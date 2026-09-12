@@ -1,0 +1,63 @@
+name: Preview deploy
+
+# Per-PR preview deploys (DECISIONS.md §4, §8).
+#
+# This is what makes the CMS draft workflow usable for non-technical editors:
+# Sveltia saves a draft to a branch and opens a PR, and this publishes it to a
+# real URL they can look at before publishing.
+#
+# ⚠️ The preview pull zone MUST send `X-Robots-Tag: noindex` (set it as an edge
+# rule in Bunny). A publicly indexed staging site competes with production in
+# search results. See LAUNCH-CHECKLIST.md.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Build & deploy preview
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          SITE_URL: ${{ vars.PREVIEW_SITE_URL }}
+
+      - name: Upload to preview storage zone
+        run: pnpm run deploy
+        env:
+          BUNNY_STORAGE_ZONE: ${{ vars.PREVIEW_STORAGE_ZONE }}
+          BUNNY_STORAGE_ENDPOINT: ${{ vars.BUNNY_STORAGE_ENDPOINT }}
+          BUNNY_STORAGE_PASSWORD: ${{ secrets.PREVIEW_STORAGE_PASSWORD }}
+          BUNNY_PULL_ZONE_ID: ${{ vars.PREVIEW_PULL_ZONE_ID }}
+          BUNNY_API_KEY: ${{ secrets.BUNNY_API_KEY }}
+
+      - name: Comment preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ vars.PREVIEW_SITE_URL }}';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Preview deployed: ${url}`,
+            });

@@ -1,0 +1,47 @@
+---
+import { LOCALES, LOCALE_TAGS, type Locale } from '../config';
+import { localizedPath } from '../i18n/routes';
+import { useTranslations } from '../i18n/ui';
+import type { Alternate } from '../lib/content';
+
+interface Props {
+  locale: Locale;
+  /**
+   * The current page's counterpart in each locale. Because slugs are localised
+   * (DECISIONS.md §5), the switcher cannot derive the target URL by string
+   * manipulation — every page must pass its alternates down.
+   */
+  alternates: Alternate[];
+}
+
+const { locale, alternates } = Astro.props;
+const t = useTranslations(locale);
+
+const targets = LOCALES.filter((l) => l !== locale).map((target) => {
+  const alternate = alternates.find((a) => a.locale === target);
+  return {
+    locale: target,
+    // Fall back to the locale's homepage when this page has no counterpart —
+    // which happens for blog posts that exist in one locale only.
+    href: alternate?.path ?? localizedPath('home', target),
+    isFallback: !alternate,
+  };
+});
+---
+
+<nav aria-label={t('lang.label')} class="flex items-center gap-2">
+  {
+    targets.map(({ locale: target, href, isFallback }) => (
+      <a
+        href={href}
+        hreflang={LOCALE_TAGS[target]}
+        lang={LOCALE_TAGS[target]}
+        rel={isFallback ? 'nofollow' : undefined}
+        class="rounded px-2 py-1 text-sm font-medium uppercase transition-colors hover:bg-neutral-100"
+      >
+        <span class="sr-only">{t('lang.switchTo')}</span>
+        <span aria-hidden="true">{target}</span>
+      </a>
+    ))
+  }
+</nav>

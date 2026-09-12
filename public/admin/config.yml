@@ -1,0 +1,155 @@
+# Sveltia CMS configuration (DECISIONS.md §4)
+#
+# Git-based: this CMS commits MDX files straight into the repo. There is no
+# database and no server — the repo IS the content store.
+#
+# SETUP REQUIRED before this works:
+#   1. Set `repo` below to the real GitHub owner/name.
+#   2. Deploy Sveltia's OAuth worker to Cloudflare (free tier) and set `base_url`.
+#      https://github.com/sveltia/sveltia-cms-auth
+#   3. Invite each editor to the repo with write access.
+
+backend:
+  name: github
+  repo: kubion/website-kubion # TODO: confirm the real GitHub owner/repo
+  branch: main
+  # TODO: point at your deployed sveltia-cms-auth worker
+  base_url: https://auth.kubion.de
+
+# Drafts land on a branch and open a PR, which triggers a preview deploy
+# (DECISIONS.md §4). Editors see their post on a real URL before publishing.
+publish_mode: editorial_workflow
+
+# Uploads go into src/assets/ so astro:assets can optimise them at build time
+# (DECISIONS.md §11). src/lib/images.ts resolves these paths.
+media_folder: src/assets/uploads
+public_folder: /src/assets/uploads
+
+# Cap upload dimensions, or the repo grows without bound — a git-based CMS keeps
+# every image forever (DECISIONS.md §11).
+media_libraries:
+  default:
+    config:
+      max_file_size: 2097152 # 2 MB
+      transformations:
+        raster_image:
+          format: webp
+          quality: 85
+          width: 2000
+          height: 2000
+
+# DECISIONS.md §5 — German primary, English secondary.
+# `multiple_folders` writes <collection>/de/<slug>.mdx and <collection>/en/<slug>.mdx.
+# If you change this, update the glob patterns in src/content.config.ts to match.
+i18n:
+  structure: multiple_folders
+  locales: [de, en]
+  default_locale: de
+
+collections:
+  # ---------------------------------------------------------------- Blog
+  - name: blog
+    label: Blog
+    label_singular: Blogbeitrag
+    folder: src/content/blog
+    create: true
+    format: frontmatter
+    extension: mdx
+    slug: '{{slug}}'
+    preview_path: blog/{{fields.urlSlug}}
+    summary: '{{title}}'
+    sortable_fields: [publishedAt, title]
+    i18n: true
+    fields:
+      - { name: title, label: Titel, widget: string, i18n: true }
+      - {
+          name: description,
+          label: Kurzbeschreibung,
+          widget: text,
+          i18n: true,
+          hint: 'Wird in Suchergebnissen und beim Teilen angezeigt. Ca. 150 Zeichen.',
+        }
+      # Localised URL slug (DECISIONS.md §5) — may differ between DE and EN.
+      - {
+          name: urlSlug,
+          label: URL-Slug,
+          widget: string,
+          i18n: true,
+          required: false,
+          hint: 'Optional. Leer lassen, um den Dateinamen zu verwenden.',
+        }
+      # Shared across locales — this is what links the DE and EN version of a post
+      # so the language switcher can find the counterpart.
+      - {
+          name: translationKey,
+          label: Übersetzungs-ID,
+          widget: string,
+          i18n: duplicate,
+          hint: 'Verbindet die deutsche und englische Fassung. Nicht ändern.',
+        }
+      - { name: publishedAt, label: Veröffentlicht am, widget: datetime, i18n: duplicate }
+      - {
+          name: updatedAt,
+          label: Aktualisiert am,
+          widget: datetime,
+          required: false,
+          i18n: duplicate,
+        }
+      - { name: author, label: Autor, widget: string, required: false, i18n: duplicate }
+      - { name: heroImage, label: Titelbild, widget: image, required: false, i18n: duplicate }
+      - {
+          name: heroImageAlt,
+          label: Bildbeschreibung,
+          widget: string,
+          required: false,
+          i18n: true,
+          hint: 'Für Screenreader. Beschreibt, was auf dem Bild zu sehen ist.',
+        }
+      - { name: tags, label: Tags, widget: list, required: false, i18n: true }
+      - { name: draft, label: Entwurf, widget: boolean, default: true, i18n: duplicate }
+      - { name: body, label: Inhalt, widget: markdown, i18n: true }
+
+  # ---------------------------------------------------------------- Team
+  - name: team
+    label: Team
+    label_singular: Teammitglied
+    folder: src/content/team
+    create: true
+    format: frontmatter
+    extension: mdx
+    slug: '{{slug}}'
+    summary: '{{name}} — {{role}}'
+    sortable_fields: [order, name]
+    i18n: true
+    fields:
+      # `i18n: duplicate` copies the value to every locale automatically, so
+      # locale-independent fields are entered once (DECISIONS.md §3).
+      - { name: name, label: Name, widget: string, i18n: duplicate }
+      - { name: role, label: Position, widget: string, i18n: true }
+      - {
+          name: translationKey,
+          label: Übersetzungs-ID,
+          widget: string,
+          i18n: duplicate,
+          hint: 'Verbindet die deutsche und englische Fassung. Nicht ändern.',
+        }
+      - { name: photo, label: Foto, widget: image, required: false, i18n: duplicate }
+      - { name: email, label: E-Mail, widget: string, required: false, i18n: duplicate }
+      - { name: linkedin, label: LinkedIn-Profil, widget: string, required: false, i18n: duplicate }
+      - {
+          name: order,
+          label: Reihenfolge,
+          widget: number,
+          default: 999,
+          value_type: int,
+          i18n: duplicate,
+          hint: 'Kleinere Zahl = weiter vorne.',
+        }
+      - { name: draft, label: Entwurf, widget: boolean, default: false, i18n: duplicate }
+      - {
+          name: body,
+          label: Kurzbiografie,
+          widget: markdown,
+          required: false,
+          i18n: true,
+        }

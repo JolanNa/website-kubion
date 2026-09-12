@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+/*
+ * Self-hosted fonts only (DECISIONS.md §9).
+ *
+ * Never add @import url('https://fonts.googleapis.com/...') or a <link> to it.
+ * Hotlinking Google Fonts transmits visitor IPs to the US and has been ruled a
+ * DSGVO violation by German courts. Install via Fontsource instead:
+ *
+ *   pnpm add @fontsource-variable/<family>
+ *   @import '@fontsource-variable/<family>';
+ */
+
+@theme {
+  /* Placeholder scale — replace once the design is handed over. */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Accessibility baseline (DECISIONS.md §12).
+ *
+ * The site is animation-heavy, so reduced-motion support is built in from the
+ * start rather than retrofitted. GSAP timelines should ALSO check the media query
+ * in JS — this rule only neutralises CSS-driven motion.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* Prose defaults for MDX bodies. Replace with the design system's type scale. */
+.prose :where(h2) {
+  @apply mt-12 mb-4 text-2xl font-semibold tracking-tight;
+}
+.prose :where(h3) {
+  @apply mt-8 mb-3 text-xl font-semibold tracking-tight;
+}
+.prose :where(p) {
+  @apply mb-4 leading-relaxed;
+}
+.prose :where(ul) {
+  @apply mb-4 list-disc pl-6;
+}
+.prose :where(a) {
+  @apply underline underline-offset-4;
+}

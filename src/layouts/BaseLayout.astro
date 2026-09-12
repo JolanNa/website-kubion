@@ -1,0 +1,127 @@
+---
+import { DEFAULT_LOCALE, LOCALE_TAGS, SITE_NAME, type Locale } from '../config';
+import type { Alternate } from '../lib/content';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { useTranslations } from '../i18n/ui';
+import '../styles/global.css';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  /** hreflang alternates. Omit only for pages that exist in one locale by design. */
+  alternates?: Alternate[];
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  /** Rendered into <head>; used for per-page JSON-LD. */
+  structuredData?: Record<string, unknown>;
+}
+
+const {
+  locale,
+  title,
+  description,
+  alternates = [],
+  ogImage,
+  ogType = 'website',
+  noindex = false,
+  structuredData,
+} = Astro.props;
+
+const t = useTranslations(locale);
+
+// Canonical must be the clean form: no `.html`, no trailing slash (DECISIONS.md §6).
+//
+// With `build.format: 'file'`, Astro.url.pathname is the OUTPUT FILE path at build
+// time ("/projekte/beispiel.html"), not the public URL. Emitting that verbatim would
+// advertise a second URL for every page — precisely the duplicate-content problem
+// the no-trailing-slash decision exists to avoid.
+const cleanPath =
+  Astro.url.pathname
+    .replace(/\/index\.html$/, '/')
+    .replace(/\.html$/, '')
+    .replace(/\/+$/, '') || '/';
+
+const canonical = new URL(cleanPath, Astro.site).href;
+
+const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`;
+const socialImage = new URL(ogImage ?? '/og-default.png', Astro.site).href;
+
+// The default-locale version doubles as x-default, so search engines have a
+// fallback for visitors whose language we don't serve.
+const xDefault = alternates.find((a) => a.locale === DEFAULT_LOCALE);
+---
+
+<!doctype html>
+<html lang={LOCALE_TAGS[locale]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    {
+      alternates.map((alt) => (
+        <link
+          rel="alternate"
+          hreflang={LOCALE_TAGS[alt.locale]}
+          href={new URL(alt.path, Astro.site).href}
+        />
+      ))
+    }
+    {
+      xDefault && (
+        <link rel="alternate" hreflang="x-default" href={new URL(xDefault.path, Astro.site).href} />
+      )
+    }
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content={LOCALE_TAGS[locale].replace('-', '_')} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {/* DECISIONS.md §9 — fonts are self-hosted. Never link fonts.googleapis.com. */}
+
+    <link rel="alternate" type="application/rss+xml" title={`${SITE_NAME} Blog`}
+      href={new URL(locale === DEFAULT_LOCALE ? '/rss.xml' : `/${locale}/rss.xml`, Astro.site).href} />
+
+    {
+      structuredData && (
+        <script
+          type="application/ld+json"
+          is:inline
+          set:html={JSON.stringify(structuredData)}
+        />
+      )
+    }
+
+    <slot name="head" />
+  </head>
+
+  <body class="bg-white text-neutral-900 antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded focus:bg-neutral-900 focus:px-4 focus:py-2 focus:text-white"
+    >
+      {t('nav.skipToContent')}
+    </a>
+
+    <Header locale={locale} alternates={alternates} />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <Footer locale={locale} />
+  </body>
+</html>

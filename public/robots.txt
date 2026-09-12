@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Keep in sync with the sitemaps emitted by @astrojs/sitemap.
+Sitemap: https://www.kubion.de/sitemap-index.xml

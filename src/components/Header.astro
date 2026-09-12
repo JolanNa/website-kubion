@@ -1,0 +1,112 @@
+---
+import { SITE_NAME, type Locale } from '../config';
+import { localizedPath, type PageKey } from '../i18n/routes';
+import { useTranslations, type UIKey } from '../i18n/ui';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import type { Alternate } from '../lib/content';
+
+interface Props {
+  locale: Locale;
+  alternates: Alternate[];
+}
+
+const { locale, alternates } = Astro.props;
+const t = useTranslations(locale);
+
+const NAV: { key: PageKey; label: UIKey }[] = [
+  { key: 'leistungen', label: 'nav.leistungen' },
+  { key: 'projekte', label: 'nav.projekte' },
+  { key: 'ueber-uns', label: 'nav.ueberUns' },
+  { key: 'blog', label: 'nav.blog' },
+  { key: 'kontakt', label: 'nav.kontakt' },
+];
+
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<header class="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
+    <a href={localizedPath('home', locale)} class="text-lg font-semibold tracking-tight">
+      {SITE_NAME}
+    </a>
+
+    <nav class="hidden items-center gap-1 md:flex" aria-label="Hauptnavigation">
+      {
+        NAV.map(({ key, label }) => {
+          const href = localizedPath(key, locale);
+          const isActive = current === href || current.startsWith(`${href}/`);
+          return (
+            <a
+              href={href}
+              aria-current={isActive ? 'page' : undefined}
+              class:list={[
+                'rounded px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-100',
+                isActive && 'text-neutral-900 underline underline-offset-4',
+              ]}
+            >
+              {t(label)}
+            </a>
+          );
+        })
+      }
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <LanguageSwitcher locale={locale} alternates={alternates} />
+
+      <button
+        type="button"
+        class="rounded p-2 hover:bg-neutral-100 md:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+        data-menu-toggle
+      >
+        <span class="sr-only" data-menu-label>{t('nav.menu.open')}</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
+          <path d="M2 5h16v2H2zM2 9h16v2H2zM2 13h16v2H2z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <nav
+    id="mobile-nav"
+    hidden
+    class="border-t border-neutral-200 px-4 pb-4 md:hidden"
+    aria-label="Hauptnavigation (mobil)"
+  >
+    {
+      NAV.map(({ key, label }) => (
+        <a href={localizedPath(key, locale)} class="block py-3 text-base font-medium">
+          {t(label)}
+        </a>
+      ))
+    }
+  </nav>
+</header>
+
+<script>
+  // Vanilla JS, no framework island (DECISIONS.md §12).
+  //
+  // Initialise on `astro:page-load` rather than DOMContentLoaded: that event fires
+  // on the first load AND after every View Transitions navigation. Using
+  // DOMContentLoaded here is the single most common Astro animation/interaction bug.
+  function initMenu() {
+    const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const nav = document.getElementById('mobile-nav');
+    const label = document.querySelector<HTMLElement>('[data-menu-label]');
+    if (!toggle || !nav) return;
+
+    const openText = toggle.dataset.openText ?? label?.textContent ?? '';
+
+    toggle.addEventListener('click', () => {
+      const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!isOpen));
+      nav.hidden = isOpen;
+      if (label) label.textContent = openText;
+    });
+  }
+
+  document.addEventListener('astro:page-load', initMenu);
+  initMenu();
+</script>

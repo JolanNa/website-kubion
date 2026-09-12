@@ -1,0 +1,67 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../config';
+import { getProjekte, loadPage, pageAlternates, projektPath } from '../lib/content';
+import { requireImage } from '../lib/images';
+import { useTranslations } from '../i18n/ui';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+// The index page's own copy is a Tier 1 static page; the cards come from the
+// projekte collection (DECISIONS.md §3).
+const page = await loadPage('projekte', locale);
+const projects = await getProjekte(locale);
+---
+
+<BaseLayout
+  locale={locale}
+  title={page.data.title}
+  description={page.data.description}
+  alternates={pageAlternates('projekte')}
+  ogImage={page.data.ogImage}
+>
+  <div class="mx-auto max-w-6xl px-4 py-20">
+    <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
+      {page.data.hero?.headline ?? t('projekte.title')}
+    </h1>
+    {
+      page.data.hero?.subline && (
+        <p class="mt-6 max-w-2xl text-lg text-neutral-600 text-pretty">
+          {page.data.hero.subline}
+        </p>
+      )
+    }
+
+    <ul class="mt-16 grid gap-12 sm:grid-cols-2">
+      {
+        projects.map((project) => (
+          <li>
+            <a href={projektPath(project, locale)} class="group block">
+              <Image
+                src={requireImage(project.data.heroImage, `projekte/${project.id}`)}
+                alt={project.data.heroImageAlt}
+                widths={[600, 1200]}
+                sizes="(min-width: 640px) 50vw, 100vw"
+                class="aspect-[4/3] w-full rounded-xl object-cover"
+                loading="lazy"
+              />
+              <p class="mt-4 text-sm text-neutral-500">
+                {project.data.client} · {project.data.year}
+              </p>
+              <h2 class="mt-1 text-2xl font-semibold tracking-tight group-hover:underline underline-offset-4">
+                {project.data.title}
+              </h2>
+              <p class="mt-2 text-neutral-600">{project.data.description}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

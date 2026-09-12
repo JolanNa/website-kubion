@@ -1,0 +1,19 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BlogPost from '../../components/BlogPost.astro';
+import { getPosts, postSlug } from '../../lib/content';
+
+// Slugs are localised per post (DECISIONS.md §5), so the slug comes from the
+// entry's frontmatter rather than from its filename.
+export const getStaticPaths = (async () => {
+  const posts = await getPosts('de');
+  return posts.map((entry) => ({
+    params: { slug: postSlug(entry) },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+---
+
+<BlogPost entry={entry} locale="de" />

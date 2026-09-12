@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { useTranslations } from '../../i18n/ui';
+import { localizedPath } from '../../i18n/routes';
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+---
+
+<BaseLayout locale={locale} title={t('404.title')} description={t('404.body')} noindex>
+  <div class="mx-auto max-w-3xl px-4 py-32 text-center">
+    <p class="text-sm font-medium text-neutral-500">404</p>
+    <h1 class="mt-3 text-4xl font-semibold tracking-tight">{t('404.title')}</h1>
+    <p class="mt-4 text-neutral-600">{t('404.body')}</p>
+    <a
+      href={localizedPath('home', locale)}
+      class="mt-8 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white"
+    >
+      {t('404.home')}
+    </a>
+  </div>
+</BaseLayout>

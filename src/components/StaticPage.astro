@@ -1,0 +1,73 @@
+---
+import { render } from 'astro:content';
+import type { Locale } from '../config';
+import type { PageKey } from '../i18n/routes';
+import { loadPage, pageAlternates } from '../lib/content';
+import { resolveImage } from '../lib/images';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+
+/**
+ * Renders a Tier 1 static marketing page (DECISIONS.md §3).
+ *
+ * Each route in src/pages/ is a four-line file that delegates here, so the routing
+ * table stays explicit — necessary because slugs are localised and can't be derived.
+ */
+interface Props {
+  pageKey: PageKey;
+  locale: Locale;
+}
+
+const { pageKey, locale } = Astro.props;
+
+const entry = await loadPage(pageKey, locale);
+const { Content } = await render(entry);
+const { hero } = entry.data;
+const heroImage = resolveImage(hero?.image);
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates(pageKey)}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
+>
+  {
+    hero && (
+      <section class="mx-auto max-w-6xl px-4 py-20">
+        <h1 class="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+          {hero.headline}
+        </h1>
+        {hero.subline && (
+          <p class="mt-6 max-w-2xl text-lg text-neutral-600 text-pretty">{hero.subline}</p>
+        )}
+        {hero.ctaLabel && hero.ctaHref && (
+          <a
+            href={hero.ctaHref}
+            class="mt-8 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+          >
+            {hero.ctaLabel}
+          </a>
+        )}
+        {heroImage && (
+          <Image
+            src={heroImage}
+            alt=""
+            widths={[640, 1024, 1600]}
+            sizes="(min-width: 1024px) 1024px, 100vw"
+            class="mt-12 w-full rounded-2xl"
+            loading="eager"
+          />
+        )}
+      </section>
+    )
+  }
+
+  <div class="prose mx-auto max-w-3xl px-4 pb-12">
+    <Content />
+  </div>
+
+  <slot />
+</BaseLayout>

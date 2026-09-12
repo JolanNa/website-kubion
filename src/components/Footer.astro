@@ -1,0 +1,39 @@
+---
+import { SITE_NAME, type Locale } from '../config';
+import { localizedPath, type PageKey } from '../i18n/routes';
+import { useTranslations, type UIKey } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+// Impressum must be reachable within two clicks from every page (§5 DDG),
+// which is why it lives in the footer on every page rather than only on Kontakt.
+const LEGAL: { key: PageKey; label: UIKey }[] = [
+  { key: 'impressum', label: 'nav.impressum' },
+  { key: 'datenschutz', label: 'nav.datenschutz' },
+];
+
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-24 border-t border-neutral-200 bg-neutral-50">
+  <div
+    class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <p>&copy; {year} {SITE_NAME}. {t('footer.rights')}</p>
+
+    <nav class="flex gap-4" aria-label="Rechtliches">
+      {
+        LEGAL.map(({ key, label }) => (
+          <a href={localizedPath(key, locale)} class="underline-offset-4 hover:underline">
+            {t(label)}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</footer>
