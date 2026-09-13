@@ -79,12 +79,16 @@
 }
 
 /*
- * The Markenkern (§05) — the only gradient in the entire system.
- * Square, 135°, #FF6A00 → #FF9A3D. No radius, no border, no shadow.
- * Used once per page, as the marker to the left of the hero kicker.
+ * The Markenkern (§05): square, 135°, #FF6A00 → #FF9A3D, no radius, no border,
+ * no shadow. Used once per page, as the marker left of the hero kicker.
  * Website size: 24–32 px.
+ *
+ * `.gradient-orange` is the same ramp reused on the small arrow buttons. Note
+ * that §05 calls the Markenkern "der einzige Verlauf im gesamten System" — this
+ * is a deliberate departure, requested for the arrows.
  */
-.markenkern {
+.markenkern,
+.gradient-orange {
   background-image: linear-gradient(135deg, var(--color-orange), var(--color-orange-light));
 }
 

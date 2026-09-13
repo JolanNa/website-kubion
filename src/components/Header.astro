@@ -90,7 +90,7 @@ const navItemClass =
     class="mx-auto w-full max-w-[90rem] overflow-hidden rounded-2xl transition-[max-width,background-color,box-shadow] duration-500 ease-[var(--ease-out-quint)] group-data-scrolled:max-w-[68rem] group-data-scrolled:bg-weiss/90 group-data-scrolled:shadow-island group-data-scrolled:backdrop-blur-xl group-data-open:bg-weiss! group-data-open:shadow-panel"
     data-shell
   >
-    <div class="flex h-16 items-center justify-between gap-8 px-4 sm:px-6">
+    <div class="flex h-16 items-center justify-between gap-8 px-6">
       <a
         href={localizedPath('home', locale)}
         class="text-marine transition-opacity duration-200 hover:opacity-70"
@@ -230,7 +230,7 @@ const navItemClass =
                 class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
               >
                 <span
-                  class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                  class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path
@@ -248,8 +248,8 @@ const navItemClass =
         </div>
 
         <div class="hidden group-data-[panel=menu]:block lg:hidden">
-          <div class="mx-4 h-px bg-marine-15 sm:mx-6"></div>
-          <div class="max-h-[76svh] overflow-y-auto px-4 pt-2 pb-4 sm:px-6">
+          <div class="mx-6 h-px bg-marine-15"></div>
+          <div class="max-h-[76svh] overflow-y-auto px-6 pt-4 pb-6">
             <nav aria-label={t('nav.primaryMobile')}>
               <ul>
                 {
@@ -259,11 +259,19 @@ const navItemClass =
                         href={localizedPath(key, locale)}
                         aria-current={isActive(key) ? 'page' : undefined}
                         class:list={[
-                          'block border-b border-marine-15 py-4 text-2xl font-medium tracking-[-0.01em]',
-                          isActive(key) ? 'text-marine' : 'text-marine-70',
+                          '-mx-3 flex items-center justify-between rounded-xl px-3 py-3 text-2xl font-medium tracking-[-0.01em] transition-colors duration-200',
+                          isActive(key) ? 'bg-nebel text-marine' : 'text-marine-70 active:bg-nebel',
                         ]}
                       >
                         {t(label)}
+                        {/* Trailing, so every label stays flush with the rest of the panel. */}
+                        <span
+                          class:list={[
+                            'size-1.5 shrink-0 rounded-full transition-colors duration-200',
+                            isActive(key) ? 'bg-orange' : 'bg-transparent',
+                          ]}
+                          aria-hidden="true"
+                        />
                       </a>
                     </li>
                   ))
@@ -289,7 +297,7 @@ const navItemClass =
                 class="group/cta mt-5 inline-flex items-center gap-3 font-medium text-weiss"
               >
                 <span
-                  class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                  class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path
