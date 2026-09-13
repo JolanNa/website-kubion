@@ -7,6 +7,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HomeHero from '../../components/HomeHero.astro';
 import { loadPage, pageAlternates } from '../../lib/content';
+// TEMPORARY — remove with DevScrollFiller.astro once the real sections exist.
+import DevScrollFiller from '../../components/DevScrollFiller.astro';
 
 const locale = 'en' as const;
 const entry = await loadPage('home', locale);
@@ -20,4 +22,5 @@ const entry = await loadPage('home', locale);
   ogImage={entry.data.ogImage}
 >
   <HomeHero entry={entry} locale={locale} />
+  <DevScrollFiller locale={locale} />
 </BaseLayout>

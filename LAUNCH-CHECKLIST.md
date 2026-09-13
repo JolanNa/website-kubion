@@ -56,6 +56,9 @@ Steps:
 
 ## Technical
 
+- [ ] **Remove `src/components/DevScrollFiller.astro`** and its use in
+      `src/pages/index.astro` and `src/pages/en/index.astro`. It is placeholder copy and
+      hatched boxes that exist only so the homepage scrolls during development.
 - [ ] `hreflang` DE/EN pairs plus `x-default` correct on every page
 - [ ] Clean URLs verified live: `/leistungen` resolves, `/leistungen/` 301s to it, and
       `/leistungen.html` 301s to it too (`DECISIONS.md` §6) — otherwise duplicate content
