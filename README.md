@@ -83,6 +83,10 @@ and event handlers silently die after the first navigation (DECISIONS.md §12).
 cookie-free so it needs no consent banner; one embed undoes that (DECISIONS.md §9).
 Self-host fonts via Fontsource.
 
+**Zod comes from `astro/zod`, not `astro:content`.** The `astro:content` re-export is
+deprecated and disappears in Astro 8. Astro 7 ships zod v4, so use the top-level
+`z.email()` / `z.url()` rather than the deprecated `z.string().email()` chain.
+
 **`sharp` is a direct dependency** and must stay one. Under pnpm's strict linking it
 isn't reachable as a transitive dependency of Astro, and image optimisation fails at
 build time.

@@ -26,6 +26,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
+          # Astro 7 requires Node 22.12+; '22' resolves to the latest 22.x.
           node-version: 22
           cache: pnpm
 

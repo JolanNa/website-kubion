@@ -1,5 +1,9 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+// Zod comes from 'astro/zod', not 'astro:content' — the latter is deprecated and
+// is removed in Astro 8.
+import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
+
 /** Fields every page/post shares for <head> and social cards. */
 const seo = {
   title: z.string(),
@@ -105,8 +109,8 @@ const team = defineCollection({
     name: z.string(),
     role: z.string(),
     photo: z.string().optional(),
-    email: z.string().email().optional(),
-    linkedin: z.string().url().optional(),
+    email: z.email().optional(),
+    linkedin: z.url().optional(),
     order: z.number().default(999),
     draft: z.boolean().default(false),
   }),

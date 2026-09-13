@@ -29,7 +29,9 @@ export default defineConfig({
     defaultLocale: 'de',
     routing: {
       prefixDefaultLocale: false,
-      redirectToDefaultLocale: false,
+      // Note: `redirectToDefaultLocale` is deliberately absent. Since Astro 6 it
+      // may only be set when `prefixDefaultLocale: true`, and it would be a no-op
+      // here anyway — German already lives at the root.
     },
   },
 

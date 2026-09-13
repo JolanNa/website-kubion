@@ -9,10 +9,18 @@ Living document. Decisions made before implementation started (2026-09-12).
 Astro, static output (`output: 'static'`). No server runtime, no login, no user accounts.
 The only dynamic piece is the contact form (see §7).
 
-## 2. Framework: Astro
+## 2. Framework: Astro 7
 
 Chosen for static-first output, Content Collections (schema-validated content with a single
 API regardless of where the content came from), and built-in i18n routing.
+
+Scaffolded on Astro 5, upgraded to 7 immediately — starting a greenfield project two majors
+behind is a cost that only grows. The upgrade required three changes, all in
+`src/content.config.ts`: `z` now comes from `astro/zod` rather than `astro:content`, zod v4
+moved `.email()`/`.url()` to top-level validators, and `i18n.routing.redirectToDefaultLocale`
+may no longer be set alongside `prefixDefaultLocale: false`.
+
+**Requires Node 22.12 or newer** (Astro 6 dropped Node 18 and 20).
 
 **"Zero JS by default" is about framework runtime, not our own code.** Custom animation
 JavaScript ships and runs normally. We do not need component-framework islands (React/Vue)
