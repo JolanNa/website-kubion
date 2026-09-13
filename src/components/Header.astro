@@ -18,9 +18,15 @@ const t = useTranslations(locale);
  * A floating island, not a full-width bar.
  *
  * STRUCTURE
- *   header          sticky, transparent, holds the page-blur overlay
+ *   header          sticky, transparent, FIXED height, holds the blur overlay
  *     ├ overlay     fixed; blurs the rest of the site while a panel is open
- *     └ shell       the visible island: rounds, frosts, compresses, expands
+ *     └ float       absolute, so the island can grow past the header's box
+ *         └ shell   the visible island: rounds, frosts, compresses, expands
+ *
+ * The header's height is fixed at --header-height and the island is positioned
+ * absolutely inside it. That is what stops an opening panel from pushing the
+ * page down: the shell grows outside its parent's box and overlays the content
+ * instead of taking part in layout.
  *         ├ top row logo · nav · actions
  *         └ panel   grows downwards to reveal the mega menu or the mobile nav
  *
@@ -72,15 +78,16 @@ const navItemClass =
   'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200';
 ---
 
-<header class="group sticky top-0 z-50 px-4 py-4" data-header>
+<header class="group sticky top-0 z-50 h-(--header-height)" data-header>
   <div
     class="pointer-events-none fixed inset-0 -z-10 bg-marine/10 opacity-0 backdrop-blur-md transition-opacity duration-300 group-data-open:opacity-100"
     aria-hidden="true"
   >
   </div>
 
+  <div class="absolute inset-x-4 top-4">
   <div
-    class="mx-auto w-full max-w-[90rem] overflow-hidden rounded-2xl transition-[max-width,background-color,box-shadow] duration-500 ease-[var(--ease-out-quint)] group-data-scrolled:max-w-[68rem] group-data-scrolled:bg-weiss/70 group-data-scrolled:shadow-island group-data-scrolled:backdrop-blur-xl group-data-open:bg-weiss group-data-open:shadow-panel"
+    class="mx-auto w-full max-w-[90rem] overflow-hidden rounded-2xl transition-[max-width,background-color,box-shadow] duration-500 ease-[var(--ease-out-quint)] group-data-scrolled:max-w-[68rem] group-data-scrolled:bg-weiss/90 group-data-scrolled:shadow-island group-data-scrolled:backdrop-blur-xl group-data-open:bg-weiss group-data-open:shadow-panel"
     data-shell
   >
     <div class="flex h-16 items-center justify-between gap-8 px-4 sm:px-6">
@@ -185,7 +192,8 @@ const navItemClass =
     >
       <div class="overflow-hidden">
         <div class="hidden group-data-[panel=mega]:block">
-          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-2 pb-6">
+          <div class="mx-6 h-px bg-marine-15"></div>
+          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-6 pb-6">
             <div>
               <p class="kicker text-marine-45">{mega.heading}</p>
               <ul class="mt-5 space-y-1">
@@ -240,6 +248,7 @@ const navItemClass =
         </div>
 
         <div class="hidden group-data-[panel=menu]:block lg:hidden">
+          <div class="mx-4 h-px bg-marine-15 sm:mx-6"></div>
           <div class="max-h-[76svh] overflow-y-auto px-4 pt-2 pb-4 sm:px-6">
             <nav aria-label={t('nav.primaryMobile')}>
               <ul>
@@ -298,6 +307,7 @@ const navItemClass =
         </div>
       </div>
     </div>
+  </div>
   </div>
 </header>
 
