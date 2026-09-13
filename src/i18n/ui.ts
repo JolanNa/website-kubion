@@ -20,6 +20,9 @@ export const UI = {
     'nav.blog': 'Blog',
     'nav.primary': 'Hauptnavigation',
     'nav.primaryMobile': 'Hauptnavigation (mobil)',
+    'nav.card.kicker': 'Kontakt',
+    'nav.card.text': 'Sie haben ein Projekt im Kopf? Schreiben Sie uns.',
+    'nav.card.cta': 'Kontakt aufnehmen',
     'nav.impressum': 'Impressum',
     'nav.datenschutz': 'Datenschutz',
 
@@ -73,6 +76,9 @@ export const UI = {
     'nav.blog': 'Blog',
     'nav.primary': 'Main navigation',
     'nav.primaryMobile': 'Main navigation (mobile)',
+    'nav.card.kicker': 'Contact',
+    'nav.card.text': 'Got a project in mind? Drop us a line.',
+    'nav.card.cta': 'Get in touch',
     'nav.impressum': 'Imprint',
     'nav.datenschutz': 'Privacy',
 

@@ -46,9 +46,16 @@
   --color-marine-45: #7989ab; /* footers, image captions */
   --color-marine-15: #dadee7; /* lines, frames, dividers */
 
-  /* Shared so the hero can size itself against the sticky header (see
-     HomeHero.astro). Changing it here moves both. */
-  --header-height: 5rem;
+  /* The floating header's total footprint: 1rem top gap + 4rem island + 1rem
+     bottom gap. Shared so the hero can size itself against it (HomeHero.astro).
+     Changing it here moves both. */
+  --header-height: 6rem;
+
+  /* Header island elevation. Defined here rather than as arbitrary utilities:
+     an arbitrary shadow containing a slash (rgb(... / a)) silently fails to
+     compile when combined with a variant. */
+  --shadow-island: 0 8px 32px -12px rgb(10 38 95 / 0.18);
+  --shadow-panel: 0 24px 60px -20px rgb(10 38 95 / 0.28);
 
   /* --- Motion ----------------------------------------------------------- */
   /* Not covered by the guideline; chosen here and applied consistently. */

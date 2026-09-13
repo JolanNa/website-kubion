@@ -15,23 +15,42 @@ const { locale, alternates } = Astro.props;
 const t = useTranslations(locale);
 
 /*
- * Layout and shape follow the Figma design; colour and type follow the brand
- * guideline (Marine / Orange / Hellblau, Geist Sans + Geist Mono).
+ * A floating island, not a full-width bar.
  *
- * MEGA MENU
- * Open state is a `data-open` attribute on the parent <li>; everything visual
- * hangs off `group-data-open:*` in CSS. Do NOT animate the panel with an inline
- * `transform`: Tailwind v4 implements translate utilities through the standalone
- * `translate` property, so a transform composes with `-translate-x-1/2` rather
- * than replacing it — which centres the panel twice and pushes it off-screen.
+ * STRUCTURE
+ *   header          sticky, transparent, holds the page-blur overlay
+ *     ├ overlay     fixed; blurs the rest of the site while a panel is open
+ *     └ shell       the visible island: rounds, frosts, compresses, expands
+ *         ├ top row logo · nav · actions
+ *         └ panel   grows downwards to reveal the mega menu or the mobile nav
+ *
+ * STATE lives as attributes on <header>; every visual change hangs off them in
+ * CSS via `group-data-*`, so the animation and the logic stay separable:
+ *   data-scrolled           page has scrolled → frost the shell and compress it
+ *   data-open + data-panel  a panel is open ("mega" or "menu")
+ *
+ * The panel expands with the grid-rows 0fr→1fr technique, which animates to the
+ * content's natural height. `height: auto` is not animatable, and measuring it
+ * in JS would have to be redone on every resize and font load.
+ *
+ * The overlay is a child of <header> but deliberately NOT of the shell:
+ * `backdrop-filter` creates a containing block for fixed-position descendants,
+ * so an overlay inside the frosted shell would be trapped inside it rather than
+ * covering the viewport. Its negative z-index paints it behind the island while
+ * still covering the page, which works because <header>'s z-index already makes
+ * it a stacking context.
  */
 
-/** Primary navigation, in design order. Blog sits in the footer and mobile menu. */
 const NAV: { key: PageKey; label: UIKey; mega?: boolean }[] = [
   { key: 'home', label: 'nav.home' },
   { key: 'leistungen', label: 'nav.leistungen', mega: true },
   { key: 'projekte', label: 'nav.projekte' },
   { key: 'ueber-uns', label: 'nav.ueberUns' },
+];
+
+const MOBILE_NAV: { key: PageKey; label: UIKey }[] = [
+  ...NAV.map(({ key, label }) => ({ key, label })),
+  { key: 'blog', label: 'nav.blog' },
 ];
 
 const mega = MEGA_MENU[locale];
@@ -48,213 +67,346 @@ function isActive(key: PageKey): boolean {
   if (key === 'home') return current === href;
   return current === href || current.startsWith(`${href}/`);
 }
+
+const navItemClass =
+  'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200';
 ---
 
-<header
-  class="sticky top-0 z-50 border-b border-transparent bg-weiss/85 backdrop-blur-md transition-colors duration-300 data-scrolled:border-marine-15"
-  data-header
->
-  <div class="mx-auto flex h-(--header-height) max-w-[90rem] items-center justify-between gap-8 px-6">
-    <a
-      href={localizedPath('home', locale)}
-      class="text-marine transition-opacity duration-200 hover:opacity-70"
-    >
-      <Logo width={104} />
-    </a>
-
-    <!--
-      The sliding indicator is a single absolutely-positioned element rather than
-      a border on each link, so it can animate between items. `relative` here is
-      the positioning context it measures against.
-    -->
-    <nav
-      class="relative hidden lg:block"
-      aria-label={t('nav.primary')}
-      data-nav
-      data-reset-delay="60"
-    >
-      <ul class="flex items-center gap-1">
-        {
-          NAV.map(({ key, label, mega: hasMega }) => {
-            const href = localizedPath(key, locale);
-            const active = isActive(key);
-            return (
-              <li class="group relative" data-nav-group={hasMega ? '' : undefined}>
-                <a
-                  href={href}
-                  data-nav-item
-                  data-active={active ? '' : undefined}
-                  aria-current={active ? 'page' : undefined}
-                  class:list={[
-                    'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
-                    active ? 'text-marine' : 'text-marine-70 hover:text-marine',
-                  ]}
-                >
-                  {t(label)}
-                </a>
-
-                {hasMega && (
-                  <div
-                    class="invisible absolute top-[calc(100%+1.25rem)] left-1/2 w-[52rem] max-w-[calc(100vw-3rem)] -translate-x-1/2 translate-y-1 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
-                    data-mega
-                  >
-                    <div class="grid grid-cols-[1.15fr_1fr] gap-3 rounded-2xl border border-marine-15 bg-weiss p-3 shadow-[0_24px_60px_-20px_rgb(10_38_95/0.28)]">
-                      <div class="p-5">
-                        <p class="kicker text-marine-45">{mega.heading}</p>
-                        <ul class="mt-5 space-y-1">
-                          {mega.items.map((item, index) => (
-                            <li>
-                              <a
-                                href={localizedPath('leistungen', locale)}
-                                class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
-                              >
-                                <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
-                                  {String(index + 1).padStart(2, '0')}
-                                </span>
-                                <span>
-                                  <span class="block font-semibold text-marine">
-                                    {item.title}
-                                  </span>
-                                  <span class="block text-sm text-marine-70">
-                                    {item.description}
-                                  </span>
-                                </span>
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
-                        <div>
-                          <p class="kicker text-hellblau">{mega.overviewHeading}</p>
-                          <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
-                            {mega.overviewBody}
-                          </p>
-                        </div>
-                        <a
-                          href={localizedPath('leistungen', locale)}
-                          class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
-                        >
-                          <span class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                              <path
-                                d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
-                                stroke="currentColor"
-                                stroke-width="1.75"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              />
-                            </svg>
-                          </span>
-                          {mega.overviewCta}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </li>
-            );
-          })
-        }
-      </ul>
-
-      <!--
-        The active marker. Starts at opacity 0 and is positioned by JS on first
-        paint, so it never flashes in the wrong place before being measured.
-      -->
-      <span
-        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] w-3 rounded-full bg-marine opacity-0"
-        data-nav-indicator
-        aria-hidden="true"></span>
-    </nav>
-
-    <div class="flex items-center gap-3">
-      <LanguageSwitcher locale={locale} alternates={alternates} />
-
-      <a
-        href={localizedPath('kontakt', locale)}
-        class="rounded-full bg-marine px-5 py-2.5 text-[0.9375rem] font-medium text-weiss transition-opacity duration-200 hover:opacity-90"
-      >
-        {t('nav.kontakt')}
-      </a>
-
-      <button
-        type="button"
-        class="-mr-2 flex size-10 items-center justify-center rounded-lg text-marine transition-colors hover:bg-nebel lg:hidden"
-        aria-expanded="false"
-        aria-controls="mobile-nav"
-        data-menu-toggle
-      >
-        <span class="sr-only">{t('nav.menu.open')}</span>
-        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
-          <rect x="2" y="5" width="16" height="2"></rect>
-          <rect x="2" y="9" width="16" height="2"></rect>
-          <rect x="2" y="13" width="16" height="2"></rect>
-        </svg>
-      </button>
-    </div>
+<header class="group sticky top-0 z-50 px-4 py-4" data-header>
+  <div
+    class="pointer-events-none fixed inset-0 -z-10 bg-marine/10 opacity-0 backdrop-blur-md transition-opacity duration-300 group-data-open:opacity-100"
+    aria-hidden="true"
+  >
   </div>
 
-  <nav
-    id="mobile-nav"
-    hidden
-    class="border-t border-marine-15 px-6 pb-6 lg:hidden"
-    aria-label={t('nav.primaryMobile')}
+  <div
+    class="mx-auto w-full max-w-[90rem] overflow-hidden rounded-2xl transition-[max-width,background-color,box-shadow] duration-500 ease-[var(--ease-out-quint)] group-data-scrolled:max-w-[68rem] group-data-scrolled:bg-weiss/70 group-data-scrolled:shadow-island group-data-scrolled:backdrop-blur-xl group-data-open:bg-weiss group-data-open:shadow-panel"
+    data-shell
   >
-    <ul>
-      {
-        [...NAV, { key: 'blog' as PageKey, label: 'nav.blog' as UIKey }].map(
-          ({ key, label }) => (
-            <li>
+    <div class="flex h-16 items-center justify-between gap-8 px-4 sm:px-6">
+      <a
+        href={localizedPath('home', locale)}
+        class="text-marine transition-opacity duration-200 hover:opacity-70"
+      >
+        <Logo width={104} />
+      </a>
+
+      <nav
+        class="relative hidden lg:block"
+        aria-label={t('nav.primary')}
+        data-nav
+        data-reset-delay="60"
+      >
+        <ul class="flex items-center gap-1">
+          {
+            NAV.map(({ key, label, mega: hasMega }) => {
+              const active = isActive(key);
+              const stateClass = active ? 'text-marine' : 'text-marine-70 hover:text-marine';
+
+              return (
+                <li>
+                  {hasMega ? (
+                    /*
+                     * A button, not a link: it toggles a panel, so it needs
+                     * aria-expanded — and the panel's own "Alle Leistungen" link
+                     * is how you reach the page itself.
+                     */
+                    <button
+                      type="button"
+                      data-nav-item
+                      data-mega-trigger
+                      data-active={active ? '' : undefined}
+                      aria-expanded="false"
+                      aria-controls="nav-panel"
+                      class:list={[navItemClass, stateClass, 'cursor-pointer']}
+                    >
+                      {t(label)}
+                    </button>
+                  ) : (
+                    <a
+                      href={localizedPath(key, locale)}
+                      data-nav-item
+                      data-active={active ? '' : undefined}
+                      aria-current={active ? 'page' : undefined}
+                      class:list={[navItemClass, stateClass]}
+                    >
+                      {t(label)}
+                    </a>
+                  )}
+                </li>
+              );
+            })
+          }
+        </ul>
+
+        <span
+          class="pointer-events-none absolute -bottom-1 left-0 h-[3px] w-3 rounded-full bg-marine opacity-0"
+          data-nav-indicator
+          aria-hidden="true"></span>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden lg:flex lg:items-center lg:gap-3">
+          <LanguageSwitcher locale={locale} alternates={alternates} />
+          <a
+            href={localizedPath('kontakt', locale)}
+            class="rounded-full bg-marine px-5 py-2.5 text-[0.9375rem] font-medium text-weiss transition-opacity duration-200 hover:opacity-90"
+          >
+            {t('nav.kontakt')}
+          </a>
+        </div>
+
+        <button
+          type="button"
+          class="-mr-1 flex size-10 cursor-pointer items-center justify-center lg:hidden"
+          aria-expanded="false"
+          aria-controls="nav-panel"
+          data-menu-toggle
+        >
+          <span class="sr-only">{t('nav.menu.open')}</span>
+          <span class="relative block h-4 w-6" aria-hidden="true">
+            <span
+              class="absolute top-0 left-0 block h-[2px] w-6 rounded-full bg-marine transition-transform duration-300 ease-[var(--ease-out-quint)] group-data-[panel=menu]:translate-y-[7px] group-data-[panel=menu]:rotate-45"
+            ></span>
+            <span
+              class="absolute top-[7px] left-0 block h-[2px] w-6 rounded-full bg-marine transition-opacity duration-200 group-data-[panel=menu]:opacity-0"
+            ></span>
+            <span
+              class="absolute top-[14px] left-0 block h-[2px] w-6 rounded-full bg-marine transition-transform duration-300 ease-[var(--ease-out-quint)] group-data-[panel=menu]:-translate-y-[7px] group-data-[panel=menu]:-rotate-45"
+            ></span>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="nav-panel"
+      class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-500 ease-[var(--ease-out-quint)] group-data-open:grid-rows-[1fr]"
+    >
+      <div class="overflow-hidden">
+        <div class="hidden group-data-[panel=mega]:block">
+          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-2 pb-6">
+            <div>
+              <p class="kicker text-marine-45">{mega.heading}</p>
+              <ul class="mt-5 space-y-1">
+                {
+                  mega.items.map((item, index) => (
+                    <li>
+                      <a
+                        href={localizedPath('leistungen', locale)}
+                        class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
+                      >
+                        <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <span>
+                          <span class="block font-semibold text-marine">{item.title}</span>
+                          <span class="block text-sm text-marine-70">{item.description}</span>
+                        </span>
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+
+            <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
+              <div>
+                <p class="kicker text-hellblau">{mega.overviewHeading}</p>
+                <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
+                  {mega.overviewBody}
+                </p>
+              </div>
               <a
-                href={localizedPath(key, locale)}
-                aria-current={isActive(key) ? 'page' : undefined}
-                class:list={[
-                  'block border-b border-marine-15 py-4 text-base',
-                  isActive(key) ? 'font-medium text-marine' : 'text-marine-70',
-                ]}
+                href={localizedPath('leistungen', locale)}
+                class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
               >
-                {t(label)}
+                <span
+                  class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                {mega.overviewCta}
               </a>
-            </li>
-          ),
-        )
-      }
-    </ul>
-  </nav>
+            </div>
+          </div>
+        </div>
+
+        <div class="hidden group-data-[panel=menu]:block lg:hidden">
+          <div class="max-h-[76svh] overflow-y-auto px-4 pt-2 pb-4 sm:px-6">
+            <nav aria-label={t('nav.primaryMobile')}>
+              <ul>
+                {
+                  MOBILE_NAV.map(({ key, label }) => (
+                    <li>
+                      <a
+                        href={localizedPath(key, locale)}
+                        aria-current={isActive(key) ? 'page' : undefined}
+                        class:list={[
+                          'block border-b border-marine-15 py-4 text-2xl font-medium tracking-[-0.01em]',
+                          isActive(key) ? 'text-marine' : 'text-marine-70',
+                        ]}
+                      >
+                        {t(label)}
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </nav>
+
+            <div class="mt-6 flex items-center justify-between">
+              <LanguageSwitcher locale={locale} alternates={alternates} />
+              <a
+                href={localizedPath('kontakt', locale)}
+                class="rounded-full bg-marine px-5 py-2.5 font-medium text-weiss"
+              >
+                {t('nav.kontakt')}
+              </a>
+            </div>
+
+            <div class="mt-6 rounded-xl bg-marine p-6">
+              <p class="kicker text-hellblau">{t('nav.card.kicker')}</p>
+              <p class="mt-3 leading-relaxed text-weiss">{t('nav.card.text')}</p>
+              <a
+                href={localizedPath('kontakt', locale)}
+                class="group/cta mt-5 inline-flex items-center gap-3 font-medium text-weiss"
+              >
+                <span
+                  class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                  </svg>
+                </span>
+                {t('nav.card.cta')}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
 <script>
   /**
-   * Navigation behaviour: the sliding active marker and the mega menu.
+   * Header behaviour: scroll state, the two panels, and the sliding marker.
    *
-   * Vanilla JS, no framework island (DECISIONS.md §12).
+   * Vanilla JS, no framework island (DECISIONS.md §12). Initialised on
+   * `astro:page-load`, NOT DOMContentLoaded — that fires on first load and after
+   * every View Transitions navigation; using DOMContentLoaded is the most common
+   * Astro interaction bug.
    *
-   * Initialised on `astro:page-load`, NOT DOMContentLoaded — that event fires on
-   * the first load and after every View Transitions navigation. Using
-   * DOMContentLoaded here is the most common Astro interaction bug.
+   * The script only sets attributes; all the motion is CSS.
    */
-  function initNav() {
-    const nav = document.querySelector<HTMLElement>('[data-nav]');
-    const indicator = document.querySelector<HTMLElement>('[data-nav-indicator]');
+  function initHeader() {
+    const header = document.querySelector<HTMLElement>('[data-header]');
+    if (!header) return;
+
+    const megaTrigger = header.querySelector<HTMLButtonElement>('[data-mega-trigger]');
+    const menuToggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+
+    // --- Panels ------------------------------------------------------------
+
+    function openPanel(panel: 'mega' | 'menu') {
+      header!.dataset.panel = panel;
+      header!.setAttribute('data-open', '');
+      megaTrigger?.setAttribute('aria-expanded', String(panel === 'mega'));
+      menuToggle?.setAttribute('aria-expanded', String(panel === 'menu'));
+    }
+
+    function closePanel() {
+      header!.removeAttribute('data-open');
+      delete header!.dataset.panel;
+      megaTrigger?.setAttribute('aria-expanded', 'false');
+      menuToggle?.setAttribute('aria-expanded', 'false');
+    }
+
+    const isOpen = (panel?: string) =>
+      header!.hasAttribute('data-open') && (!panel || header!.dataset.panel === panel);
+
+    megaTrigger?.addEventListener('click', () => {
+      if (isOpen('mega')) closePanel();
+      else openPanel('mega');
+    });
+
+    // Hover opens on desktop only — a touch "hover" would fire on tap and fight
+    // the click handler.
+    megaTrigger?.addEventListener('pointerenter', (event) => {
+      if ((event as PointerEvent).pointerType === 'mouse') openPanel('mega');
+    });
+
+    menuToggle?.addEventListener('click', () => {
+      if (isOpen('menu')) closePanel();
+      else openPanel('menu');
+    });
+
+    // Close when the pointer leaves the whole island, not just the trigger, so
+    // the cursor can travel down into the panel without it collapsing.
+    header.addEventListener('pointerleave', () => {
+      if (isOpen('mega')) closePanel();
+    });
+
+    header.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !isOpen()) return;
+      const wasMenu = header.dataset.panel === 'menu';
+      closePanel();
+      (wasMenu ? menuToggle : megaTrigger)?.focus();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (isOpen() && !header.contains(event.target as Node)) closePanel();
+    });
+
+    // --- Scroll state ------------------------------------------------------
+
+    let ticking = false;
+    const applyScrollState = () => {
+      header.toggleAttribute('data-scrolled', window.scrollY > 4);
+      ticking = false;
+    };
+    // `passive` because this never calls preventDefault — without it the browser
+    // must wait on the listener before it can scroll.
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(applyScrollState);
+      },
+      { passive: true },
+    );
+    applyScrollState();
+
+    // --- Sliding active marker ---------------------------------------------
+
+    const nav = header.querySelector<HTMLElement>('[data-nav]');
+    const indicator = header.querySelector<HTMLElement>('[data-nav-indicator]');
     if (!nav || !indicator) return;
 
-    const items = [...nav.querySelectorAll<HTMLAnchorElement>('[data-nav-item]')];
+    const items = [...nav.querySelectorAll<HTMLElement>('[data-nav-item]')];
     if (items.length === 0) return;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const activeItem = () =>
-      items.find((item) => item.hasAttribute('data-active')) ?? null;
+    const activeItem = () => items.find((item) => item.hasAttribute('data-active')) ?? null;
 
     /**
-     * Move the marker under `target`.
-     *
-     * The marker is a fixed-width pill (4× its own height) centred on the item,
-     * not a bar spanning the label — so only `transform` changes and its width
-     * is left to CSS. `animate` is false for the first placement and for
-     * resizes, so it doesn't slide in from the left on load.
+     * Move the marker under `target`: a fixed-width pill centred on the item, so
+     * only `transform` changes. `animate` is false for the first placement and
+     * for resizes, so it doesn't slide in from the left on load.
      */
     function moveTo(target: HTMLElement | null, animate = true) {
       if (!target) {
@@ -264,33 +416,24 @@ function isActive(key: PageKey): boolean {
 
       const navBox = nav!.getBoundingClientRect();
       const box = target.getBoundingClientRect();
+      const left = box.left - navBox.left + box.width / 2 - indicator!.offsetWidth / 2;
 
-      const centre = box.left - navBox.left + box.width / 2;
-      const left = centre - indicator!.offsetWidth / 2;
-
-      const shouldAnimate = animate && !reduceMotion.matches;
-      indicator!.style.transition = shouldAnimate
-        ? 'transform var(--duration-nav) var(--ease-out-quint), opacity 200ms linear'
-        : 'none';
-
+      indicator!.style.transition =
+        animate && !reduceMotion.matches
+          ? 'transform var(--duration-nav) var(--ease-out-quint), opacity 200ms linear'
+          : 'none';
       indicator!.style.transform = `translateX(${left}px)`;
       indicator!.style.opacity = '1';
     }
 
-    // --- Marker: follow hover/focus, fall back to the current page -----------
-
     let resetTimer: number | undefined;
     const resetDelay = Number(nav.dataset.resetDelay ?? 60);
-
     const cancelReset = () => {
-      if (resetTimer !== undefined) {
-        window.clearTimeout(resetTimer);
-        resetTimer = undefined;
-      }
+      if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+      resetTimer = undefined;
     };
-
-    // Small delay so sweeping the cursor across the nav doesn't make the bar
-    // snap back and forth between each item and the active one.
+    // Delayed, so sweeping across the nav doesn't make the marker snap back and
+    // forth between each item and the active one.
     const scheduleReset = () => {
       cancelReset();
       resetTimer = window.setTimeout(() => moveTo(activeItem()), resetDelay);
@@ -312,85 +455,14 @@ function isActive(key: PageKey): boolean {
       if (!nav.contains(event.relatedTarget as Node | null)) scheduleReset();
     });
 
-    // --- Mega menu -----------------------------------------------------------
-
-    for (const group of nav.querySelectorAll<HTMLElement>('[data-nav-group]')) {
-      const panel = group.querySelector<HTMLElement>('[data-mega]');
-      if (!panel) continue;
-
-      // State only — all the visual work is CSS on `group-data-open:*`.
-      const open = () => group.setAttribute('data-open', '');
-      const close = () => group.removeAttribute('data-open');
-
-      group.addEventListener('pointerenter', open);
-      group.addEventListener('pointerleave', close);
-      group.addEventListener('focusin', open);
-      group.addEventListener('focusout', (event) => {
-        if (!group.contains(event.relatedTarget as Node | null)) close();
-      });
-      group.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          close();
-          group.querySelector<HTMLAnchorElement>('[data-nav-item]')?.focus();
-        }
-      });
-    }
-
-    // --- Keep the marker correct as the layout changes -----------------------
-
     moveTo(activeItem(), false);
-
     // Fonts change text metrics after first paint, which would otherwise leave
-    // the bar measured against the fallback face.
+    // the marker measured against the fallback face.
     document.fonts?.ready.then(() => moveTo(activeItem(), false));
-
+    // The shell changes width as the page scrolls, which moves every item.
     new ResizeObserver(() => moveTo(activeItem(), false)).observe(nav);
   }
 
-  /**
-   * The header hairline is hidden at the very top, so the bar reads as part of
-   * the page, and fades in once content scrolls underneath it.
-   */
-  function initScrollState() {
-    const header = document.querySelector<HTMLElement>('[data-header]');
-    if (!header) return;
-
-    let ticking = false;
-    const apply = () => {
-      header.toggleAttribute('data-scrolled', window.scrollY > 4);
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(apply);
-    };
-
-    // `passive` because this listener never calls preventDefault — without it
-    // the browser must wait on it before scrolling.
-    window.addEventListener('scroll', onScroll, { passive: true });
-    apply();
-  }
-
-  function initMenu() {
-    const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
-    const nav = document.getElementById('mobile-nav');
-    if (!toggle || !nav) return;
-
-    toggle.addEventListener('click', () => {
-      const isOpen = toggle.getAttribute('aria-expanded') === 'true';
-      toggle.setAttribute('aria-expanded', String(!isOpen));
-      nav.hidden = isOpen;
-    });
-  }
-
-  function init() {
-    initNav();
-    initMenu();
-    initScrollState();
-  }
-
-  document.addEventListener('astro:page-load', init);
-  init();
+  document.addEventListener('astro:page-load', initHeader);
+  initHeader();
 </script>
