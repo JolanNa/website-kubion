@@ -192,8 +192,13 @@ const navItemClass =
     >
       <div class="overflow-hidden">
         <div class="hidden group-data-[panel=mega]:block">
-          <div class="mx-6 h-px bg-marine-15"></div>
-          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-6 pb-6">
+          {/*
+            `mt-2` centres the rule in the gap. Without it the bar's own padding
+            leaves only 13px above it against 24px below, and the active marker
+            clears it by just 9px.
+          */}
+          <div class="mx-6 mt-2 h-px bg-marine-15"></div>
+          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-5 pb-6">
             <div>
               <p class="kicker text-marine-45">{mega.heading}</p>
               <ul class="mt-5 space-y-1">
