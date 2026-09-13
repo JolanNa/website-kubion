@@ -1,7 +1,7 @@
 ---
 import { SITE_NAME, type Locale } from '../config';
 import { localizedPath, type PageKey } from '../i18n/routes';
-import { useTranslations, type UIKey } from '../i18n/ui';
+import { MEGA_MENU, useTranslations, type UIKey } from '../i18n/ui';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import type { Alternate } from '../lib/content';
 
@@ -13,57 +13,194 @@ interface Props {
 const { locale, alternates } = Astro.props;
 const t = useTranslations(locale);
 
-const NAV: { key: PageKey; label: UIKey }[] = [
-  { key: 'leistungen', label: 'nav.leistungen' },
+/*
+ * Mega-menu open/closed state is a `data-open` attribute that the script sets on
+ * the parent <li>; everything visual hangs off `group-data-open:*` in CSS.
+ *
+ * Do NOT animate the panel with an inline `transform`. Tailwind v4 implements its
+ * translate utilities through the standalone `translate` property, so a transform
+ * composes with `-translate-x-1/2` instead of replacing it — which centres the
+ * panel twice and pushes it off the left edge of the viewport.
+ *
+ * `transition-discrete` lets `visibility` wait for the fade-out to finish, while
+ * still hiding the panel from keyboard and screen-reader users when it is closed.
+ */
+
+/** Primary navigation, in design order. Blog is reachable from the footer. */
+const NAV: { key: PageKey; label: UIKey; mega?: boolean }[] = [
+  { key: 'home', label: 'nav.home' },
+  { key: 'leistungen', label: 'nav.leistungen', mega: true },
   { key: 'projekte', label: 'nav.projekte' },
   { key: 'ueber-uns', label: 'nav.ueberUns' },
-  { key: 'blog', label: 'nav.blog' },
-  { key: 'kontakt', label: 'nav.kontakt' },
+  { key: 'preise', label: 'nav.preise' },
 ];
 
-const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+const mega = MEGA_MENU[locale];
+
+// Normalised so `/leistungen.html` (the built filename) still matches at runtime.
+const current =
+  Astro.url.pathname
+    .replace(/\/index\.html$/, '/')
+    .replace(/\.html$/, '')
+    .replace(/\/+$/, '') || '/';
+
+function isActive(key: PageKey): boolean {
+  const href = localizedPath(key, locale);
+  if (key === 'home') return current === href;
+  return current === href || current.startsWith(`${href}/`);
+}
 ---
 
-<header class="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
-    <a href={localizedPath('home', locale)} class="text-lg font-semibold tracking-tight">
+<header
+  class="sticky top-0 z-50 border-b border-hairline bg-surface/85 backdrop-blur-md"
+  data-header
+>
+  <div class="mx-auto flex h-20 max-w-[90rem] items-center justify-between gap-8 px-6">
+    <a
+      href={localizedPath('home', locale)}
+      class="text-xl font-bold tracking-tight text-brand-900 lowercase"
+    >
       {SITE_NAME}
     </a>
 
-    <nav class="hidden items-center gap-1 md:flex" aria-label="Hauptnavigation">
-      {
-        NAV.map(({ key, label }) => {
-          const href = localizedPath(key, locale);
-          const isActive = current === href || current.startsWith(`${href}/`);
-          return (
-            <a
-              href={href}
-              aria-current={isActive ? 'page' : undefined}
-              class:list={[
-                'rounded px-3 py-2 text-sm font-medium transition-colors hover:bg-neutral-100',
-                isActive && 'text-neutral-900 underline underline-offset-4',
-              ]}
-            >
-              {t(label)}
-            </a>
-          );
-        })
-      }
+    <!--
+      Desktop navigation.
+
+      The sliding indicator is a single absolutely-positioned element rather than
+      a border on each link, so it can animate between items. `relative` here is
+      the positioning context it measures against.
+    -->
+    <nav
+      class="relative hidden lg:block"
+      aria-label={t('nav.primary')}
+      data-nav
+      data-reset-delay="60"
+    >
+      <ul class="flex items-center gap-1">
+        {
+          NAV.map(({ key, label, mega: hasMega }) => {
+            const href = localizedPath(key, locale);
+            const active = isActive(key);
+            return (
+              <li class="group relative" data-nav-group={hasMega ? '' : undefined}>
+                <a
+                  href={href}
+                  data-nav-item
+                  data-active={active ? '' : undefined}
+                  aria-current={active ? 'page' : undefined}
+                  class:list={[
+                    'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
+                    active ? 'text-brand-900' : 'text-ink-muted hover:text-brand-900',
+                  ]}
+                >
+                  {t(label)}
+                </a>
+
+                {hasMega && (
+                  <div
+                    class="invisible absolute top-[calc(100%+1.25rem)] left-1/2 w-[52rem] max-w-[calc(100vw-3rem)] -translate-x-1/2 translate-y-2 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
+                    data-mega
+                  >
+                    <div class="grid grid-cols-[1.15fr_1fr] gap-3 rounded-2xl border border-hairline bg-surface p-3 shadow-[0_24px_60px_-20px_rgb(12_42_102/0.28)]">
+                      <div class="p-5">
+                        <p class="label-mono text-ink-muted">{mega.heading}</p>
+                        <ul class="mt-5 space-y-1">
+                          {mega.items.map((item, index) => (
+                            <li>
+                              <a
+                                href={localizedPath('leistungen', locale)}
+                                class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-surface-muted"
+                              >
+                                <span class="label-mono mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-900 text-on-brand">
+                                  {String(index + 1).padStart(2, '0')}
+                                </span>
+                                <span>
+                                  <span class="block font-semibold text-brand-900">
+                                    {item.title}
+                                  </span>
+                                  <span class="block text-sm text-ink-muted">{item.description}</span>
+                                </span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div class="flex flex-col justify-between rounded-xl bg-brand-900 p-6">
+                        <div>
+                          <p class="label-mono text-on-brand-muted">{mega.overviewHeading}</p>
+                          <p class="mt-5 text-[0.9375rem] leading-relaxed text-on-brand">
+                            {mega.overviewBody}
+                          </p>
+                        </div>
+                        <a
+                          href={localizedPath('leistungen', locale)}
+                          class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-on-brand"
+                        >
+                          <span class="flex size-9 items-center justify-center rounded-lg bg-accent-500 transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                              <path
+                                d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                class="text-white"
+                              />
+                            </svg>
+                          </span>
+                          {mega.overviewCta}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })
+        }
+      </ul>
+
+      <!--
+        The indicator. Starts hidden (opacity 0) and is positioned by JS on first
+        paint, so it never flashes at the wrong place before measuring.
+      -->
+      <span
+        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] rounded-full bg-brand-900 opacity-0"
+        data-nav-indicator
+        aria-hidden="true"
+      ></span>
     </nav>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <LanguageSwitcher locale={locale} alternates={alternates} />
+
+      <a
+        href={localizedPath('kontakt', locale)}
+        class="hidden rounded-full bg-surface-muted px-5 py-2.5 text-[0.9375rem] font-medium text-brand-900 transition-colors duration-200 hover:bg-hairline sm:block"
+      >
+        {t('nav.bookCall')}
+      </a>
+
+      <a
+        href={localizedPath('kontakt', locale)}
+        class="rounded-full bg-brand-900 px-5 py-2.5 text-[0.9375rem] font-medium text-on-brand transition-colors duration-200 hover:bg-brand-800"
+      >
+        {t('nav.kontakt')}
+      </a>
 
       <button
         type="button"
-        class="rounded p-2 hover:bg-neutral-100 md:hidden"
+        class="-mr-2 flex size-10 items-center justify-center rounded-lg text-brand-900 transition-colors hover:bg-surface-muted lg:hidden"
         aria-expanded="false"
         aria-controls="mobile-nav"
         data-menu-toggle
       >
         <span class="sr-only" data-menu-label>{t('nav.menu.open')}</span>
-        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
-          <path d="M2 5h16v2H2zM2 9h16v2H2zM2 13h16v2H2z"></path>
+        <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="currentColor">
+          <rect x="3" y="6" width="16" height="2" rx="1"></rect>
+          <rect x="3" y="10" width="16" height="2" rx="1"></rect>
+          <rect x="3" y="14" width="16" height="2" rx="1"></rect>
         </svg>
       </button>
     </div>
@@ -72,41 +209,182 @@ const current = Astro.url.pathname.replace(/\/$/, '') || '/';
   <nav
     id="mobile-nav"
     hidden
-    class="border-t border-neutral-200 px-4 pb-4 md:hidden"
-    aria-label="Hauptnavigation (mobil)"
+    class="border-t border-hairline px-6 pb-6 lg:hidden"
+    aria-label={t('nav.primaryMobile')}
   >
-    {
-      NAV.map(({ key, label }) => (
-        <a href={localizedPath(key, locale)} class="block py-3 text-base font-medium">
-          {t(label)}
+    <ul>
+      {
+        NAV.map(({ key, label }) => (
+          <li>
+            <a
+              href={localizedPath(key, locale)}
+              aria-current={isActive(key) ? 'page' : undefined}
+              class:list={[
+                'block border-b border-hairline py-4 text-lg font-medium',
+                isActive(key) ? 'text-brand-900' : 'text-ink-muted',
+              ]}
+            >
+              {t(label)}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a
+          href={localizedPath('blog', locale)}
+          class="block py-4 text-lg font-medium text-ink-muted"
+        >
+          {t('nav.blog')}
         </a>
-      ))
-    }
+      </li>
+    </ul>
   </nav>
 </header>
 
 <script>
-  // Vanilla JS, no framework island (DECISIONS.md §12).
-  //
-  // Initialise on `astro:page-load` rather than DOMContentLoaded: that event fires
-  // on the first load AND after every View Transitions navigation. Using
-  // DOMContentLoaded here is the single most common Astro animation/interaction bug.
+  /**
+   * Navigation behaviour: the sliding indicator and the mega menu.
+   *
+   * Vanilla JS, no framework island (DECISIONS.md §12).
+   *
+   * Initialised on `astro:page-load`, NOT DOMContentLoaded — that event fires on
+   * the first load and after every View Transitions navigation. Using
+   * DOMContentLoaded here is the most common Astro interaction bug.
+   */
+  function initNav() {
+    const nav = document.querySelector<HTMLElement>('[data-nav]');
+    const indicator = document.querySelector<HTMLElement>('[data-nav-indicator]');
+    if (!nav || !indicator) return;
+
+    const items = [...nav.querySelectorAll<HTMLAnchorElement>('[data-nav-item]')];
+    if (items.length === 0) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const activeItem = () =>
+      items.find((item) => item.hasAttribute('data-active')) ?? null;
+
+    /**
+     * Move the indicator under `target`.
+     *
+     * Width is measured from the link's text, not its box, so the bar tracks the
+     * word rather than the padding — otherwise it looks untethered on the wider
+     * items. `animate` is false for the very first placement and for resizes, so
+     * the bar doesn't slide in from 0 on page load.
+     */
+    function moveTo(target: HTMLElement | null, animate = true) {
+      if (!target) {
+        indicator!.style.opacity = '0';
+        return;
+      }
+
+      const navBox = nav!.getBoundingClientRect();
+      const box = target.getBoundingClientRect();
+      const styles = getComputedStyle(target);
+      const padLeft = parseFloat(styles.paddingLeft);
+      const padRight = parseFloat(styles.paddingRight);
+
+      const width = box.width - padLeft - padRight;
+      const left = box.left - navBox.left + padLeft;
+
+      const shouldAnimate = animate && !reduceMotion.matches;
+      indicator!.style.transition = shouldAnimate
+        ? 'transform var(--duration-nav) var(--ease-out-quint), width var(--duration-nav) var(--ease-out-quint), opacity 200ms linear'
+        : 'none';
+
+      indicator!.style.width = `${width}px`;
+      indicator!.style.transform = `translateX(${left}px)`;
+      indicator!.style.opacity = '1';
+    }
+
+    // --- Indicator: follow hover/focus, fall back to the current page ---------
+
+    let resetTimer: number | undefined;
+    const resetDelay = Number(nav.dataset.resetDelay ?? 60);
+
+    const cancelReset = () => {
+      if (resetTimer !== undefined) {
+        window.clearTimeout(resetTimer);
+        resetTimer = undefined;
+      }
+    };
+
+    // Small delay so sweeping the cursor across the nav doesn't make the bar
+    // snap back and forth between each item and the active one.
+    const scheduleReset = () => {
+      cancelReset();
+      resetTimer = window.setTimeout(() => moveTo(activeItem()), resetDelay);
+    };
+
+    for (const item of items) {
+      item.addEventListener('pointerenter', () => {
+        cancelReset();
+        moveTo(item);
+      });
+      item.addEventListener('focus', () => {
+        cancelReset();
+        moveTo(item);
+      });
+    }
+
+    nav.addEventListener('pointerleave', scheduleReset);
+    nav.addEventListener('focusout', (event) => {
+      if (!nav.contains(event.relatedTarget as Node | null)) scheduleReset();
+    });
+
+    // --- Mega menu -----------------------------------------------------------
+
+    for (const group of nav.querySelectorAll<HTMLElement>('[data-nav-group]')) {
+      const panel = group.querySelector<HTMLElement>('[data-mega]');
+      if (!panel) continue;
+
+      // State only — all the visual work is CSS on `group-data-open:*`.
+      const open = () => group.setAttribute('data-open', '');
+      const close = () => group.removeAttribute('data-open');
+
+      group.addEventListener('pointerenter', open);
+      group.addEventListener('pointerleave', close);
+      group.addEventListener('focusin', open);
+      group.addEventListener('focusout', (event) => {
+        if (!group.contains(event.relatedTarget as Node | null)) close();
+      });
+      group.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          close();
+          group.querySelector<HTMLAnchorElement>('[data-nav-item]')?.focus();
+        }
+      });
+    }
+
+    // --- Keep the indicator correct as the layout changes --------------------
+
+    moveTo(activeItem(), false);
+
+    // Fonts change text metrics after first paint, which would leave the bar
+    // measured against the fallback face.
+    document.fonts?.ready.then(() => moveTo(activeItem(), false));
+
+    const observer = new ResizeObserver(() => moveTo(activeItem(), false));
+    observer.observe(nav);
+  }
+
   function initMenu() {
     const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
     const nav = document.getElementById('mobile-nav');
-    const label = document.querySelector<HTMLElement>('[data-menu-label]');
     if (!toggle || !nav) return;
-
-    const openText = toggle.dataset.openText ?? label?.textContent ?? '';
 
     toggle.addEventListener('click', () => {
       const isOpen = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!isOpen));
       nav.hidden = isOpen;
-      if (label) label.textContent = openText;
     });
   }
 
-  document.addEventListener('astro:page-load', initMenu);
-  initMenu();
+  function init() {
+    initNav();
+    initMenu();
+  }
+
+  document.addEventListener('astro:page-load', init);
+  init();
 </script>

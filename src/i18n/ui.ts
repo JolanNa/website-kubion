@@ -18,6 +18,10 @@ export const UI = {
     'nav.ueberUns': 'Über uns',
     'nav.kontakt': 'Kontakt',
     'nav.blog': 'Blog',
+    'nav.preise': 'Preise',
+    'nav.bookCall': 'Termin buchen',
+    'nav.primary': 'Hauptnavigation',
+    'nav.primaryMobile': 'Hauptnavigation (mobil)',
     'nav.impressum': 'Impressum',
     'nav.datenschutz': 'Datenschutz',
 
@@ -69,6 +73,10 @@ export const UI = {
     'nav.ueberUns': 'About us',
     'nav.kontakt': 'Contact',
     'nav.blog': 'Blog',
+    'nav.preise': 'Pricing',
+    'nav.bookCall': 'Book a call',
+    'nav.primary': 'Main navigation',
+    'nav.primaryMobile': 'Main navigation (mobile)',
     'nav.impressum': 'Imprint',
     'nav.datenschutz': 'Privacy',
 
@@ -127,3 +135,39 @@ export function useTranslations(locale: Locale) {
     return UI[locale][key];
   };
 }
+
+/**
+ * The Leistungen mega-menu.
+ *
+ * Navigation chrome rather than page prose, so it lives here alongside the other
+ * nav strings rather than in a content collection (DECISIONS.md §3). If these
+ * grow into real marketing copy, move them into src/content/pages/leistungen.
+ */
+export const MEGA_MENU = {
+  de: {
+    heading: 'Was wir bauen',
+    overviewHeading: 'Überblick',
+    overviewBody:
+      'Wir entwickeln KI-Systeme entlang bestehender Prozesse — von der Bewertung der Use Cases bis zum Betrieb in der Produktion.',
+    overviewCta: 'Alle Leistungen',
+    items: [
+      { title: 'KI-Discovery', description: 'Use Cases bewerten und priorisieren' },
+      { title: 'Prototyp', description: 'An echten Daten getestet' },
+      { title: 'Prozessautomatisierung', description: 'Agenten in bestehende Systeme' },
+      { title: 'Betrieb & Wartung', description: 'Monitoring, SLAs, Weiterentwicklung' },
+    ],
+  },
+  en: {
+    heading: 'What we build',
+    overviewHeading: 'Overview',
+    overviewBody:
+      'We build AI systems around the processes you already run — from evaluating use cases through to running them in production.',
+    overviewCta: 'All services',
+    items: [
+      { title: 'AI discovery', description: 'Evaluating and prioritising use cases' },
+      { title: 'Prototype', description: 'Tested against real data' },
+      { title: 'Process automation', description: 'Agents inside existing systems' },
+      { title: 'Operations & maintenance', description: 'Monitoring, SLAs, ongoing work' },
+    ],
+  },
+} as const satisfies Record<Locale, unknown>;

@@ -22,12 +22,24 @@ export const ROUTES = {
   projekte: { de: 'projekte', en: 'projects' },
   'ueber-uns': { de: 'ueber-uns', en: 'about-us' },
   kontakt: { de: 'kontakt', en: 'contact' },
+  preise: { de: 'preise', en: 'pricing' },
   blog: { de: 'blog', en: 'blog' },
   impressum: { de: 'impressum', en: 'imprint' },
   datenschutz: { de: 'datenschutz', en: 'privacy' },
 } as const satisfies Record<string, Record<Locale, string>>;
 
 export type PageKey = keyof typeof ROUTES;
+
+/**
+ * Narrows a string from content frontmatter to a real page key.
+ *
+ * Content schemas can only type `page` as a string, so this is where a typo in an
+ * MDX file gets caught. Callers should throw rather than fall back silently — a
+ * mistyped key would otherwise ship as a dead link.
+ */
+export function isPageKey(value: string): value is PageKey {
+  return Object.hasOwn(ROUTES, value);
+}
 
 /** Collection page keys whose detail pages nest beneath them. */
 export const COLLECTION_PARENTS = {

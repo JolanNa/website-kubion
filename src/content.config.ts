@@ -4,6 +4,19 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 
+/**
+ * A call to action.
+ *
+ * Prefer `page` — it holds a key from src/i18n/routes.ts, so the URL resolves to
+ * the right localised slug automatically. `href` is the escape hatch for external
+ * links and anchors.
+ */
+const cta = z.object({
+  label: z.string(),
+  page: z.string().optional(),
+  href: z.string().optional(),
+});
+
 /** Fields every page/post shares for <head> and social cards. */
 const seo = {
   title: z.string(),
@@ -31,6 +44,14 @@ const pages = defineCollection({
       .object({
         headline: z.string(),
         subline: z.string().optional(),
+        /** Small uppercase label above the headline. */
+        eyebrow: z.string().optional(),
+        /** Footnote under the hero, e.g. the location line. */
+        note: z.string().optional(),
+        primaryCta: cta.optional(),
+        secondaryCta: cta.optional(),
+        textLink: cta.optional(),
+        /** Legacy single-CTA fields, still used by the plainer page template. */
         ctaLabel: z.string().optional(),
         ctaHref: z.string().optional(),
         image: z.string().optional(),

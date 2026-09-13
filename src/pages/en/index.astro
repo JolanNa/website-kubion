@@ -1,7 +1,23 @@
 ---
 // Route: see src/i18n/routes.ts (pageKey: home, locale: en).
-// Content: src/content/pages/home/en.mdx
-import StaticPage from '../../components/StaticPage.astro';
+// Copy: src/content/pages/home/en.mdx
+//
+// The homepage has a bespoke hero, so it composes BaseLayout directly instead of
+// going through StaticPage.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HomeHero from '../../components/HomeHero.astro';
+import { loadPage, pageAlternates } from '../../lib/content';
+
+const locale = 'en' as const;
+const entry = await loadPage('home', locale);
 ---
 
-<StaticPage pageKey="home" locale="en" />
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates('home')}
+  ogImage={entry.data.ogImage}
+>
+  <HomeHero entry={entry} locale={locale} />
+</BaseLayout>

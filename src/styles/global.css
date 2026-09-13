@@ -1,27 +1,65 @@
 @import 'tailwindcss';
 
 /*
- * Self-hosted fonts only (DECISIONS.md §9).
+ * Self-hosted fonts (DECISIONS.md §9).
  *
  * Never add @import url('https://fonts.googleapis.com/...') or a <link> to it.
  * Hotlinking Google Fonts transmits visitor IPs to the US and has been ruled a
- * DSGVO violation by German courts. Install via Fontsource instead:
+ * DSGVO violation by German courts. Fontsource ships the files locally.
  *
- *   pnpm add @fontsource-variable/<family>
- *   @import '@fontsource-variable/<family>';
+ * ⚠️ PROVISIONAL. Inter and JetBrains Mono stand in for the real brand faces
+ * until the brand guidelines land. Swap the @import lines and the two font
+ * tokens below; nothing else references a font family.
  */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
 
+/*
+ * ---------------------------------------------------------------------------
+ * DESIGN TOKENS
+ * ---------------------------------------------------------------------------
+ * ⚠️ PROVISIONAL — sampled from the design screenshots, not from the brand
+ * guidelines. Every colour in the UI resolves through these tokens, so
+ * replacing the values here re-themes the whole site. Do not hardcode a hex
+ * value in a component.
+ */
 @theme {
-  /* Placeholder scale — replace once the design is handed over. */
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  /* Brand navy — hero panel, primary buttons, headings. */
+  --color-brand-950: #081d47;
+  --color-brand-900: #0c2a66;
+  --color-brand-800: #123578;
+  --color-brand-700: #1b4590;
+
+  /* Brand orange — accents only: the eyebrow mark, arrow buttons, the heart. */
+  --color-accent-500: #f97316;
+  --color-accent-600: #e4620c;
+
+  /* Neutrals — page ground, muted pills, hairlines. */
+  --color-surface: #ffffff;
+  --color-surface-muted: #eef1f7;
+  --color-hairline: #e4e8f0;
+  --color-ink: #0c1221;
+  --color-ink-muted: #5a6478;
+
+  /* On-navy foregrounds. */
+  --color-on-brand: #ffffff;
+  --color-on-brand-muted: #a9bbdd;
+
+  /* Motion — one place to retune the feel of the whole UI. */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-nav: 420ms;
 }
 
 /*
  * Accessibility baseline (DECISIONS.md §12).
  *
  * The site is animation-heavy, so reduced-motion support is built in from the
- * start rather than retrofitted. GSAP timelines should ALSO check the media query
- * in JS — this rule only neutralises CSS-driven motion.
+ * start rather than retrofitted. JS-driven motion must ALSO check the media
+ * query — this rule only neutralises CSS-driven motion. See the nav indicator
+ * in Header.astro for the JS-side equivalent.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -35,8 +73,22 @@
 }
 
 :focus-visible {
-  outline: 2px solid currentColor;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Small uppercase monospace labels — the "KI-ENTWICKLUNG …" eyebrow style. */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* Prose defaults for MDX bodies. Replace with the design system's type scale. */
