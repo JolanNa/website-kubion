@@ -17,12 +17,12 @@
  * ===========================================================================
  * BRAND TOKENS — kubion Brand Guideline v1.0, August 2026
  * ===========================================================================
- * Every colour, radius and font in the UI resolves through these tokens.
- * Never hardcode a hex value in a component.
+ * Colour and type come from the brand guideline. Layout, shape and radii come
+ * from the Figma design — the guideline's print radius rules are not applied to
+ * the website. See DECISIONS.md §15.
  *
- * The guideline is binding ("verbindlich für alle Medien, intern wie extern"),
- * so where the Figma mock and the guideline disagree, the guideline wins. The
- * divergences are listed in DECISIONS.md §15.
+ * Every colour and font in the UI resolves through these tokens; never hardcode
+ * a hex value in a component.
  */
 @theme {
   /* --- Typography (§03) ------------------------------------------------- */
@@ -45,11 +45,6 @@
   --color-marine-45: #7989ab; /* footers, image captions */
   --color-marine-15: #dadee7; /* lines, frames, dividers */
 
-  /* --- Radius (§04) ----------------------------------------------------- */
-  /* Exactly two values. "Es gibt keinen dritten Wert." */
-  --radius-flat: 0; /* photos, full-bleed areas, Markenkern, tables, rules */
-  --radius-element: 4px; /* buttons, tags, inputs, cards, content areas */
-
   /* --- Motion ----------------------------------------------------------- */
   /* Not covered by the guideline; chosen here and applied consistently. */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
@@ -57,25 +52,15 @@
 }
 
 /*
- * Spacing scale (§04): 4 · 8 · 16 · 24 · 40 · 64 px.
- * "Zwischenwerte werden nicht verwendet."
- *
- * Tailwind's 4px base means the permitted step utilities are 1, 2, 4, 6, 10
- * and 16. Reach for one of those rather than inventing a value — a `p-5` or
- * `py-3.5` in this codebase is a brand violation, not a style preference.
- */
-
-/*
- * Kicker (§03).
- * Geist Mono, uppercase, letter-spacing +14%, 7.5–8 pt.
- * The guideline sets 1 pt ≈ 1.33 px digital, so 8 pt ≈ 10.6 px.
+ * Kicker (§03): Geist Mono, uppercase, letter-spacing +14%.
+ * Sized to the Figma design rather than the guideline's 7.5–8pt print value.
  *
  * A kicker always sits ABOVE the heading and names the section — it never
  * repeats the heading.
  */
 .kicker {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 0.75rem;
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -124,7 +109,7 @@ body {
  * Prose defaults for MDX bodies.
  *
  * Links on a light ground are Marine and underlined (§02) — orange is never a
- * text colour on white.
+ * text colour on white (2.9:1).
  */
 .prose :where(h2) {
   @apply mt-10 mb-4 text-2xl font-bold tracking-tight text-marine;

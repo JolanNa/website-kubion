@@ -15,15 +15,8 @@ const { locale, alternates } = Astro.props;
 const t = useTranslations(locale);
 
 /*
- * BRAND NOTES (Guideline §01–§04)
- *
- * - Radius is 4px on elements, never a pill. §04: "Es gibt keinen dritten Wert."
- *   §10 is explicit for the website: "Keine Rahmen, keine Pillen — die Marke
- *   arbeitet mit Fläche und Abstand, nicht mit Umrandungen."
- * - The active nav item is marked in the accent colour (§10). Orange is NOT a
- *   text colour on white (§02), so the accent lands on the indicator BAR — an
- *   area, which is allowed — while the label itself stays Marine.
- * - Spacing uses only 4·8·16·24·40·64px (§04), i.e. Tailwind steps 1/2/4/6/10/16.
+ * Layout and shape follow the Figma design; colour and type follow the brand
+ * guideline (Marine / Orange / Hellblau, Geist Sans + Geist Mono).
  *
  * MEGA MENU
  * Open state is a `data-open` attribute on the parent <li>; everything visual
@@ -59,10 +52,10 @@ function isActive(key: PageKey): boolean {
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-marine-15 bg-weiss/90 backdrop-blur-md"
+  class="sticky top-0 z-50 border-b border-marine-15 bg-weiss/85 backdrop-blur-md"
   data-header
 >
-  <div class="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-10 px-6">
+  <div class="mx-auto flex h-20 max-w-[90rem] items-center justify-between gap-8 px-6">
     <a
       href={localizedPath('home', locale)}
       class="text-marine transition-opacity duration-200 hover:opacity-70"
@@ -81,7 +74,7 @@ function isActive(key: PageKey): boolean {
       data-nav
       data-reset-delay="60"
     >
-      <ul class="flex items-center gap-2">
+      <ul class="flex items-center gap-1">
         {
           NAV.map(({ key, label, mega: hasMega }) => {
             const href = localizedPath(key, locale);
@@ -94,10 +87,8 @@ function isActive(key: PageKey): boolean {
                   data-active={active ? '' : undefined}
                   aria-current={active ? 'page' : undefined}
                   class:list={[
-                    'block px-4 py-2 text-sm transition-colors duration-200',
-                    active
-                      ? 'font-medium text-marine'
-                      : 'text-marine-70 hover:text-marine',
+                    'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
+                    active ? 'text-marine' : 'text-marine-70 hover:text-marine',
                   ]}
                 >
                   {t(label)}
@@ -105,20 +96,20 @@ function isActive(key: PageKey): boolean {
 
                 {hasMega && (
                   <div
-                    class="invisible absolute top-[calc(100%+16px)] left-1/2 w-[52rem] max-w-[calc(100vw-48px)] -translate-x-1/2 translate-y-1 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
+                    class="invisible absolute top-[calc(100%+1.25rem)] left-1/2 w-[52rem] max-w-[calc(100vw-3rem)] -translate-x-1/2 translate-y-1 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
                     data-mega
                   >
-                    <div class="grid grid-cols-[1.15fr_1fr] gap-4 rounded-element border border-marine-15 bg-weiss p-4">
-                      <div class="p-4">
+                    <div class="grid grid-cols-[1.15fr_1fr] gap-3 rounded-2xl border border-marine-15 bg-weiss p-3 shadow-[0_24px_60px_-20px_rgb(10_38_95/0.28)]">
+                      <div class="p-5">
                         <p class="kicker text-marine-45">{mega.heading}</p>
-                        <ul class="mt-6">
+                        <ul class="mt-5 space-y-1">
                           {mega.items.map((item, index) => (
                             <li>
                               <a
                                 href={localizedPath('leistungen', locale)}
-                                class="flex items-start gap-4 rounded-element p-4 transition-colors duration-200 hover:bg-nebel"
+                                class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
                               >
-                                <span class="kicker mt-1 flex size-6 shrink-0 items-center justify-center bg-marine text-weiss">
+                                <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
                                   {String(index + 1).padStart(2, '0')}
                                 </span>
                                 <span>
@@ -135,25 +126,29 @@ function isActive(key: PageKey): boolean {
                         </ul>
                       </div>
 
-                      <div class="flex flex-col justify-between rounded-element bg-marine p-6">
+                      <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
                         <div>
                           <p class="kicker text-hellblau">{mega.overviewHeading}</p>
-                          <p class="mt-6 text-sm leading-relaxed text-weiss">
+                          <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
                             {mega.overviewBody}
                           </p>
                         </div>
-                        {/* Orange as a text colour IS permitted on Marine from 8pt up (§02). */}
                         <a
                           href={localizedPath('leistungen', locale)}
-                          class="group/cta mt-10 inline-flex items-center gap-2 font-mono text-sm text-orange"
+                          class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
                         >
-                          {mega.overviewCta}
-                          <span
-                            class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
-                            aria-hidden="true"
-                          >
-                            →
+                          <span class="flex size-9 items-center justify-center rounded-lg bg-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                              <path
+                                d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              />
+                            </svg>
                           </span>
+                          {mega.overviewCta}
                         </a>
                       </div>
                     </div>
@@ -166,36 +161,35 @@ function isActive(key: PageKey): boolean {
       </ul>
 
       <!--
-        The active marker. Square, not a pill (§04), and orange because the
-        active point carries the accent colour (§10). Starts at opacity 0 and is
-        positioned by JS on first paint so it never flashes in the wrong place.
+        The active marker. Starts at opacity 0 and is positioned by JS on first
+        paint, so it never flashes in the wrong place before being measured.
       -->
       <span
-        class="pointer-events-none absolute bottom-0 left-0 h-[2px] bg-orange opacity-0"
+        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] rounded-full bg-marine opacity-0"
         data-nav-indicator
         aria-hidden="true"></span>
     </nav>
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3">
       <LanguageSwitcher locale={locale} alternates={alternates} />
 
       <a
         href={localizedPath('kontakt', locale)}
-        class="hidden rounded-element bg-nebel px-4 py-2 font-mono text-sm text-marine transition-colors duration-200 hover:bg-marine-15 sm:block"
+        class="hidden rounded-full bg-nebel px-5 py-2.5 text-[0.9375rem] font-medium text-marine transition-colors duration-200 hover:bg-marine-15 sm:block"
       >
         {t('nav.bookCall')}
       </a>
 
       <a
         href={localizedPath('kontakt', locale)}
-        class="rounded-element bg-marine px-4 py-2 font-mono text-sm text-weiss transition-opacity duration-200 hover:opacity-90"
+        class="rounded-full bg-marine px-5 py-2.5 text-[0.9375rem] font-medium text-weiss transition-opacity duration-200 hover:opacity-90"
       >
         {t('nav.kontakt')}
       </a>
 
       <button
         type="button"
-        class="-mr-2 flex size-10 items-center justify-center rounded-element text-marine transition-colors hover:bg-nebel lg:hidden"
+        class="-mr-2 flex size-10 items-center justify-center rounded-lg text-marine transition-colors hover:bg-nebel lg:hidden"
         aria-expanded="false"
         aria-controls="mobile-nav"
         data-menu-toggle
