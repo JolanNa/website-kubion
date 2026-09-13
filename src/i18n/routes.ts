@@ -22,7 +22,6 @@ export const ROUTES = {
   projekte: { de: 'projekte', en: 'projects' },
   'ueber-uns': { de: 'ueber-uns', en: 'about-us' },
   kontakt: { de: 'kontakt', en: 'contact' },
-  preise: { de: 'preise', en: 'pricing' },
   blog: { de: 'blog', en: 'blog' },
   impressum: { de: 'impressum', en: 'imprint' },
   datenschutz: { de: 'datenschutz', en: 'privacy' },

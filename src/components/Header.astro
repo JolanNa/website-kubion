@@ -32,7 +32,6 @@ const NAV: { key: PageKey; label: UIKey; mega?: boolean }[] = [
   { key: 'leistungen', label: 'nav.leistungen', mega: true },
   { key: 'projekte', label: 'nav.projekte' },
   { key: 'ueber-uns', label: 'nav.ueberUns' },
-  { key: 'preise', label: 'nav.preise' },
 ];
 
 const mega = MEGA_MENU[locale];
@@ -52,7 +51,7 @@ function isActive(key: PageKey): boolean {
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-marine-15 bg-weiss/85 backdrop-blur-md"
+  class="sticky top-0 z-50 border-b border-transparent bg-weiss/85 backdrop-blur-md transition-colors duration-300 data-scrolled:border-marine-15"
   data-header
 >
   <div class="mx-auto flex h-20 max-w-[90rem] items-center justify-between gap-8 px-6">
@@ -172,13 +171,6 @@ function isActive(key: PageKey): boolean {
 
     <div class="flex items-center gap-3">
       <LanguageSwitcher locale={locale} alternates={alternates} />
-
-      <a
-        href={localizedPath('kontakt', locale)}
-        class="hidden rounded-full bg-nebel px-5 py-2.5 text-[0.9375rem] font-medium text-marine transition-colors duration-200 hover:bg-marine-15 sm:block"
-      >
-        {t('nav.bookCall')}
-      </a>
 
       <a
         href={localizedPath('kontakt', locale)}
@@ -358,6 +350,32 @@ function isActive(key: PageKey): boolean {
     new ResizeObserver(() => moveTo(activeItem(), false)).observe(nav);
   }
 
+  /**
+   * The header hairline is hidden at the very top, so the bar reads as part of
+   * the page, and fades in once content scrolls underneath it.
+   */
+  function initScrollState() {
+    const header = document.querySelector<HTMLElement>('[data-header]');
+    if (!header) return;
+
+    let ticking = false;
+    const apply = () => {
+      header.toggleAttribute('data-scrolled', window.scrollY > 4);
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(apply);
+    };
+
+    // `passive` because this listener never calls preventDefault — without it
+    // the browser must wait on it before scrolling.
+    window.addEventListener('scroll', onScroll, { passive: true });
+    apply();
+  }
+
   function initMenu() {
     const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
     const nav = document.getElementById('mobile-nav');
@@ -373,6 +391,7 @@ function isActive(key: PageKey): boolean {
   function init() {
     initNav();
     initMenu();
+    initScrollState();
   }
 
   document.addEventListener('astro:page-load', init);
