@@ -164,7 +164,7 @@ function isActive(key: PageKey): boolean {
         paint, so it never flashes in the wrong place before being measured.
       -->
       <span
-        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] rounded-full bg-marine opacity-0"
+        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] w-3 rounded-full bg-marine opacity-0"
         data-nav-indicator
         aria-hidden="true"></span>
     </nav>
@@ -251,9 +251,10 @@ function isActive(key: PageKey): boolean {
     /**
      * Move the marker under `target`.
      *
-     * Width is measured from the link's text, not its box, so the bar tracks the
-     * word rather than the padding. `animate` is false for the first placement
-     * and for resizes, so it doesn't slide in from 0 on load.
+     * The marker is a fixed-width pill (4× its own height) centred on the item,
+     * not a bar spanning the label — so only `transform` changes and its width
+     * is left to CSS. `animate` is false for the first placement and for
+     * resizes, so it doesn't slide in from the left on load.
      */
     function moveTo(target: HTMLElement | null, animate = true) {
       if (!target) {
@@ -263,19 +264,15 @@ function isActive(key: PageKey): boolean {
 
       const navBox = nav!.getBoundingClientRect();
       const box = target.getBoundingClientRect();
-      const styles = getComputedStyle(target);
-      const padLeft = parseFloat(styles.paddingLeft);
-      const padRight = parseFloat(styles.paddingRight);
 
-      const width = box.width - padLeft - padRight;
-      const left = box.left - navBox.left + padLeft;
+      const centre = box.left - navBox.left + box.width / 2;
+      const left = centre - indicator!.offsetWidth / 2;
 
       const shouldAnimate = animate && !reduceMotion.matches;
       indicator!.style.transition = shouldAnimate
-        ? 'transform var(--duration-nav) var(--ease-out-quint), width var(--duration-nav) var(--ease-out-quint), opacity 200ms linear'
+        ? 'transform var(--duration-nav) var(--ease-out-quint), opacity 200ms linear'
         : 'none';
 
-      indicator!.style.width = `${width}px`;
       indicator!.style.transform = `translateX(${left}px)`;
       indicator!.style.opacity = '1';
     }
