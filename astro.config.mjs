@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -50,6 +50,61 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+
+  /*
+   * Fonts (DECISIONS.md §15) — handled by Astro's Fonts API rather than by
+   * importing Fontsource CSS directly, for three reasons:
+   *
+   *  1. It generates a metric-matched fallback @font-face (size-adjust,
+   *     ascent/descent overrides) so the fallback occupies the same space as
+   *     Geist. That is what removes the reflow when the real font arrives.
+   *  2. It emits <link rel="preload"> with the hashed build filename, which we
+   *     could not write by hand.
+   *  3. It downloads nothing at runtime — files are served from our own origin,
+   *     keeping the cookie-free rule intact (DECISIONS.md §9).
+   *
+   * The `local` provider points straight at the latin woff2 inside the
+   * installed @fontsource-variable packages, so the build needs no network
+   * access and exactly one file ships per family.
+   *
+   * Referencing the file rather than the package's index.css is deliberate: the
+   * npm/Fontsource entry pulls in all five subsets (cyrillic, cyrillic-ext,
+   * vietnamese, latin-ext, latin) and does not tag them, so `preload` cannot be
+   * filtered and all eleven files end up preloaded. German umlauts and ß live in
+   * U+0000–00FF, so latin alone covers this site.
+   */
+  fonts: [
+    {
+      name: 'Geist',
+      cssVariable: '--font-geist-sans',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '100 900',
+            style: 'normal',
+            src: ['@fontsource-variable/geist/files/geist-latin-wght-normal.woff2'],
+          },
+        ],
+      },
+      fallbacks: ['Inter', 'Arial', 'system-ui', 'sans-serif'],
+    },
+    {
+      name: 'Geist Mono',
+      cssVariable: '--font-geist-mono',
+      provider: fontProviders.local(),
+      options: {
+        variants: [
+          {
+            weight: '100 900',
+            style: 'normal',
+            src: ['@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2'],
+          },
+        ],
+      },
+      fallbacks: ['JetBrains Mono', 'Consolas', 'ui-monospace', 'monospace'],
+    },
+  ],
 
   image: {
     // DECISIONS.md §11 — build-time optimisation, modern formats.

@@ -254,7 +254,26 @@ a font family.
 - **Palette (§01)**: Marine `#0A265F`, Orange `#FF6A00`, Hellblau `#BACBED`, Nebel `#EDF0F6`,
   White. Derived tints `#54678F` / `#7989AB` / `#DADEE7`.
 - **Typography (§03)**: Geist Sans for content, Geist Mono for kickers, labels and captions.
-  Self-hosted via Fontsource, so no external requests (DECISIONS.md §9).
+  Self-hosted, so no external requests (DECISIONS.md §9).
+
+  Loaded through **Astro's Fonts API** (`fonts` in `astro.config.mjs` + `<Font>` in
+  `BaseLayout.astro`), not by importing Fontsource CSS. That buys three things:
+
+  1. **A metric-matched fallback** — Astro generates a `@font-face` over local Arial with
+     `size-adjust: 104.8%` and ascent/descent overrides, so the fallback occupies the same
+     space as Geist and swapping in the real font reflows nothing.
+  2. **Preload links with the hashed build filename**, which cannot be written by hand.
+  3. **Only the `latin` subset ships** — 56 KB total instead of 344 KB. The `local` provider
+     points straight at the latin `.woff2` inside the installed Fontsource packages, so the
+     build needs no network access.
+
+  The Fontsource `npm` provider was tried first and rejected: it pulls all five subsets and
+  does not tag them, so `<Font preload>` cannot be filtered and all eleven files get
+  preloaded.
+
+  `font-display` stays `swap`. If any flash of the fallback is unacceptable, `display:
+  'optional'` removes it entirely — at the cost of visitors on slow connections never seeing
+  Geist on that page load.
 - **Markenkern (§05)**: square, 135° `#FF6A00 → #FF9A3D`, no radius, 24–32px on the web, used
   once per page as the marker left of the hero kicker.
 - **Wordmark (§08)**: drawn, never typeset — rendered from the supplied SVG in
