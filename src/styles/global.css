@@ -46,6 +46,10 @@
   --color-marine-45: #7989ab; /* footers, image captions */
   --color-marine-15: #dadee7; /* lines, frames, dividers */
 
+  /* Shared so the hero can size itself against the sticky header (see
+     HomeHero.astro). Changing it here moves both. */
+  --header-height: 5rem;
+
   /* --- Motion ----------------------------------------------------------- */
   /* Not covered by the guideline; chosen here and applied consistently. */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);

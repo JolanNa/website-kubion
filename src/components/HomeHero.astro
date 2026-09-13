@@ -42,10 +42,26 @@ function href(cta: { page?: string; href?: string }): string {
 ---
 
 <section class="px-4 pb-4">
+  {/*
+    The panel fills the viewport below the sticky header, so the whole of it is
+    visible without scrolling.
+
+    `min-h` rather than `h`: on a viewport too short for the content the panel
+    grows instead of clipping it. `100svh` is the SMALL viewport height — the
+    height when mobile browser chrome is expanded — so the panel still fits when
+    the address bar is showing, which `100vh` would not guarantee.
+
+    The subtraction is the header plus this section's own bottom padding.
+
+    The vertical rhythm inside is expressed in `svh` as well as rem, so a wide
+    but short window (a laptop with browser chrome, say) scales the type and
+    spacing down rather than overflowing. `svh` not `dvh`: dvh changes as mobile
+    chrome hides on scroll, which would resize the headline mid-scroll.
+  */}
   <div
-    class="relative overflow-hidden rounded-3xl bg-marine px-6 py-16 sm:px-12 lg:px-16 lg:py-24"
+    class="relative flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,7svh,6rem)] sm:px-12 lg:px-16"
   >
-    <div class="mx-auto max-w-[84rem]">
+    <div class="mx-auto flex w-full max-w-[84rem] flex-1 flex-col">
       {
         hero.eyebrow && (
           <p class="flex items-center gap-4">
@@ -57,20 +73,20 @@ function href(cta: { page?: string; href?: string }): string {
       }
 
       <h1
-        class="mt-12 max-w-[16ch] text-[clamp(2.75rem,7.5vw,6.5rem)] leading-[0.95] font-bold tracking-[-0.03em] text-weiss text-balance"
+        class="mt-[clamp(1.5rem,4svh,3rem)] max-w-[16ch] text-[clamp(2.25rem,min(7.5vw,10svh),6.5rem)] leading-[0.95] font-bold tracking-[-0.03em] text-weiss text-balance"
       >
         {hero.headline}
       </h1>
 
       {
         hero.subline && (
-          <p class="mt-10 max-w-[34ch] text-lg leading-relaxed text-hellblau sm:text-xl">
+          <p class="mt-[clamp(1rem,3svh,2.5rem)] max-w-[34ch] text-lg leading-relaxed text-hellblau sm:text-xl">
             {hero.subline}
           </p>
         )
       }
 
-      <div class="mt-12 flex flex-wrap items-center gap-4">
+      <div class="mt-[clamp(1.5rem,4svh,3rem)] flex flex-wrap items-center gap-4">
         {
           hero.primaryCta && (
             <a
@@ -95,7 +111,7 @@ function href(cta: { page?: string; href?: string }): string {
 
       {
         hero.textLink && (
-          <p class="mt-8">
+          <p class="mt-[clamp(1rem,2.5svh,2rem)]">
             <a
               href={href(hero.textLink)}
               class="group inline-flex items-center gap-2 text-hellblau transition-colors duration-200 hover:text-weiss"
@@ -114,7 +130,7 @@ function href(cta: { page?: string; href?: string }): string {
 
       {
         hero.note && (
-          <p class="mt-20 flex items-center gap-4 lg:mt-28">
+          <p class="mt-auto flex items-center gap-4 pt-[clamp(1.5rem,5svh,4rem)]">
             {/* Pixel heart, drawn inline so it inherits the accent colour. */}
             <svg
               width="18"
