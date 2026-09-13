@@ -1,8 +1,9 @@
 ---
-import { SITE_NAME, type Locale } from '../config';
+import type { Locale } from '../config';
 import { localizedPath, type PageKey } from '../i18n/routes';
 import { MEGA_MENU, useTranslations, type UIKey } from '../i18n/ui';
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import Logo from './Logo.astro';
 import type { Alternate } from '../lib/content';
 
 interface Props {
@@ -14,19 +15,25 @@ const { locale, alternates } = Astro.props;
 const t = useTranslations(locale);
 
 /*
- * Mega-menu open/closed state is a `data-open` attribute that the script sets on
- * the parent <li>; everything visual hangs off `group-data-open:*` in CSS.
+ * BRAND NOTES (Guideline §01–§04)
  *
- * Do NOT animate the panel with an inline `transform`. Tailwind v4 implements its
- * translate utilities through the standalone `translate` property, so a transform
- * composes with `-translate-x-1/2` instead of replacing it — which centres the
- * panel twice and pushes it off the left edge of the viewport.
+ * - Radius is 4px on elements, never a pill. §04: "Es gibt keinen dritten Wert."
+ *   §10 is explicit for the website: "Keine Rahmen, keine Pillen — die Marke
+ *   arbeitet mit Fläche und Abstand, nicht mit Umrandungen."
+ * - The active nav item is marked in the accent colour (§10). Orange is NOT a
+ *   text colour on white (§02), so the accent lands on the indicator BAR — an
+ *   area, which is allowed — while the label itself stays Marine.
+ * - Spacing uses only 4·8·16·24·40·64px (§04), i.e. Tailwind steps 1/2/4/6/10/16.
  *
- * `transition-discrete` lets `visibility` wait for the fade-out to finish, while
- * still hiding the panel from keyboard and screen-reader users when it is closed.
+ * MEGA MENU
+ * Open state is a `data-open` attribute on the parent <li>; everything visual
+ * hangs off `group-data-open:*` in CSS. Do NOT animate the panel with an inline
+ * `transform`: Tailwind v4 implements translate utilities through the standalone
+ * `translate` property, so a transform composes with `-translate-x-1/2` rather
+ * than replacing it — which centres the panel twice and pushes it off-screen.
  */
 
-/** Primary navigation, in design order. Blog is reachable from the footer. */
+/** Primary navigation, in design order. Blog sits in the footer and mobile menu. */
 const NAV: { key: PageKey; label: UIKey; mega?: boolean }[] = [
   { key: 'home', label: 'nav.home' },
   { key: 'leistungen', label: 'nav.leistungen', mega: true },
@@ -52,20 +59,18 @@ function isActive(key: PageKey): boolean {
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-hairline bg-surface/85 backdrop-blur-md"
+  class="sticky top-0 z-50 border-b border-marine-15 bg-weiss/90 backdrop-blur-md"
   data-header
 >
-  <div class="mx-auto flex h-20 max-w-[90rem] items-center justify-between gap-8 px-6">
+  <div class="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-10 px-6">
     <a
       href={localizedPath('home', locale)}
-      class="text-xl font-bold tracking-tight text-brand-900 lowercase"
+      class="text-marine transition-opacity duration-200 hover:opacity-70"
     >
-      {SITE_NAME}
+      <Logo width={104} />
     </a>
 
     <!--
-      Desktop navigation.
-
       The sliding indicator is a single absolutely-positioned element rather than
       a border on each link, so it can animate between items. `relative` here is
       the positioning context it measures against.
@@ -76,7 +81,7 @@ function isActive(key: PageKey): boolean {
       data-nav
       data-reset-delay="60"
     >
-      <ul class="flex items-center gap-1">
+      <ul class="flex items-center gap-2">
         {
           NAV.map(({ key, label, mega: hasMega }) => {
             const href = localizedPath(key, locale);
@@ -89,8 +94,10 @@ function isActive(key: PageKey): boolean {
                   data-active={active ? '' : undefined}
                   aria-current={active ? 'page' : undefined}
                   class:list={[
-                    'block px-4 py-2 text-[0.9375rem] font-medium transition-colors duration-200',
-                    active ? 'text-brand-900' : 'text-ink-muted hover:text-brand-900',
+                    'block px-4 py-2 text-sm transition-colors duration-200',
+                    active
+                      ? 'font-medium text-marine'
+                      : 'text-marine-70 hover:text-marine',
                   ]}
                 >
                   {t(label)}
@@ -98,27 +105,29 @@ function isActive(key: PageKey): boolean {
 
                 {hasMega && (
                   <div
-                    class="invisible absolute top-[calc(100%+1.25rem)] left-1/2 w-[52rem] max-w-[calc(100vw-3rem)] -translate-x-1/2 translate-y-2 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
+                    class="invisible absolute top-[calc(100%+16px)] left-1/2 w-[52rem] max-w-[calc(100vw-48px)] -translate-x-1/2 translate-y-1 opacity-0 transition-[opacity,translate,visibility] duration-300 ease-[var(--ease-out-quint)] transition-discrete group-data-open:visible group-data-open:translate-y-0 group-data-open:opacity-100"
                     data-mega
                   >
-                    <div class="grid grid-cols-[1.15fr_1fr] gap-3 rounded-2xl border border-hairline bg-surface p-3 shadow-[0_24px_60px_-20px_rgb(12_42_102/0.28)]">
-                      <div class="p-5">
-                        <p class="label-mono text-ink-muted">{mega.heading}</p>
-                        <ul class="mt-5 space-y-1">
+                    <div class="grid grid-cols-[1.15fr_1fr] gap-4 rounded-element border border-marine-15 bg-weiss p-4">
+                      <div class="p-4">
+                        <p class="kicker text-marine-45">{mega.heading}</p>
+                        <ul class="mt-6">
                           {mega.items.map((item, index) => (
                             <li>
                               <a
                                 href={localizedPath('leistungen', locale)}
-                                class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-surface-muted"
+                                class="flex items-start gap-4 rounded-element p-4 transition-colors duration-200 hover:bg-nebel"
                               >
-                                <span class="label-mono mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-900 text-on-brand">
+                                <span class="kicker mt-1 flex size-6 shrink-0 items-center justify-center bg-marine text-weiss">
                                   {String(index + 1).padStart(2, '0')}
                                 </span>
                                 <span>
-                                  <span class="block font-semibold text-brand-900">
+                                  <span class="block font-semibold text-marine">
                                     {item.title}
                                   </span>
-                                  <span class="block text-sm text-ink-muted">{item.description}</span>
+                                  <span class="block text-sm text-marine-70">
+                                    {item.description}
+                                  </span>
                                 </span>
                               </a>
                             </li>
@@ -126,30 +135,25 @@ function isActive(key: PageKey): boolean {
                         </ul>
                       </div>
 
-                      <div class="flex flex-col justify-between rounded-xl bg-brand-900 p-6">
+                      <div class="flex flex-col justify-between rounded-element bg-marine p-6">
                         <div>
-                          <p class="label-mono text-on-brand-muted">{mega.overviewHeading}</p>
-                          <p class="mt-5 text-[0.9375rem] leading-relaxed text-on-brand">
+                          <p class="kicker text-hellblau">{mega.overviewHeading}</p>
+                          <p class="mt-6 text-sm leading-relaxed text-weiss">
                             {mega.overviewBody}
                           </p>
                         </div>
+                        {/* Orange as a text colour IS permitted on Marine from 8pt up (§02). */}
                         <a
                           href={localizedPath('leistungen', locale)}
-                          class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-on-brand"
+                          class="group/cta mt-10 inline-flex items-center gap-2 font-mono text-sm text-orange"
                         >
-                          <span class="flex size-9 items-center justify-center rounded-lg bg-accent-500 transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                              <path
-                                d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
-                                stroke="currentColor"
-                                stroke-width="1.75"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="text-white"
-                              />
-                            </svg>
-                          </span>
                           {mega.overviewCta}
+                          <span
+                            class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                            aria-hidden="true"
+                          >
+                            →
+                          </span>
                         </a>
                       </div>
                     </div>
@@ -162,45 +166,45 @@ function isActive(key: PageKey): boolean {
       </ul>
 
       <!--
-        The indicator. Starts hidden (opacity 0) and is positioned by JS on first
-        paint, so it never flashes at the wrong place before measuring.
+        The active marker. Square, not a pill (§04), and orange because the
+        active point carries the accent colour (§10). Starts at opacity 0 and is
+        positioned by JS on first paint so it never flashes in the wrong place.
       -->
       <span
-        class="pointer-events-none absolute -bottom-1 left-0 h-[3px] rounded-full bg-brand-900 opacity-0"
+        class="pointer-events-none absolute bottom-0 left-0 h-[2px] bg-orange opacity-0"
         data-nav-indicator
-        aria-hidden="true"
-      ></span>
+        aria-hidden="true"></span>
     </nav>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-4">
       <LanguageSwitcher locale={locale} alternates={alternates} />
 
       <a
         href={localizedPath('kontakt', locale)}
-        class="hidden rounded-full bg-surface-muted px-5 py-2.5 text-[0.9375rem] font-medium text-brand-900 transition-colors duration-200 hover:bg-hairline sm:block"
+        class="hidden rounded-element bg-nebel px-4 py-2 font-mono text-sm text-marine transition-colors duration-200 hover:bg-marine-15 sm:block"
       >
         {t('nav.bookCall')}
       </a>
 
       <a
         href={localizedPath('kontakt', locale)}
-        class="rounded-full bg-brand-900 px-5 py-2.5 text-[0.9375rem] font-medium text-on-brand transition-colors duration-200 hover:bg-brand-800"
+        class="rounded-element bg-marine px-4 py-2 font-mono text-sm text-weiss transition-opacity duration-200 hover:opacity-90"
       >
         {t('nav.kontakt')}
       </a>
 
       <button
         type="button"
-        class="-mr-2 flex size-10 items-center justify-center rounded-lg text-brand-900 transition-colors hover:bg-surface-muted lg:hidden"
+        class="-mr-2 flex size-10 items-center justify-center rounded-element text-marine transition-colors hover:bg-nebel lg:hidden"
         aria-expanded="false"
         aria-controls="mobile-nav"
         data-menu-toggle
       >
-        <span class="sr-only" data-menu-label>{t('nav.menu.open')}</span>
-        <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="currentColor">
-          <rect x="3" y="6" width="16" height="2" rx="1"></rect>
-          <rect x="3" y="10" width="16" height="2" rx="1"></rect>
-          <rect x="3" y="14" width="16" height="2" rx="1"></rect>
+        <span class="sr-only">{t('nav.menu.open')}</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
+          <rect x="2" y="5" width="16" height="2"></rect>
+          <rect x="2" y="9" width="16" height="2"></rect>
+          <rect x="2" y="13" width="16" height="2"></rect>
         </svg>
       </button>
     </div>
@@ -209,41 +213,35 @@ function isActive(key: PageKey): boolean {
   <nav
     id="mobile-nav"
     hidden
-    class="border-t border-hairline px-6 pb-6 lg:hidden"
+    class="border-t border-marine-15 px-6 pb-6 lg:hidden"
     aria-label={t('nav.primaryMobile')}
   >
     <ul>
       {
-        NAV.map(({ key, label }) => (
-          <li>
-            <a
-              href={localizedPath(key, locale)}
-              aria-current={isActive(key) ? 'page' : undefined}
-              class:list={[
-                'block border-b border-hairline py-4 text-lg font-medium',
-                isActive(key) ? 'text-brand-900' : 'text-ink-muted',
-              ]}
-            >
-              {t(label)}
-            </a>
-          </li>
-        ))
+        [...NAV, { key: 'blog' as PageKey, label: 'nav.blog' as UIKey }].map(
+          ({ key, label }) => (
+            <li>
+              <a
+                href={localizedPath(key, locale)}
+                aria-current={isActive(key) ? 'page' : undefined}
+                class:list={[
+                  'block border-b border-marine-15 py-4 text-base',
+                  isActive(key) ? 'font-medium text-marine' : 'text-marine-70',
+                ]}
+              >
+                {t(label)}
+              </a>
+            </li>
+          ),
+        )
       }
-      <li>
-        <a
-          href={localizedPath('blog', locale)}
-          class="block py-4 text-lg font-medium text-ink-muted"
-        >
-          {t('nav.blog')}
-        </a>
-      </li>
     </ul>
   </nav>
 </header>
 
 <script>
   /**
-   * Navigation behaviour: the sliding indicator and the mega menu.
+   * Navigation behaviour: the sliding active marker and the mega menu.
    *
    * Vanilla JS, no framework island (DECISIONS.md §12).
    *
@@ -265,12 +263,11 @@ function isActive(key: PageKey): boolean {
       items.find((item) => item.hasAttribute('data-active')) ?? null;
 
     /**
-     * Move the indicator under `target`.
+     * Move the marker under `target`.
      *
      * Width is measured from the link's text, not its box, so the bar tracks the
-     * word rather than the padding — otherwise it looks untethered on the wider
-     * items. `animate` is false for the very first placement and for resizes, so
-     * the bar doesn't slide in from 0 on page load.
+     * word rather than the padding. `animate` is false for the first placement
+     * and for resizes, so it doesn't slide in from 0 on load.
      */
     function moveTo(target: HTMLElement | null, animate = true) {
       if (!target) {
@@ -297,7 +294,7 @@ function isActive(key: PageKey): boolean {
       indicator!.style.opacity = '1';
     }
 
-    // --- Indicator: follow hover/focus, fall back to the current page ---------
+    // --- Marker: follow hover/focus, fall back to the current page -----------
 
     let resetTimer: number | undefined;
     const resetDelay = Number(nav.dataset.resetDelay ?? 60);
@@ -356,16 +353,15 @@ function isActive(key: PageKey): boolean {
       });
     }
 
-    // --- Keep the indicator correct as the layout changes --------------------
+    // --- Keep the marker correct as the layout changes -----------------------
 
     moveTo(activeItem(), false);
 
-    // Fonts change text metrics after first paint, which would leave the bar
-    // measured against the fallback face.
+    // Fonts change text metrics after first paint, which would otherwise leave
+    // the bar measured against the fallback face.
     document.fonts?.ready.then(() => moveTo(activeItem(), false));
 
-    const observer = new ResizeObserver(() => moveTo(activeItem(), false));
-    observer.observe(nav);
+    new ResizeObserver(() => moveTo(activeItem(), false)).observe(nav);
   }
 
   function initMenu() {

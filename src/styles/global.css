@@ -1,56 +1,94 @@
 @import 'tailwindcss';
 
 /*
- * Self-hosted fonts (DECISIONS.md §9).
+ * Fonts — Geist Sans and Geist Mono, per Brand Guideline v1.0 §03.
  *
- * Never add @import url('https://fonts.googleapis.com/...') or a <link> to it.
- * Hotlinking Google Fonts transmits visitor IPs to the US and has been ruled a
- * DSGVO violation by German courts. Fontsource ships the files locally.
+ * Self-hosted via Fontsource (DECISIONS.md §9). Never add a <link> or @import to
+ * fonts.googleapis.com: hotlinking transmits visitor IPs to the US and has been
+ * ruled a DSGVO violation by German courts.
  *
- * ⚠️ PROVISIONAL. Inter and JetBrains Mono stand in for the real brand faces
- * until the brand guidelines land. Swap the @import lines and the two font
- * tokens below; nothing else references a font family.
+ * The guideline names Inter/Arial and JetBrains Mono/Consolas as substitutes when
+ * Geist is unavailable — that is what the fallback stacks below are for.
  */
-@import '@fontsource-variable/inter';
-@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 
 /*
- * ---------------------------------------------------------------------------
- * DESIGN TOKENS
- * ---------------------------------------------------------------------------
- * ⚠️ PROVISIONAL — sampled from the design screenshots, not from the brand
- * guidelines. Every colour in the UI resolves through these tokens, so
- * replacing the values here re-themes the whole site. Do not hardcode a hex
- * value in a component.
+ * ===========================================================================
+ * BRAND TOKENS — kubion Brand Guideline v1.0, August 2026
+ * ===========================================================================
+ * Every colour, radius and font in the UI resolves through these tokens.
+ * Never hardcode a hex value in a component.
+ *
+ * The guideline is binding ("verbindlich für alle Medien, intern wie extern"),
+ * so where the Figma mock and the guideline disagree, the guideline wins. The
+ * divergences are listed in DECISIONS.md §15.
  */
 @theme {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  /* --- Typography (§03) ------------------------------------------------- */
+  /* Geist Sans: all content. Geist Mono: kickers, labels, buttons, links,
+     numeric values, image captions — a signal, not a second text face. */
+  --font-sans: 'Geist Variable', Inter, Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'JetBrains Mono', Consolas, ui-monospace, monospace;
 
-  /* Brand navy — hero panel, primary buttons, headings. */
-  --color-brand-950: #081d47;
-  --color-brand-900: #0c2a66;
-  --color-brand-800: #123578;
-  --color-brand-700: #1b4590;
+  /* --- Palette (§01) ---------------------------------------------------- */
+  /* Five colours with strictly separated jobs. No additional colours. */
+  --color-marine: #0a265f; /* base: large areas, headings, body text */
+  --color-orange: #ff6a00; /* accent: buttons, links, markers, highlights */
+  --color-orange-light: #ff9a3d; /* only as the Markenkern gradient end */
+  --color-hellblau: #bacbed; /* areas, cards, diagrams, text on marine */
+  --color-nebel: #edf0f6; /* second background; cards on white */
+  --color-weiss: #ffffff;
 
-  /* Brand orange — accents only: the eyebrow mark, arrow buttons, the heart. */
-  --color-accent-500: #f97316;
-  --color-accent-600: #e4620c;
+  /* Derived values (§01). These are the ONLY permitted tints. */
+  --color-marine-70: #54678f; /* secondary text, captions */
+  --color-marine-45: #7989ab; /* footers, image captions */
+  --color-marine-15: #dadee7; /* lines, frames, dividers */
 
-  /* Neutrals — page ground, muted pills, hairlines. */
-  --color-surface: #ffffff;
-  --color-surface-muted: #eef1f7;
-  --color-hairline: #e4e8f0;
-  --color-ink: #0c1221;
-  --color-ink-muted: #5a6478;
+  /* --- Radius (§04) ----------------------------------------------------- */
+  /* Exactly two values. "Es gibt keinen dritten Wert." */
+  --radius-flat: 0; /* photos, full-bleed areas, Markenkern, tables, rules */
+  --radius-element: 4px; /* buttons, tags, inputs, cards, content areas */
 
-  /* On-navy foregrounds. */
-  --color-on-brand: #ffffff;
-  --color-on-brand-muted: #a9bbdd;
-
-  /* Motion — one place to retune the feel of the whole UI. */
+  /* --- Motion ----------------------------------------------------------- */
+  /* Not covered by the guideline; chosen here and applied consistently. */
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-nav: 420ms;
+}
+
+/*
+ * Spacing scale (§04): 4 · 8 · 16 · 24 · 40 · 64 px.
+ * "Zwischenwerte werden nicht verwendet."
+ *
+ * Tailwind's 4px base means the permitted step utilities are 1, 2, 4, 6, 10
+ * and 16. Reach for one of those rather than inventing a value — a `p-5` or
+ * `py-3.5` in this codebase is a brand violation, not a style preference.
+ */
+
+/*
+ * Kicker (§03).
+ * Geist Mono, uppercase, letter-spacing +14%, 7.5–8 pt.
+ * The guideline sets 1 pt ≈ 1.33 px digital, so 8 pt ≈ 10.6 px.
+ *
+ * A kicker always sits ABOVE the heading and names the section — it never
+ * repeats the heading.
+ */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/*
+ * The Markenkern (§05) — the only gradient in the entire system.
+ * Square, 135°, #FF6A00 → #FF9A3D. No radius, no border, no shadow.
+ * Used once per page, as the marker to the left of the hero kicker.
+ * Website size: 24–32 px.
+ */
+.markenkern {
+  background-image: linear-gradient(135deg, var(--color-orange), var(--color-orange-light));
 }
 
 /*
@@ -58,8 +96,7 @@
  *
  * The site is animation-heavy, so reduced-motion support is built in from the
  * start rather than retrofitted. JS-driven motion must ALSO check the media
- * query — this rule only neutralises CSS-driven motion. See the nav indicator
- * in Header.astro for the JS-side equivalent.
+ * query — this only neutralises CSS-driven motion.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -73,37 +110,34 @@
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent-500);
-  outline-offset: 3px;
-  border-radius: 2px;
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
 }
 
 body {
   font-family: var(--font-sans);
+  color: var(--color-marine);
+  background-color: var(--color-weiss);
 }
 
-/* Small uppercase monospace labels — the "KI-ENTWICKLUNG …" eyebrow style. */
-.label-mono {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-/* Prose defaults for MDX bodies. Replace with the design system's type scale. */
+/*
+ * Prose defaults for MDX bodies.
+ *
+ * Links on a light ground are Marine and underlined (§02) — orange is never a
+ * text colour on white.
+ */
 .prose :where(h2) {
-  @apply mt-12 mb-4 text-2xl font-semibold tracking-tight;
+  @apply mt-10 mb-4 text-2xl font-bold tracking-tight text-marine;
 }
 .prose :where(h3) {
-  @apply mt-8 mb-3 text-xl font-semibold tracking-tight;
+  @apply mt-6 mb-2 text-lg font-semibold tracking-tight text-marine;
 }
 .prose :where(p) {
-  @apply mb-4 leading-relaxed;
+  @apply mb-4 leading-relaxed text-marine;
 }
 .prose :where(ul) {
   @apply mb-4 list-disc pl-6;
 }
 .prose :where(a) {
-  @apply underline underline-offset-4;
+  @apply text-marine underline underline-offset-4;
 }

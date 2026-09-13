@@ -235,6 +235,63 @@ Runs on every pull request, blocks merge on failure:
   deliberate number that admits GSAP while catching an accidental 300 KB dependency. It is
   explicitly *not* a "zero JS" budget — see §12.
 
+## 15. Brand implementation
+
+Source: **kubion Brand Guideline v1.0, August 2026** (`kubion_Brandguideline_v7.pdf`).
+It declares itself binding — "verbindlich für alle Medien, intern wie extern" — so where
+the Figma mock and the guideline disagree, **the guideline wins** and the divergence is
+listed below.
+
+All brand values are tokens in `src/styles/global.css`. No component hardcodes a hex value,
+a font family or a radius.
+
+- **Palette (§01)**: Marine `#0A265F`, Orange `#FF6A00`, Hellblau `#BACBED`, Nebel `#EDF0F6`,
+  White. Derived tints `#54678F` / `#7989AB` / `#DADEE7` are the only permitted variants.
+- **Typography (§03)**: Geist Sans for all content, Geist Mono for kickers, labels, buttons,
+  links and numerals. Self-hosted via Fontsource. Hero headline is Black 900.
+- **Radius (§04)**: exactly two values — `0` for full-bleed areas, photos and the Markenkern,
+  `4px` for buttons, cards and inputs. There is no third value.
+- **Spacing (§04)**: 4 · 8 · 16 · 24 · 40 · 64px only, i.e. Tailwind steps 1/2/4/6/10/16.
+  A `p-5` or `py-3.5` in this codebase is a brand violation, not a style preference.
+- **Markenkern (§05)**: the only gradient in the system. 135°, `#FF6A00 → #FF9A3D`, square,
+  no radius, 24–32px on the web, used **once per page** as the marker left of the hero kicker.
+- **Wordmark (§08)**: drawn, never typeset — rendered from the supplied SVG in
+  `src/components/Logo.astro`. Two colour versions only (white on Marine, Marine on light),
+  never orange. The component throws below the 90px minimum width.
+
+### Divergences from the Figma mock
+
+Each of these is a deliberate choice, and each is reversible if you'd rather have the mock.
+
+1. **No pills, no large radii.** The mock used ~24px panels and fully rounded buttons. §04
+   permits only 0 and 4px, and §10 names the failure directly: "Keine Rahmen, keine Pillen —
+   die Marke arbeitet mit Fläche und Abstand, nicht mit Umrandungen."
+2. **One primary button, secondary as a text link.** The mock showed two buttons side by
+   side; §10 says "Ein primärer Button pro Bereich, sekundär als Textlink daneben."
+3. **The hero's primary button is orange, not white.** Orange is the action colour (§01) and
+   the guideline's own website example shows an orange CTA.
+4. **The hero's third link ("Leistungen ansehen") is dropped**, following the same §10 rule.
+5. **The active nav marker is orange.** §10 calls for the active point in the accent colour.
+   Because orange is never a text colour on white (§02), the accent lands on the indicator
+   bar — an area, which is permitted — while the label itself stays Marine.
+
+### Divergence from the guideline
+
+1. **The orange button's label is Marine, not white.** White on `#FF6A00` measures **2.87:1**
+   and fails WCAG AA; Marine on orange is **5.03:1** and passes. The guideline's contrast
+   table (§02) never states a label colour — its example images merely show white — so this
+   fills a gap rather than overriding a rule. Revisit only if the brand owner insists.
+
+### Open brand questions
+
+- **Navigation alignment.** §10 says "Navigation rechtsbündig" and places it inside the
+  Marine hero area; the mock has it centred in a white sticky bar above the hero. The mock's
+  arrangement is implemented. Worth a decision.
+- **`#7989AB` (Marine 45%) on white is 3.51:1** and fails AA for body-size text, yet §01
+  assigns it to footers and image captions. Use it only at large sizes, or use `#54678F`
+  (5.65:1). Not yet an issue — nothing on the site uses it.
+- **The icon/favicon artwork (§09) has not been supplied.** Needed for the browser tab.
+
 ---
 
 ## Open items

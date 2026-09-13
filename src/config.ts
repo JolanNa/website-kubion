@@ -12,4 +12,4 @@ export const LOCALE_TAGS: Record<Locale, string> = {
   en: 'en',
 };
 
-export const SITE_NAME = 'Kubion';
+export const SITE_NAME = 'kubion';

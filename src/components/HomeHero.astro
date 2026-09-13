@@ -4,11 +4,30 @@ import type { Locale } from '../config';
 import { isPageKey, localizedPath } from '../i18n/routes';
 
 /**
- * The homepage hero: a full-bleed navy panel inset from the viewport edges.
+ * The homepage hero (Brand Guideline §10).
+ *
+ * "Der Hero besteht aus vier Elementen in fester Reihenfolge: Wortmarke mit
+ * Navigation, Kicker mit Markenkern, Aussage, Handlungsaufforderung."
+ * The wordmark and navigation live in Header.astro; this covers the other three.
+ *
+ * Brand rules encoded here:
+ *  - ONE primary button per area, the secondary sits beside it as a text link
+ *    (§10). The Figma mock showed two buttons; the guideline overrides.
+ *  - The primary button is an Orange area — orange is the action colour (§01).
+ *    Its LABEL is Marine, not white: white on #FF6A00 measures 2.87:1, which
+ *    fails WCAG AA, while Marine on orange is 5.03:1 and passes. The guideline's
+ *    contrast table (§02) never states the label colour — its example images
+ *    merely show white — so this resolves the omission rather than breaking a
+ *    rule. Flagged in DECISIONS.md §15.
+ *  - Radius 4px on the panel and the button; never a pill (§04, §10).
+ *  - The Markenkern is the marker left of the kicker, square with the only
+ *    gradient in the system, 24–32px on the web (§05). Once per page.
+ *  - Subline is Hellblau on Marine (§02); Hellblau is never text on white.
+ *  - Spacing uses only 4·8·16·24·40·64px (§04).
  *
  * All copy comes from src/content/pages/home/<locale>.mdx frontmatter
- * (DECISIONS.md §3) — nothing here is hardcoded text. CTAs reference page KEYS
- * rather than URLs, so localised slugs resolve automatically.
+ * (DECISIONS.md §3). CTAs reference page KEYS, so localised slugs resolve
+ * automatically and a typo fails the build instead of shipping a dead link.
  */
 interface Props {
   entry: CollectionEntry<'pages'>;
@@ -24,11 +43,6 @@ if (!hero) {
   );
 }
 
-/**
- * Resolves a CTA to a URL. A `page` key wins over a raw `href`, so localised
- * slugs stay automatic. An unknown key fails the build rather than shipping a
- * dead link.
- */
 function href(cta: { page?: string; href?: string }): string {
   if (cta.page) {
     if (!isPageKey(cta.page)) {
@@ -43,97 +57,69 @@ function href(cta: { page?: string; href?: string }): string {
 }
 ---
 
-<section class="px-3 pb-3">
-  <div
-    class="relative overflow-hidden rounded-3xl bg-brand-900 px-6 py-16 sm:px-12 lg:px-16 lg:py-24"
-  >
-    <div class="mx-auto max-w-[84rem]">
-      {
-        hero.eyebrow && (
-          <p class="flex items-center gap-4">
-            <span class="size-5 shrink-0 bg-accent-500" aria-hidden="true" />
-            <span class="label-mono text-on-brand">{hero.eyebrow}</span>
-          </p>
-        )
-      }
+<section class="px-6 pb-16">
+  <div class="mx-auto max-w-[90rem] rounded-element bg-marine px-6 py-16 sm:px-10 lg:px-16">
+    {
+      hero.eyebrow && (
+        <p class="flex items-center gap-4">
+          {/* Markenkern — square, 135° gradient, no radius. Once per page. */}
+          <span class="markenkern size-7 shrink-0" aria-hidden="true" />
+          <span class="kicker text-weiss">{hero.eyebrow}</span>
+        </p>
+      )
+    }
 
+    <div class="mt-10 grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-end lg:gap-16">
       <h1
-        class="mt-12 max-w-[16ch] text-[clamp(2.75rem,7.5vw,6.5rem)] leading-[0.95] font-bold tracking-[-0.03em] text-on-brand text-balance"
+        class="max-w-[14ch] text-[clamp(2.5rem,6.5vw,5.5rem)] leading-[1.02] font-black tracking-[-0.02em] text-weiss"
       >
         {hero.headline}
       </h1>
 
       {
         hero.subline && (
-          <p class="mt-10 max-w-[34ch] text-lg leading-relaxed text-on-brand-muted sm:text-xl">
-            {hero.subline}
-          </p>
-        )
-      }
-
-      <div class="mt-12 flex flex-wrap items-center gap-4">
-        {
-          hero.primaryCta && (
-            <a
-              href={href(hero.primaryCta)}
-              class="rounded-full bg-surface px-7 py-3.5 font-medium text-brand-900 transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
-            >
-              {hero.primaryCta.label}
-            </a>
-          )
-        }
-        {
-          hero.secondaryCta && (
-            <a
-              href={href(hero.secondaryCta)}
-              class="rounded-full border border-on-brand-muted/50 px-7 py-3.5 font-medium text-on-brand transition-colors duration-300 hover:border-on-brand hover:bg-white/5"
-            >
-              {hero.secondaryCta.label}
-            </a>
-          )
-        }
-      </div>
-
-      {
-        hero.textLink && (
-          <p class="mt-8">
-            <a
-              href={href(hero.textLink)}
-              class="group inline-flex items-center gap-2 text-on-brand-muted transition-colors duration-200 hover:text-on-brand"
-            >
-              {hero.textLink.label}
-              <span
-                class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
-                aria-hidden="true"
-              >
-                →
-              </span>
-            </a>
-          </p>
-        )
-      }
-
-      {
-        hero.note && (
-          <p class="mt-20 flex items-center gap-4 lg:mt-28">
-            {/* Pixel heart, drawn inline so it inherits the accent token. */}
-            <svg
-              width="18"
-              height="16"
-              viewBox="0 0 9 8"
-              class="shrink-0 text-accent-500"
-              aria-hidden="true"
-              fill="currentColor"
-              shape-rendering="crispEdges"
-            >
-              <path
-                d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z"
-              />
-            </svg>
-            <span class="label-mono text-on-brand">{hero.note}</span>
-          </p>
+          <p class="max-w-[42ch] leading-relaxed text-hellblau lg:pb-2">{hero.subline}</p>
         )
       }
     </div>
+
+    <div class="mt-10 flex flex-wrap items-center gap-6">
+      {
+        hero.primaryCta && (
+          <a
+            href={href(hero.primaryCta)}
+            class="rounded-element bg-orange px-6 py-4 font-mono text-sm font-medium text-marine transition-opacity duration-200 hover:opacity-90"
+          >
+            {hero.primaryCta.label}
+          </a>
+        )
+      }
+
+      {/* Secondary action is a text link beside the primary button, not a second button (§10). */}
+      {
+        hero.secondaryCta && (
+          <a
+            href={href(hero.secondaryCta)}
+            class="group inline-flex items-center gap-2 font-mono text-sm text-hellblau transition-colors duration-200 hover:text-weiss"
+          >
+            {hero.secondaryCta.label}
+            <span
+              class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </a>
+        )
+      }
+    </div>
+
+    {
+      hero.note && (
+        <p class="mt-16 border-t border-weiss/15 pt-6">
+          <span class="kicker text-hellblau">{hero.note}</span>
+        </p>
+      )
+    }
   </div>
 </section>
