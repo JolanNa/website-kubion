@@ -115,7 +115,13 @@ const blog = defineCollection({
     translationKey: z.string(),
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date().optional(),
+    /**
+     * The `translationKey` of a team member; the post shows that person's card.
+     * A value that matches nobody is printed as a plain name.
+     */
     author: z.string().optional(),
+    /** A few sentences shown in a box ahead of the article body. */
+    summary: z.string().optional(),
     heroImage: z.string().optional(),
     heroImageAlt: z.string().optional(),
     tags: z.array(z.string()).default([]),

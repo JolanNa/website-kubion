@@ -1,0 +1,80 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import type { Locale } from '../config';
+import { resolveImage } from '../lib/images';
+import { useTranslations } from '../i18n/ui';
+
+/**
+ * The card beside a blog article: portrait, name, role, short bio and contact
+ * links of the post's author, taken from the CMS-managed team collection.
+ */
+interface Props {
+  member: CollectionEntry<'team'>;
+  locale: Locale;
+  class?: string;
+}
+
+const { member, locale, class: className } = Astro.props;
+const t = useTranslations(locale);
+
+const { Content } = await render(member);
+const photo = resolveImage(member.data.photo);
+
+/** Stands in for the portrait until a photo is uploaded. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return [parts[0], parts.length > 1 ? parts.at(-1) : undefined]
+    .map((part) => part?.[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+---
+
+<aside class:list={['rounded-2xl bg-nebel p-6', className]} aria-label={t('blog.author')}>
+  <p class="kicker opacity-70">{t('blog.author')}</p>
+  {
+    photo ? (
+      <Image
+        src={photo}
+        alt=""
+        widths={[160, 320]}
+        sizes="5rem"
+        class="mt-5 size-20 rounded-full object-cover"
+        loading="lazy"
+      />
+    ) : (
+      <div
+        class="mt-5 flex size-20 items-center justify-center rounded-full bg-hellblau font-mono text-xl tracking-[0.14em]"
+        aria-hidden="true"
+      >
+        {initials(member.data.name)}
+      </div>
+    )
+  }
+  <p class="mt-4 text-lg font-semibold tracking-[-0.01em]">{member.data.name}</p>
+  <p class="kicker mt-1.5 opacity-70">{member.data.role}</p>
+  <div class="mt-4 text-sm leading-relaxed text-pretty [&_p+p]:mt-3">
+    <Content />
+  </div>
+  {
+    (member.data.email || member.data.linkedin) && (
+      <ul class="mt-5 flex flex-col gap-2 border-t border-marine-15 pt-5 font-mono text-sm">
+        {member.data.email && (
+          <li>
+            <a href={`mailto:${member.data.email}`} class="underline underline-offset-4">
+              {t('form.email')}
+            </a>
+          </li>
+        )}
+        {member.data.linkedin && (
+          <li>
+            <a href={member.data.linkedin} rel="noopener" class="underline underline-offset-4">
+              LinkedIn
+            </a>
+          </li>
+        )}
+      </ul>
+    )
+  }
+</aside>

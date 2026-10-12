@@ -79,6 +79,13 @@ export async function getTeam(locale: Locale) {
   return published(members).sort((a, b) => a.data.order - b.data.order);
 }
 
+/** The team member a post's `author` field points at, in the post's locale. */
+export async function getAuthor(key: string | undefined, locale: Locale) {
+  if (!key) return undefined;
+  const team = await getTeam(locale);
+  return team.find((member) => member.data.translationKey === key);
+}
+
 /* ------------------------------------------------------------------ *
  * hreflang alternates
  * ------------------------------------------------------------------ */

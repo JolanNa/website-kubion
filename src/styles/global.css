@@ -41,6 +41,10 @@
   --color-nebel: #edf0f6; /* second background; cards on white */
   --color-weiss: #ffffff;
 
+  /* Text colour of blog articles only (BlogPost.astro). A deliberate departure
+     from the five-colour rule above, requested for the blog. 10.9:1 on white. */
+  --color-lila: #4a1d96;
+
   /* Derived values (§01). These are the ONLY permitted tints. */
   --color-marine-70: #54678f; /* secondary text, captions */
   --color-marine-45: #7989ab; /* footers, image captions */
@@ -141,4 +145,9 @@ body {
 }
 .prose :where(a) {
   @apply text-marine underline underline-offset-4;
+}
+
+/* Blog articles set their own text colour (--color-lila); the body follows it. */
+.blog-post .prose :where(h2, h3, p, a) {
+  color: inherit;
 }
