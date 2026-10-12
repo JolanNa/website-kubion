@@ -95,7 +95,26 @@ collections:
           required: false,
           i18n: duplicate,
         }
-      - { name: author, label: Autor, widget: string, required: false, i18n: duplicate }
+      # Stores the team member's translationKey; the post shows that person's card.
+      - {
+          name: author,
+          label: Autor,
+          widget: relation,
+          collection: team,
+          value_field: translationKey,
+          display_fields: [name],
+          search_fields: [name],
+          required: false,
+          i18n: duplicate,
+        }
+      - {
+          name: summary,
+          label: Zusammenfassung,
+          widget: text,
+          required: false,
+          i18n: true,
+          hint: 'Zwei bis drei Sätze. Steht in einem Kasten vor dem Beitrag.',
+        }
       - { name: heroImage, label: Titelbild, widget: image, required: false, i18n: duplicate }
       - {
           name: heroImageAlt,

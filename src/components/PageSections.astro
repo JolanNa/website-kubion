@@ -1,0 +1,334 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../config';
+import { ctaHref } from '../lib/content';
+import { useTranslations } from '../i18n/ui';
+import ArrowLink from './ArrowLink.astro';
+import CtaPanel from './CtaPanel.astro';
+import Placeholder from './Placeholder.astro';
+import SectionHeader from './SectionHeader.astro';
+import Steps from './Steps.astro';
+
+/**
+ * Renders a page's `sections` in the order they appear in its frontmatter.
+ *
+ * Each section names a `layout`; the frontmatter key becomes the element id,
+ * so `/leistungen#branchen` works without extra wiring. Reordering, adding or
+ * dropping a section is an edit to the MDX file only.
+ */
+interface Props {
+  entry: CollectionEntry<'pages'>;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const source = `src/content/pages/${entry.id}.mdx`;
+
+const sections = Object.entries(entry.data.sections);
+for (const [id, section] of sections) {
+  if (!section.layout) throw new Error(`Section "${id}" in ${source} needs a \`layout\`.`);
+}
+
+const number = (index: number) => String(index + 1).padStart(2, '0');
+const numberTile =
+  'kicker flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss';
+const gutter = 'scroll-mt-28 px-4 py-14 sm:px-16 lg:px-20 lg:py-24';
+const wrap = 'mx-auto max-w-[84rem]';
+
+// Spelled out so Tailwind sees the class names.
+const cardColumns = (count: number) =>
+  count === 2 || count === 4 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3';
+---
+
+<div class="pt-6 lg:pt-8">
+  {
+    sections.map(([id, section]) => {
+      const inlineCta = section.primaryCta && (
+        <ArrowLink href={ctaHref(section.primaryCta, locale, source)} class="mt-10">
+          {section.primaryCta.label}
+        </ArrowLink>
+      );
+
+      switch (section.layout) {
+        case 'cta':
+          return (
+            <div id={id} class="scroll-mt-28 py-6 lg:py-10">
+              <CtaPanel section={section} locale={locale} source={source} />
+            </div>
+          );
+
+        /* Large linked rows — the services on the overview page. */
+        case 'rows':
+          return (
+            <section id={id} class={gutter}>
+              <div class={wrap}>
+                <SectionHeader section={section} locale={locale} />
+                <ul class="mt-12 border-t border-marine-15 lg:mt-16">
+                  {section.items.map((item, index) => (
+                    <li class="border-b border-marine-15">
+                      <a
+                        href={ctaHref(item, locale, source)}
+                        class="group grid gap-6 py-8 lg:grid-cols-[4rem_1fr_1.2fr_auto] lg:items-start lg:gap-10 lg:py-12"
+                      >
+                        <span class={numberTile}>{number(index)}</span>
+                        <h3 class="text-2xl leading-tight font-bold tracking-[-0.02em] text-balance sm:text-4xl">
+                          {item.title}
+                        </h3>
+                        <span>
+                          {item.text && (
+                            <span class="block max-w-[52ch] text-lg leading-relaxed text-pretty text-marine-70">
+                              {item.text}
+                            </span>
+                          )}
+                          {item.points.length > 0 && (
+                            <span class="mt-6 flex flex-wrap gap-2">
+                              {item.points.map((point) => (
+                                <span class="rounded-full bg-nebel px-4 py-1.5 text-sm">{point}</span>
+                              ))}
+                            </span>
+                          )}
+                        </span>
+                        <span
+                          class="flex size-11 items-center justify-center rounded-xl gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                          aria-hidden="true"
+                        >
+                          →
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          );
+
+        case 'cards':
+          return (
+            <section id={id} class={gutter}>
+              <div class={wrap}>
+                <SectionHeader section={section} locale={locale} />
+                <ul class:list={['mt-12 grid gap-4 lg:mt-16 lg:gap-6', cardColumns(section.items.length)]}>
+                  {section.items.map((item) => (
+                    <li class="rounded-2xl bg-nebel p-6 sm:p-8">
+                      {item.meta && <p class="kicker text-marine-70">{item.meta}</p>}
+                      <h3 class="mt-4 text-xl font-semibold tracking-[-0.01em] sm:text-2xl">
+                        {item.title}
+                      </h3>
+                      {item.text && (
+                        <p class="mt-3 leading-relaxed text-pretty text-marine-70">{item.text}</p>
+                      )}
+                      {item.page && (
+                        <ArrowLink href={ctaHref(item, locale, source)} class="mt-6">
+                          {t('common.more')}
+                        </ArrowLink>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {inlineCta}
+              </div>
+            </section>
+          );
+
+        /* Short labels — the industries. */
+        case 'chips':
+          return (
+            <section id={id} class={gutter}>
+              <div class:list={[wrap, 'grid gap-10 lg:grid-cols-2 lg:gap-16']}>
+                <div>
+                  <SectionHeader section={section} locale={locale} />
+                  {inlineCta}
+                </div>
+                <ul class="flex flex-wrap content-start gap-3 lg:pt-12">
+                  {section.items.map((item) => (
+                    <li class="rounded-full border border-marine-15 px-5 py-2.5 text-lg font-medium">
+                      {item.title}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          );
+
+        case 'steps':
+          return (
+            <section id={id} class="scroll-mt-28 px-4 py-14 lg:py-24">
+              <div class="rounded-3xl bg-nebel px-6 pt-16 pb-6 sm:px-12 lg:px-16 lg:pt-24 lg:pb-14">
+                <div class={wrap}>
+                  <SectionHeader section={section} locale={locale} />
+                  <Steps items={section.items} class="mt-12 lg:mt-16" />
+                  {section.primaryCta && <div class="pb-10">{inlineCta}</div>}
+                </div>
+              </div>
+            </section>
+          );
+
+        /* Copy beside one image. */
+        case 'split':
+          return (
+            <section id={id} class={gutter}>
+              <div class:list={[wrap, 'grid items-center gap-10 lg:grid-cols-2 lg:gap-16']}>
+                <div>
+                  <SectionHeader section={section} locale={locale} />
+                  {section.items.length > 0 && (
+                    <ul class="mt-10 border-t border-marine-15">
+                      {section.items.map((item) => (
+                        <li class="border-b border-marine-15 py-4">
+                          <p class="flex items-center gap-4 font-semibold">
+                            <span class="h-[3px] w-3 shrink-0 rounded-full bg-orange" aria-hidden="true" />
+                            {item.title}
+                          </p>
+                          {item.text && (
+                            <p class="mt-1 pl-7 leading-relaxed text-pretty text-marine-70">{item.text}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {inlineCta}
+                </div>
+                <Placeholder
+                  label={section.imageNote ?? t('placeholder.image')}
+                  class="aspect-[4/3] w-full rounded-3xl p-6 text-center"
+                />
+              </div>
+            </section>
+          );
+
+        /*
+          One system pulled apart into its layers. The layers start collapsed
+          into a stack and spread as the section scrolls into view — see the
+          <style> block. Without scroll-timeline support, or with reduced
+          motion, they simply render spread out.
+        */
+        case 'layers':
+          return (
+            <section id={id} class={gutter}>
+              <div class:list={[wrap, 'grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16']}>
+                <div class="lg:sticky lg:top-32 lg:self-start">
+                  <SectionHeader section={section} locale={locale} />
+                  {inlineCta}
+                </div>
+                <ol class="layers grid gap-3" style={`--count:${section.items.length}`}>
+                  {section.items.map((item, index) => (
+                    <li
+                      class="layer flex items-start gap-5 rounded-2xl border border-marine-15 bg-weiss p-5 shadow-island sm:p-6"
+                      style={`--i:${index}`}
+                    >
+                      <span class={numberTile}>{number(index)}</span>
+                      <span class="flex-1">
+                        {item.meta && <span class="kicker block text-marine-70">{item.meta}</span>}
+                        <span class="mt-1 block text-xl font-semibold tracking-[-0.01em]">
+                          {item.title}
+                        </span>
+                        {item.text && (
+                          <span class="mt-2 block leading-relaxed text-pretty text-marine-70">
+                            {item.text}
+                          </span>
+                        )}
+                      </span>
+                      <Placeholder class="hidden size-20 shrink-0 rounded-xl sm:flex" />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </section>
+          );
+
+        /* A scale from simple to elaborate, one image per stop. */
+        case 'spectrum':
+          return (
+            <section id={id} class={gutter}>
+              <div class={wrap}>
+                <SectionHeader section={section} locale={locale} />
+                <ol class="mt-12 grid gap-10 md:grid-cols-3 md:gap-6 lg:mt-16">
+                  {section.items.map((item, index) => (
+                    <li>
+                      <div class="flex items-center gap-3">
+                        <span class="kicker text-marine-70">{item.meta}</span>
+                        <span class="h-px flex-1 bg-marine-15" aria-hidden="true" />
+                        {index < section.items.length - 1 && (
+                          <span class="text-marine-45" aria-hidden="true">→</span>
+                        )}
+                      </div>
+                      <Placeholder
+                        label={item.imageNote ?? t('placeholder.image')}
+                        class="mt-5 aspect-[4/3] w-full rounded-2xl p-6 text-center"
+                      />
+                      <h3 class="mt-6 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+                      {item.text && (
+                        <p class="mt-2 leading-relaxed text-pretty text-marine-70">{item.text}</p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+                {inlineCta}
+              </div>
+            </section>
+          );
+
+        case 'projects':
+          return (
+            <section id={id} class={gutter}>
+              <div class={wrap}>
+                <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                  <SectionHeader section={section} locale={locale} />
+                  {section.primaryCta && (
+                    <ArrowLink href={ctaHref(section.primaryCta, locale, source)}>
+                      {section.primaryCta.label}
+                    </ArrowLink>
+                  )}
+                </div>
+                <ul class:list={['mt-12 grid gap-4 lg:mt-16 lg:gap-6', cardColumns(section.items.length)]}>
+                  {section.items.map((item) => (
+                    <li class="rounded-2xl bg-nebel p-4">
+                      <Placeholder
+                        label={item.imageNote ?? t('placeholder.image')}
+                        class="aspect-[16/9] w-full rounded-xl p-6 text-center"
+                      />
+                      <div class="px-2 pt-6 pb-2">
+                        {item.meta && <p class="kicker text-marine-70">{item.meta}</p>}
+                        <h3 class="mt-3 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+                        {item.text && <p class="mt-2 leading-relaxed text-marine-70">{item.text}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          );
+      }
+    })
+  }
+</div>
+
+<style>
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .layers {
+        view-timeline-name: --layers;
+      }
+
+      .layer {
+        /* Collapsed, every layer sits near the middle of the stack, each one
+           peeking 0.75rem past the one above it. */
+        --collapsed: calc(((var(--count) - 1) / 2 - var(--i)) * 5.5rem + var(--i) * 0.75rem);
+        position: relative;
+        z-index: calc(var(--count) - var(--i));
+        animation: layer-spread linear both;
+        animation-timeline: --layers;
+        animation-range: entry 35% cover 45%;
+      }
+
+      @keyframes layer-spread {
+        from {
+          transform: translateY(var(--collapsed)) scale(0.96);
+        }
+        to {
+          transform: none;
+        }
+      }
+    }
+  }
+</style>

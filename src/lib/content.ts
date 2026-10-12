@@ -1,7 +1,7 @@
 import { getCollection, getEntry } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { DEFAULT_LOCALE, LOCALES, type Locale } from '../config';
-import { localizedEntryPath, localizedPath, type PageKey } from '../i18n/routes';
+import { isPageKey, localizedEntryPath, localizedPath, type PageKey } from '../i18n/routes';
 
 const isProd = import.meta.env.PROD;
 
@@ -30,6 +30,47 @@ export async function loadPage(key: PageKey, locale: Locale) {
     );
   }
   return entry;
+}
+
+export type PageSection = CollectionEntry<'pages'>['data']['sections'][string];
+
+/**
+ * Reads one section of a page by id.
+ *
+ * Throws when it is missing, for the same reason loadPage does: a page that
+ * silently drops a section is harder to notice than a failed build.
+ */
+export function pageSection(entry: CollectionEntry<'pages'>, id: string): PageSection {
+  const section = entry.data.sections[id];
+  if (!section) {
+    throw new Error(`Missing section "${id}" in src/content/pages/${entry.id}.mdx.`);
+  }
+  return section;
+}
+
+/**
+ * Resolves a frontmatter CTA to a URL.
+ *
+ * `page` holds a page key, so the localised slug resolves automatically; an
+ * unknown key throws rather than shipping a dead link. `href` is the escape
+ * hatch for external links and anchors.
+ */
+export function ctaHref(
+  cta: { page?: string; href?: string; anchor?: string },
+  locale: Locale,
+  context: string,
+): string {
+  const hash = cta.anchor ? `#${cta.anchor}` : '';
+  if (cta.page) {
+    if (!isPageKey(cta.page)) {
+      throw new Error(
+        `Unknown page key "${cta.page}" in ${context}.\n` +
+          `Valid keys are defined in src/i18n/routes.ts.`,
+      );
+    }
+    return `${localizedPath(cta.page, locale)}${hash}`;
+  }
+  return cta.href ?? (hash || '#');
 }
 
 /* ------------------------------------------------------------------ *
@@ -77,6 +118,13 @@ export function projektPath(entry: CollectionEntry<'projekte'>, locale: Locale):
 export async function getTeam(locale: Locale) {
   const members = await getCollection('team', (e) => e.id.startsWith(`${locale}/`));
   return published(members).sort((a, b) => a.data.order - b.data.order);
+}
+
+/** The team member a post's `author` field points at, in the post's locale. */
+export async function getAuthor(key: string | undefined, locale: Locale) {
+  if (!key) return undefined;
+  const team = await getTeam(locale);
+  return team.find((member) => member.data.translationKey === key);
 }
 
 /* ------------------------------------------------------------------ *

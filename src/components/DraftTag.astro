@@ -1,0 +1,33 @@
+---
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+
+/**
+ * Marks a section whose copy is not final.
+ *
+ * Shown wherever a section sets `draft: true` in its frontmatter, so anyone
+ * reviewing the site can tell a placeholder from approved copy at a glance.
+ * None may be left at launch (LAUNCH-CHECKLIST.md).
+ */
+interface Props {
+  locale: Locale;
+  /** On a Marine ground. */
+  dark?: boolean;
+  class?: string;
+}
+
+const { locale, dark = false, class: className } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<span
+  title={t('draft.hint')}
+  class:list={[
+    'kicker inline-flex items-center gap-2 rounded-full border border-dashed px-3 py-1',
+    dark ? 'border-hellblau/60 text-hellblau' : 'border-marine-45 text-marine-70',
+    className,
+  ]}
+>
+  <span class="size-1.5 rounded-full bg-orange" aria-hidden="true"></span>
+  {t('draft.label')}
+</span>

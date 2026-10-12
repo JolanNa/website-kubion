@@ -11,10 +11,52 @@ import { glob } from 'astro/loaders';
  * the right localised slug automatically. `href` is the escape hatch for external
  * links and anchors.
  */
-const cta = z.object({
-  label: z.string(),
+const link = {
   page: z.string().optional(),
   href: z.string().optional(),
+  /** Fragment appended to the resolved URL, without the `#`. */
+  anchor: z.string().optional(),
+};
+
+const cta = z.object({ label: z.string(), ...link });
+
+/**
+ * A page section: a heading block plus an optional list of cards, steps or rows.
+ *
+ * Deliberately generic — the page component decides how a section is laid out,
+ * the frontmatter only carries its copy. `draft` puts a visible "Entwurf" tag on
+ * the section while its copy is not final (LAUNCH-CHECKLIST.md).
+ */
+const section = z.object({
+  kicker: z.string().optional(),
+  heading: z.string(),
+  text: z.string().optional(),
+  draft: z.boolean().default(false),
+  /**
+   * How src/components/PageSections.astro lays the section out. Pages with a
+   * bespoke component (home, Karriere, Kontakt) read sections by id instead and
+   * leave this unset.
+   */
+  layout: z
+    .enum(['rows', 'cards', 'chips', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
+    .optional(),
+  /** Describes the image that belongs here; rendered as a labelled placeholder. */
+  imageNote: z.string().optional(),
+  items: z
+    .array(
+      z.object({
+        title: z.string(),
+        text: z.string().optional(),
+        imageNote: z.string().optional(),
+        /** Small mono label: a category, a location, a contact value. */
+        meta: z.string().optional(),
+        points: z.array(z.string()).default([]),
+        ...link,
+      }),
+    )
+    .default([]),
+  primaryCta: cta.optional(),
+  secondaryCta: cta.optional(),
 });
 
 /** Fields every page/post shares for <head> and social cards. */
@@ -55,6 +97,41 @@ const pages = defineCollection({
         ctaLabel: z.string().optional(),
         ctaHref: z.string().optional(),
         image: z.string().optional(),
+      })
+      .optional(),
+    /** Keyed by section id; each page component reads the ids it renders. */
+    sections: z.record(z.string(), section).default({}),
+    /** Sections of the Über-uns page (src/components/AboutPage.astro). */
+    about: z
+      .object({
+        intro: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string(),
+          heading: z.string(),
+          body: z.array(z.string()),
+          facts: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+        }),
+        team: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string(),
+          heading: z.string(),
+          text: z.string().optional(),
+        }),
+        collaboration: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string(),
+          heading: z.string(),
+          text: z.string().optional(),
+          steps: z.array(z.object({ title: z.string(), text: z.string() })),
+        }),
+        cta: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          heading: z.string(),
+          text: z.string().optional(),
+          primaryCta: cta,
+          secondaryCta: cta.optional(),
+        }),
       })
       .optional(),
   }),
@@ -115,7 +192,13 @@ const blog = defineCollection({
     translationKey: z.string(),
     publishedAt: z.coerce.date(),
     updatedAt: z.coerce.date().optional(),
+    /**
+     * The `translationKey` of a team member; the post shows that person's card.
+     * A value that matches nobody is printed as a plain name.
+     */
     author: z.string().optional(),
+    /** A few sentences shown in a box ahead of the article body. */
+    summary: z.string().optional(),
     heroImage: z.string().optional(),
     heroImageAlt: z.string().optional(),
     tags: z.array(z.string()).default([]),

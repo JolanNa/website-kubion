@@ -19,8 +19,15 @@ import { DEFAULT_LOCALE, type Locale } from '../config';
 export const ROUTES = {
   home: { de: '', en: '' },
   leistungen: { de: 'leistungen', en: 'services' },
+  'computer-vision': { de: 'leistungen/computer-vision', en: 'services/computer-vision' },
+  prozessoptimierung: {
+    de: 'leistungen/prozessoptimierung',
+    en: 'services/process-optimisation',
+  },
+  datenprojekte: { de: 'leistungen/datenprojekte', en: 'services/data-projects' },
   projekte: { de: 'projekte', en: 'projects' },
   'ueber-uns': { de: 'ueber-uns', en: 'about-us' },
+  karriere: { de: 'karriere', en: 'careers' },
   kontakt: { de: 'kontakt', en: 'contact' },
   blog: { de: 'blog', en: 'blog' },
   impressum: { de: 'impressum', en: 'imprint' },

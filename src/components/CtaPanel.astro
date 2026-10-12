@@ -1,0 +1,72 @@
+---
+import type { Locale } from '../config';
+import { ctaHref } from '../lib/content';
+import DraftTag from './DraftTag.astro';
+
+/** The closing call to action: a Marine panel with one or two buttons. */
+type Cta = { label: string; page?: string; href?: string; anchor?: string };
+
+interface Props {
+  section: {
+    kicker?: string;
+    heading: string;
+    text?: string;
+    draft?: boolean;
+    primaryCta?: Cta;
+    secondaryCta?: Cta;
+  };
+  locale: Locale;
+  /** The content file the section came from, for error messages. */
+  source: string;
+}
+
+const { section, locale, source } = Astro.props;
+---
+
+<section class="px-4">
+  <div class="rounded-3xl bg-marine px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
+    <div
+      class="mx-auto flex max-w-[84rem] flex-col gap-10 lg:flex-row lg:items-end lg:justify-between"
+    >
+      <div>
+        {section.kicker && <p class="kicker text-hellblau">{section.kicker}</p>}
+        <h2
+          class="mt-6 max-w-[14ch] text-4xl leading-[0.95] font-black tracking-[-0.03em] text-balance text-weiss sm:text-6xl"
+        >
+          {section.heading}
+        </h2>
+        {section.draft && <DraftTag locale={locale} dark class="mt-6" />}
+        {
+          section.text && (
+            <p class="mt-6 max-w-[42ch] text-lg leading-relaxed text-pretty text-hellblau">
+              {section.text}
+            </p>
+          )
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4">
+        {
+          section.primaryCta && (
+            <a
+              href={ctaHref(section.primaryCta, locale, source)}
+              class="rounded-full bg-weiss px-7 py-3.5 font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+            >
+              {section.primaryCta.label}
+            </a>
+          )
+        }
+        {
+          section.secondaryCta && (
+            <a
+              href={ctaHref(section.secondaryCta, locale, source)}
+              class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+            >
+              {section.secondaryCta.label}
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</section>

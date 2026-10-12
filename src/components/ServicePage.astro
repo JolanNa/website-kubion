@@ -1,0 +1,37 @@
+---
+import type { Locale } from '../config';
+import type { PageKey } from '../i18n/routes';
+import { loadPage, pageAlternates } from '../lib/content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from './PageHero.astro';
+import PageSections from './PageSections.astro';
+
+/**
+ * The Leistungen overview and each service page: a hero, then whatever
+ * sections the page's frontmatter lists (see PageSections.astro).
+ */
+interface Props {
+  pageKey: PageKey;
+  locale: Locale;
+}
+
+const { pageKey, locale } = Astro.props;
+
+const entry = await loadPage(pageKey, locale);
+const { hero } = entry.data;
+if (!hero) {
+  throw new Error(`src/content/pages/${entry.id}.mdx needs a \`hero\` block.`);
+}
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates(pageKey)}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
+>
+  <PageHero hero={hero} />
+  <PageSections entry={entry} locale={locale} />
+</BaseLayout>

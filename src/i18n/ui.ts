@@ -1,4 +1,5 @@
 import type { Locale } from '../config';
+import type { PageKey } from './routes';
 
 /**
  * Chrome only — navigation, footer, buttons, form labels, aria text.
@@ -16,6 +17,7 @@ export const UI = {
     'nav.leistungen': 'Leistungen',
     'nav.projekte': 'Projekte',
     'nav.ueberUns': 'Über uns',
+    'nav.karriere': 'Karriere',
     'nav.kontakt': 'Kontakt',
     'nav.blog': 'Blog',
     'nav.primary': 'Hauptnavigation',
@@ -39,6 +41,13 @@ export const UI = {
     'blog.by': 'von',
     'blog.empty': 'Noch keine Beiträge vorhanden.',
     'blog.search': 'Beiträge durchsuchen',
+    'blog.author': 'Über den Autor',
+    'blog.summary': 'Kurz gefasst',
+    'blog.cta.kicker': 'Kontakt',
+    'blog.cta.heading': 'Ein ähnliches Thema bei Ihnen?',
+    'blog.cta.text': 'Schreiben Sie uns – wir schauen gemeinsam, was sich daraus machen lässt.',
+    'blog.cta.primary': 'Kontakt aufnehmen',
+    'blog.cta.secondary': 'Weitere Beiträge',
 
     'projekte.title': 'Projekte',
     'projekte.client': 'Kunde',
@@ -60,6 +69,12 @@ export const UI = {
     'form.privacyConsent':
       'Ich habe die Datenschutzerklärung gelesen und stimme der Verarbeitung meiner Daten zu.',
 
+    'draft.label': 'Entwurf',
+    'draft.hint': 'Dieser Abschnitt ist ein Entwurf – Text und Inhalt sind noch nicht final.',
+    'common.more': 'Mehr erfahren',
+    'placeholder.image': 'Bild',
+    'placeholder.logo': 'Logo',
+
     'footer.rights': 'Alle Rechte vorbehalten.',
 
     '404.title': 'Seite nicht gefunden',
@@ -72,6 +87,7 @@ export const UI = {
     'nav.leistungen': 'Services',
     'nav.projekte': 'Projects',
     'nav.ueberUns': 'About us',
+    'nav.karriere': 'Careers',
     'nav.kontakt': 'Contact',
     'nav.blog': 'Blog',
     'nav.primary': 'Main navigation',
@@ -95,6 +111,13 @@ export const UI = {
     'blog.by': 'by',
     'blog.empty': 'No posts yet.',
     'blog.search': 'Search posts',
+    'blog.author': 'About the author',
+    'blog.summary': 'In short',
+    'blog.cta.kicker': 'Contact',
+    'blog.cta.heading': 'Facing something similar?',
+    'blog.cta.text': 'Drop us a line – we will work out together what can be done.',
+    'blog.cta.primary': 'Get in touch',
+    'blog.cta.secondary': 'More posts',
 
     'projekte.title': 'Projects',
     'projekte.client': 'Client',
@@ -115,6 +138,12 @@ export const UI = {
     'form.required': 'Required',
     'form.privacyConsent':
       'I have read the privacy policy and consent to the processing of my data.',
+
+    'draft.label': 'Draft',
+    'draft.hint': 'This section is a draft – copy and content are not final yet.',
+    'common.more': 'Learn more',
+    'placeholder.image': 'Image',
+    'placeholder.logo': 'Logo',
 
     'footer.rights': 'All rights reserved.',
 
@@ -139,37 +168,118 @@ export function useTranslations(locale: Locale) {
 }
 
 /**
- * The Leistungen mega-menu.
+ * The mega-menus — one panel per nav item that opens one.
  *
  * Navigation chrome rather than page prose, so it lives here alongside the other
  * nav strings rather than in a content collection (DECISIONS.md §3). If these
- * grow into real marketing copy, move them into src/content/pages/leistungen.
+ * grow into real marketing copy, move them into src/content/pages/.
+ *
+ * `page` is a page key, so every link resolves to the right localised slug.
  */
+export type MegaId = 'leistungen' | 'about';
+
+export interface MegaPanel {
+  heading: string;
+  items: { title: string; description: string; page: PageKey }[];
+  /** An optional second column of short links, e.g. the industries. */
+  aside?: { heading: string; items: string[]; page: PageKey; anchor?: string };
+  overviewHeading: string;
+  overviewBody: string;
+  overviewCta: string;
+  overviewPage: PageKey;
+}
+
 export const MEGA_MENU = {
   de: {
-    heading: 'Was wir bauen',
-    overviewHeading: 'Überblick',
-    overviewBody:
-      'Wir entwickeln KI-Systeme entlang bestehender Prozesse — von der Bewertung der Use Cases bis zum Betrieb in der Produktion.',
-    overviewCta: 'Alle Leistungen',
-    items: [
-      { title: 'KI-Discovery', description: 'Use Cases bewerten und priorisieren' },
-      { title: 'Prototyp', description: 'An echten Daten getestet' },
-      { title: 'Prozessautomatisierung', description: 'Agenten in bestehende Systeme' },
-      { title: 'Betrieb & Wartung', description: 'Monitoring, SLAs, Weiterentwicklung' },
-    ],
+    leistungen: {
+      heading: 'Was wir machen',
+      overviewHeading: 'Überblick',
+      overviewBody:
+        'Wir lösen Probleme in der Produktion mit Kameras, Daten und KI — von der ersten Analyse bis zum laufenden Betrieb.',
+      overviewCta: 'Alle Leistungen',
+      overviewPage: 'leistungen',
+      items: [
+        {
+          title: 'Computer Vision',
+          description: 'Vision-Systeme von der Kamera bis zum Dashboard',
+          page: 'computer-vision',
+        },
+        {
+          title: 'Prozessoptimierung',
+          description: 'Produktionsprozesse mit Daten verbessern',
+          page: 'prozessoptimierung',
+        },
+        {
+          title: 'Individuelle Datenprojekte',
+          description: 'Für Probleme, die in kein Raster passen',
+          page: 'datenprojekte',
+        },
+      ],
+      aside: {
+        heading: 'Branchen',
+        items: ['Recycling & Entsorgung', 'Druck & Verpackung', 'Lebensmittel', 'Kunststoff', 'Metall'],
+        page: 'leistungen',
+        anchor: 'branchen',
+      },
+    },
+    about: {
+      heading: 'Wer wir sind',
+      overviewHeading: 'Standort',
+      overviewBody:
+        'Wir entwickeln aus Osnabrück und Berlin — nah an den Unternehmen, für die wir bauen.',
+      overviewCta: 'Team kennenlernen',
+      overviewPage: 'ueber-uns',
+      items: [
+        { title: 'Über uns', description: 'Team, Standort und Zusammenarbeit', page: 'ueber-uns' },
+        { title: 'Karriere', description: 'Mit uns an KI-Systemen arbeiten', page: 'karriere' },
+        { title: 'Blog', description: 'Einblicke aus Projekten und Praxis', page: 'blog' },
+      ],
+    },
   },
   en: {
-    heading: 'What we build',
-    overviewHeading: 'Overview',
-    overviewBody:
-      'We build AI systems around the processes you already run — from evaluating use cases through to running them in production.',
-    overviewCta: 'All services',
-    items: [
-      { title: 'AI discovery', description: 'Evaluating and prioritising use cases' },
-      { title: 'Prototype', description: 'Tested against real data' },
-      { title: 'Process automation', description: 'Agents inside existing systems' },
-      { title: 'Operations & maintenance', description: 'Monitoring, SLAs, ongoing work' },
-    ],
+    leistungen: {
+      heading: 'What we do',
+      overviewHeading: 'Overview',
+      overviewBody:
+        'We solve problems in production with cameras, data and AI — from the first analysis through to day-to-day operation.',
+      overviewCta: 'All services',
+      overviewPage: 'leistungen',
+      items: [
+        {
+          title: 'Computer vision',
+          description: 'Vision systems from camera to dashboard',
+          page: 'computer-vision',
+        },
+        {
+          title: 'Process optimisation',
+          description: 'Improving production processes with data',
+          page: 'prozessoptimierung',
+        },
+        {
+          title: 'Custom data projects',
+          description: 'For problems that fit no template',
+          page: 'datenprojekte',
+        },
+      ],
+      aside: {
+        heading: 'Industries',
+        items: ['Recycling & waste', 'Print & packaging', 'Food', 'Plastics', 'Metal'],
+        page: 'leistungen',
+        anchor: 'industries',
+      },
+    },
+    about: {
+      heading: 'Who we are',
+      overviewHeading: 'Location',
+      overviewBody:
+        'We build from Osnabrück and Berlin — close to the companies we work for.',
+      overviewCta: 'Meet the team',
+      overviewPage: 'ueber-uns',
+      items: [
+        { title: 'About us', description: 'Team, location and how we work', page: 'ueber-uns' },
+        { title: 'Careers', description: 'Work on AI systems with us', page: 'karriere' },
+        { title: 'Blog', description: 'Notes from projects and practice', page: 'blog' },
+      ],
+    },
   },
-} as const satisfies Record<Locale, unknown>;
+} as const satisfies Record<Locale, Record<MegaId, MegaPanel>>;

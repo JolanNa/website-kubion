@@ -56,9 +56,9 @@ Steps:
 
 ## Technical
 
-- [ ] **Remove `src/components/DevScrollFiller.astro`** and its use in
-      `src/pages/index.astro` and `src/pages/en/index.astro`. It is placeholder copy and
-      hatched boxes that exist only so the homepage scrolls during development.
+- [ ] **No draft content left.** No `draft: true` in `src/content/pages/` (each one renders
+      a visible "Entwurf" tag), no `<Placeholder>` hatched boxes, no placeholder team
+      members, and the contact form is wired up (`DECISIONS.md` §7) instead of disabled.
 - [ ] `hreflang` DE/EN pairs plus `x-default` correct on every page
 - [ ] Clean URLs verified live: `/leistungen` resolves, `/leistungen/` 301s to it, and
       `/leistungen.html` 301s to it too (`DECISIONS.md` §6) — otherwise duplicate content

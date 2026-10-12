@@ -1,0 +1,199 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../config';
+import { ctaHref, getPosts, pageSection, postPath } from '../lib/content';
+import { useTranslations } from '../i18n/ui';
+import ArrowLink from './ArrowLink.astro';
+import CtaPanel from './CtaPanel.astro';
+import DraftTag from './DraftTag.astro';
+import Placeholder from './Placeholder.astro';
+import SectionHeader from './SectionHeader.astro';
+import Steps from './Steps.astro';
+
+/**
+ * Everything on the homepage below the hero.
+ *
+ * Order: clients → services → projects → process → about → blog → contact.
+ * Copy comes from the `sections` block of src/content/pages/home/<locale>.mdx.
+ */
+interface Props {
+  entry: CollectionEntry<'pages'>;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const source = `src/content/pages/${entry.id}.mdx`;
+
+const clients = pageSection(entry, 'clients');
+const services = pageSection(entry, 'services');
+const projects = pageSection(entry, 'projects');
+const process = pageSection(entry, 'process');
+const about = pageSection(entry, 'about');
+const blog = pageSection(entry, 'blog');
+const cta = pageSection(entry, 'cta');
+
+const posts = (await getPosts(locale)).slice(0, 3);
+
+const dateFormat = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const wrap = 'mx-auto max-w-[84rem]';
+const gutter = 'px-4 sm:px-16 lg:px-20';
+---
+
+<section class:list={[gutter, 'py-14 lg:py-20']}>
+  <div class:list={[wrap, 'flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-16']}>
+    <h2 class="flex shrink-0 flex-wrap items-center gap-4">
+      <span class="kicker text-marine-70">{clients.kicker ?? clients.heading}</span>
+      {clients.draft && <DraftTag locale={locale} />}
+    </h2>
+    <ul class="grid flex-1 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      {
+        clients.items.map(() => (
+          <li>
+            <Placeholder label={t('placeholder.logo')} class="h-14 rounded-lg" />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<section class:list={[gutter, 'py-14 lg:py-24']}>
+  <div class={wrap}>
+    <SectionHeader section={services} locale={locale} />
+
+    <ul class="mt-12 grid gap-4 lg:mt-16 lg:grid-cols-3 lg:gap-6">
+      {
+        services.items.map((item, index) => (
+          <li class="flex flex-col rounded-3xl bg-nebel p-6 sm:p-8">
+            <span class="kicker flex size-9 items-center justify-center rounded-lg bg-marine text-weiss">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <h3 class="mt-10 max-w-[18ch] text-2xl leading-tight font-bold tracking-[-0.02em] text-balance sm:text-3xl">
+              {item.title}
+            </h3>
+            {item.text && (
+              <p class="mt-5 max-w-[44ch] text-lg leading-relaxed text-pretty text-marine-70">
+                {item.text}
+              </p>
+            )}
+            {item.points.length > 0 && (
+              <ul class="mt-8 flex flex-wrap gap-2">
+                {item.points.map((point) => (
+                  <li class="rounded-full bg-weiss px-4 py-1.5 text-sm text-marine">{point}</li>
+                ))}
+              </ul>
+            )}
+            <ArrowLink href={ctaHref(item, locale, source)} class="mt-auto pt-10">
+              {t('common.more')}
+            </ArrowLink>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<section class:list={[gutter, 'py-14 lg:py-24']}>
+  <div class={wrap}>
+    <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <SectionHeader section={projects} locale={locale} />
+      {
+        projects.primaryCta && (
+          <ArrowLink href={ctaHref(projects.primaryCta, locale, source)}>
+            {projects.primaryCta.label}
+          </ArrowLink>
+        )
+      }
+    </div>
+
+    <ul class="mt-12 grid gap-4 md:grid-cols-3 lg:mt-16 lg:gap-6">
+      {
+        projects.items.map((item) => (
+          <li class="rounded-2xl bg-nebel p-4">
+            <Placeholder label={t('placeholder.image')} class="aspect-[4/3] w-full rounded-xl" />
+            <div class="px-2 pt-6 pb-2">
+              {item.meta && <p class="kicker text-marine-70">{item.meta}</p>}
+              <h3 class="mt-3 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+              {item.text && <p class="mt-2 leading-relaxed text-marine-70">{item.text}</p>}
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<section class="px-4 py-14 lg:py-24">
+  <div class="rounded-3xl bg-nebel px-6 pt-16 pb-6 sm:px-12 lg:px-16 lg:pt-24 lg:pb-14">
+    <div class={wrap}>
+      <SectionHeader section={process} locale={locale} />
+      <Steps items={process.items} class="mt-12 lg:mt-16" />
+    </div>
+  </div>
+</section>
+
+<section class:list={[gutter, 'py-14 lg:py-24']}>
+  <div class:list={[wrap, 'grid items-center gap-10 lg:grid-cols-2 lg:gap-16']}>
+    <Placeholder label={t('placeholder.image')} class="aspect-[4/3] w-full rounded-3xl" />
+    <div>
+      <SectionHeader section={about} locale={locale} />
+      {
+        about.primaryCta && (
+          <ArrowLink href={ctaHref(about.primaryCta, locale, source)} class="mt-10">
+            {about.primaryCta.label}
+          </ArrowLink>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+{
+  posts.length > 0 && (
+    <section class:list={[gutter, 'py-14 lg:py-24']}>
+      <div class={wrap}>
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeader section={blog} locale={locale} />
+          {blog.primaryCta && (
+            <ArrowLink href={ctaHref(blog.primaryCta, locale, source)}>
+              {blog.primaryCta.label}
+            </ArrowLink>
+          )}
+        </div>
+
+        <ul class="mt-12 border-t border-marine-15 lg:mt-16">
+          {posts.map((post) => (
+            <li class="border-b border-marine-15">
+              <a
+                href={postPath(post, locale)}
+                class="group grid gap-2 py-6 sm:grid-cols-[12rem_1fr] sm:gap-8 sm:py-8"
+              >
+                <time datetime={post.data.publishedAt.toISOString()} class="kicker pt-1.5 text-marine-70">
+                  {dateFormat.format(post.data.publishedAt)}
+                </time>
+                <span>
+                  <span class="block text-xl font-semibold tracking-[-0.01em] underline-offset-4 group-hover:underline">
+                    {post.data.title}
+                  </span>
+                  <span class="mt-2 block max-w-[60ch] leading-relaxed text-marine-70">
+                    {post.data.description}
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<div class="pt-6 lg:pt-10">
+  <CtaPanel section={cta} locale={locale} source={source} />
+</div>

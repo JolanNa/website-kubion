@@ -64,9 +64,13 @@ changes should go through review and leave a git diff as audit trail.
 |---|---|---|
 | `/` | `/en` | repo |
 | `/leistungen` | `/en/services` | repo |
+| `/leistungen/computer-vision` | `/en/services/computer-vision` | repo |
+| `/leistungen/prozessoptimierung` | `/en/services/process-optimisation` | repo |
+| `/leistungen/datenprojekte` | `/en/services/data-projects` | repo |
 | `/projekte` | `/en/projects` | repo |
 | `/projekte/<slug>` | `/en/projects/<slug>` | repo (MDX per project) |
-| `/ueber-uns` | `/en/about-us` | repo |
+| `/ueber-uns` | `/en/about-us` | repo (page) + CMS (team members) |
+| `/karriere` | `/en/careers` | repo |
 | `/kontakt` | `/en/contact` | repo |
 | `/blog` | `/en/blog` | repo (index) + CMS (posts) |
 | `/blog/<slug>` | `/en/blog/<slug>` | CMS |

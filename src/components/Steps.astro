@@ -1,0 +1,28 @@
+---
+/** A numbered row of steps or principles. */
+interface Props {
+  items: { title: string; text?: string }[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+
+// Spelled out so Tailwind sees the class names.
+const columns =
+  { 3: 'lg:grid-cols-3', 5: 'lg:grid-cols-5', 6: 'lg:grid-cols-3' }[items.length] ??
+  'lg:grid-cols-4';
+---
+
+<ol class:list={['grid gap-x-6 sm:grid-cols-2', columns, className]}>
+  {
+    items.map((item, index) => (
+      <li class="border-t border-marine-15 pt-6 pb-10">
+        <span class="kicker flex size-9 items-center justify-center rounded-lg bg-marine text-weiss">
+          {String(index + 1).padStart(2, '0')}
+        </span>
+        <h3 class="mt-6 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+        {item.text && <p class="mt-3 leading-relaxed text-pretty text-marine-70">{item.text}</p>}
+      </li>
+    ))
+  }
+</ol>

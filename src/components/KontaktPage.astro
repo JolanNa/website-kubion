@@ -1,0 +1,93 @@
+---
+import type { Locale } from '../config';
+import { loadPage, pageAlternates, pageSection } from '../lib/content';
+import { useTranslations } from '../i18n/ui';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DraftTag from './DraftTag.astro';
+import PageHero from './PageHero.astro';
+import SectionHeader from './SectionHeader.astro';
+
+/**
+ * The Kontakt page: contact details beside the form.
+ *
+ * The form is a disabled sketch — it has no handler yet (DECISIONS.md §7), so
+ * it must not look submittable.
+ */
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+
+const entry = await loadPage('kontakt', locale);
+const source = `src/content/pages/${entry.id}.mdx`;
+const { hero } = entry.data;
+if (!hero) throw new Error(`The Kontakt page needs a \`hero\` block in ${source}.`);
+
+const details = pageSection(entry, 'details');
+
+const field =
+  'mt-2 w-full rounded-xl border border-marine-15 bg-weiss px-4 py-3 text-marine placeholder:text-marine-45';
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates('kontakt')}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
+>
+  <PageHero hero={hero} />
+
+  <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
+    <div class="mx-auto grid max-w-[84rem] gap-12 lg:grid-cols-2 lg:gap-16">
+      <div>
+        <SectionHeader section={details} locale={locale} />
+        <dl class="mt-12 border-t border-marine-15">
+          {
+            details.items.map((item) => (
+              <div class="grid gap-1 border-b border-marine-15 py-5 sm:grid-cols-[10rem_1fr] sm:gap-6">
+                <dt class="kicker pt-1 text-marine-70">{item.title}</dt>
+                <dd class="text-lg font-medium">{item.meta}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+
+      <form class="rounded-3xl bg-nebel p-6 sm:p-10" onsubmit="return false">
+        <DraftTag locale={locale} />
+        <fieldset disabled class="mt-6 grid gap-5">
+          <label class="block text-sm font-medium">
+            {t('form.name')}
+            <input type="text" name="name" autocomplete="name" class={field} />
+          </label>
+          <label class="block text-sm font-medium">
+            {t('form.email')}
+            <input type="email" name="email" autocomplete="email" class={field} />
+          </label>
+          <label class="block text-sm font-medium">
+            {t('form.company')}
+            <input type="text" name="company" autocomplete="organization" class={field} />
+          </label>
+          <label class="block text-sm font-medium">
+            {t('form.message')}
+            <textarea name="message" rows="5" class={field}></textarea>
+          </label>
+          <label class="flex items-start gap-3 text-sm text-marine-70">
+            <input type="checkbox" name="consent" class="mt-1" />
+            {t('form.privacyConsent')}
+          </label>
+          <button
+            type="submit"
+            class="justify-self-start rounded-full bg-marine px-7 py-3.5 font-medium text-weiss opacity-50"
+          >
+            {t('form.submit')}
+          </button>
+        </fieldset>
+      </form>
+    </div>
+  </section>
+</BaseLayout>

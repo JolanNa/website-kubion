@@ -1,7 +1,13 @@
 ---
 import type { Locale } from '../config';
 import { localizedPath, type PageKey } from '../i18n/routes';
-import { MEGA_MENU, useTranslations, type UIKey } from '../i18n/ui';
+import {
+  MEGA_MENU,
+  useTranslations,
+  type MegaId,
+  type MegaPanel,
+  type UIKey,
+} from '../i18n/ui';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import Logo from './Logo.astro';
 import type { Alternate } from '../lib/content';
@@ -34,6 +40,12 @@ const t = useTranslations(locale);
  * CSS via `group-data-*`, so the animation and the logic stay separable:
  *   data-scrolled           page has scrolled → frost the shell and compress it
  *   data-open + data-panel  a panel is open ("mega" or "menu")
+ *   data-mega               which mega menu the open panel shows
+ *
+ * The mega menus are stacked in one grid cell rather than swapped with
+ * `display`, so the panel is always as tall as the tallest of them. Moving the
+ * pointer from one trigger to the next then cross-fades the content instead of
+ * snapping the island to a new height.
  *
  * The panel expands with the grid-rows 0fr→1fr technique, which animates to the
  * content's natural height. `height: auto` is not animatable, and measuring it
@@ -47,19 +59,21 @@ const t = useTranslations(locale);
  * it a stacking context.
  */
 
-const NAV: { key: PageKey; label: UIKey; mega?: boolean }[] = [
+/** `covers` lists the pages a mega menu links to, so its trigger stays marked on them. */
+const NAV: { key: PageKey; label: UIKey; mega?: MegaId; covers?: PageKey[] }[] = [
   { key: 'home', label: 'nav.home' },
-  { key: 'leistungen', label: 'nav.leistungen', mega: true },
+  { key: 'leistungen', label: 'nav.leistungen', mega: 'leistungen' },
   { key: 'projekte', label: 'nav.projekte' },
-  { key: 'ueber-uns', label: 'nav.ueberUns' },
+  { key: 'ueber-uns', label: 'nav.ueberUns', mega: 'about', covers: ['karriere', 'blog'] },
 ];
 
 const MOBILE_NAV: { key: PageKey; label: UIKey }[] = [
   ...NAV.map(({ key, label }) => ({ key, label })),
+  { key: 'karriere', label: 'nav.karriere' },
   { key: 'blog', label: 'nav.blog' },
 ];
 
-const mega = MEGA_MENU[locale];
+const megaPanels = Object.entries(MEGA_MENU[locale]) as [MegaId, MegaPanel][];
 
 // Normalised so `/leistungen.html` (the built filename) still matches at runtime.
 const current =
@@ -106,22 +120,22 @@ const navItemClass =
       >
         <ul class="flex items-center gap-1">
           {
-            NAV.map(({ key, label, mega: hasMega }) => {
-              const active = isActive(key);
+            NAV.map(({ key, label, mega: megaId, covers = [] }) => {
+              const active = [key, ...covers].some(isActive);
               const stateClass = active ? 'text-marine' : 'text-marine-70 hover:text-marine';
 
               return (
                 <li>
-                  {hasMega ? (
+                  {megaId ? (
                     /*
                      * A button, not a link: it toggles a panel, so it needs
-                     * aria-expanded — and the panel's own "Alle Leistungen" link
-                     * is how you reach the page itself.
+                     * aria-expanded — and the panel's own links are how you
+                     * reach the page itself.
                      */
                     <button
                       type="button"
                       data-nav-item
-                      data-mega-trigger
+                      data-mega-trigger={megaId}
                       data-active={active ? '' : undefined}
                       aria-expanded="false"
                       aria-controls="nav-panel"
@@ -198,57 +212,85 @@ const navItemClass =
             clears it by just 9px.
           */}
           <div class="mx-6 mt-2 h-px bg-marine-15"></div>
-          <div class="grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-5 pb-6">
-            <div>
-              <p class="kicker text-marine-45">{mega.heading}</p>
-              <ul class="mt-5 space-y-1">
-                {
-                  mega.items.map((item, index) => (
-                    <li>
-                      <a
-                        href={localizedPath('leistungen', locale)}
-                        class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
-                      >
-                        <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                        <span>
-                          <span class="block font-semibold text-marine">{item.title}</span>
-                          <span class="block text-sm text-marine-70">{item.description}</span>
-                        </span>
-                      </a>
-                    </li>
-                  ))
-                }
-              </ul>
-            </div>
-
-            <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
-              <div>
-                <p class="kicker text-hellblau">{mega.overviewHeading}</p>
-                <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
-                  {mega.overviewBody}
-                </p>
-              </div>
-              <a
-                href={localizedPath('leistungen', locale)}
-                class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
-              >
-                <span
-                  class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+          <div class="grid">
+            {
+              megaPanels.map(([id, mega]) => (
+                <div
+                  data-mega-panel={id}
+                  class:list={[
+                    'invisible col-start-1 row-start-1 grid gap-6 px-6 pt-5 pb-6 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100',
+                    mega.aside ? 'grid-cols-[1.15fr_0.8fr_1fr]' : 'grid-cols-[1.15fr_1fr]',
+                  ]}
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path
-                      d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"></path>
-                  </svg>
-                </span>
-                {mega.overviewCta}
-              </a>
-            </div>
+                  <div>
+                    <p class="kicker text-marine-45">{mega.heading}</p>
+                    <ul class="mt-5 space-y-1">
+                      {mega.items.map((item, index) => (
+                        <li>
+                          <a
+                            href={localizedPath(item.page, locale)}
+                            class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
+                          >
+                            <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
+                              {String(index + 1).padStart(2, '0')}
+                            </span>
+                            <span>
+                              <span class="block font-semibold text-marine">{item.title}</span>
+                              <span class="block text-sm text-marine-70">{item.description}</span>
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {mega.aside && (
+                    <div class="border-l border-marine-15 pl-6">
+                      <p class="kicker text-marine-45">{mega.aside.heading}</p>
+                      <ul class="mt-5">
+                        {mega.aside.items.map((label) => (
+                          <li>
+                            <a
+                              href={`${localizedPath(mega.aside!.page, locale)}${mega.aside!.anchor ? `#${mega.aside!.anchor}` : ''}`}
+                              class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-[0.9375rem] text-marine-70 transition-colors duration-200 hover:bg-nebel hover:text-marine"
+                            >
+                              <span class="h-[3px] w-3 shrink-0 rounded-full bg-marine-15" aria-hidden="true" />
+                              {label}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
+                    <div>
+                      <p class="kicker text-hellblau">{mega.overviewHeading}</p>
+                      <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
+                        {mega.overviewBody}
+                      </p>
+                    </div>
+                    <a
+                      href={localizedPath(mega.overviewPage, locale)}
+                      class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
+                    >
+                      <span class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                          <path
+                            d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      {mega.overviewCta}
+                    </a>
+                  </div>
+                </div>
+              ))
+            }
           </div>
         </div>
 
@@ -343,38 +385,59 @@ const navItemClass =
     const header = document.querySelector<HTMLElement>('[data-header]');
     if (!header) return;
 
-    const megaTrigger = header.querySelector<HTMLButtonElement>('[data-mega-trigger]');
+    const megaTriggers = [
+      ...header.querySelectorAll<HTMLButtonElement>('[data-mega-trigger]'),
+    ];
+    const megaPanels = [...header.querySelectorAll<HTMLElement>('[data-mega-panel]')];
     const menuToggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]');
 
     // --- Panels ------------------------------------------------------------
 
-    function openPanel(panel: 'mega' | 'menu') {
+    /** Reflect which mega menu (if any) is showing on the triggers and panels. */
+    function syncMega(mega?: string) {
+      for (const trigger of megaTriggers) {
+        trigger.setAttribute('aria-expanded', String(trigger.dataset.megaTrigger === mega));
+      }
+      for (const panel of megaPanels) {
+        panel.toggleAttribute('data-current', panel.dataset.megaPanel === mega);
+      }
+    }
+
+    function openPanel(panel: 'mega' | 'menu', mega?: string) {
       header!.dataset.panel = panel;
+      if (mega) header!.dataset.mega = mega;
+      else delete header!.dataset.mega;
       header!.setAttribute('data-open', '');
-      megaTrigger?.setAttribute('aria-expanded', String(panel === 'mega'));
+      syncMega(mega);
       menuToggle?.setAttribute('aria-expanded', String(panel === 'menu'));
     }
 
     function closePanel() {
       header!.removeAttribute('data-open');
       delete header!.dataset.panel;
-      megaTrigger?.setAttribute('aria-expanded', 'false');
+      for (const trigger of megaTriggers) trigger.setAttribute('aria-expanded', 'false');
       menuToggle?.setAttribute('aria-expanded', 'false');
     }
 
-    const isOpen = (panel?: string) =>
-      header!.hasAttribute('data-open') && (!panel || header!.dataset.panel === panel);
+    const isOpen = (panel?: string, mega?: string) =>
+      header!.hasAttribute('data-open') &&
+      (!panel || header!.dataset.panel === panel) &&
+      (!mega || header!.dataset.mega === mega);
 
-    megaTrigger?.addEventListener('click', () => {
-      if (isOpen('mega')) closePanel();
-      else openPanel('mega');
-    });
+    for (const trigger of megaTriggers) {
+      const mega = trigger.dataset.megaTrigger!;
 
-    // Hover opens on desktop only — a touch "hover" would fire on tap and fight
-    // the click handler.
-    megaTrigger?.addEventListener('pointerenter', (event) => {
-      if ((event as PointerEvent).pointerType === 'mouse') openPanel('mega');
-    });
+      trigger.addEventListener('click', () => {
+        if (isOpen('mega', mega)) closePanel();
+        else openPanel('mega', mega);
+      });
+
+      // Hover opens on desktop only — a touch "hover" would fire on tap and
+      // fight the click handler.
+      trigger.addEventListener('pointerenter', (event) => {
+        if ((event as PointerEvent).pointerType === 'mouse') openPanel('mega', mega);
+      });
+    }
 
     menuToggle?.addEventListener('click', () => {
       if (isOpen('menu')) closePanel();
@@ -389,9 +452,12 @@ const navItemClass =
 
     header.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape' || !isOpen()) return;
-      const wasMenu = header.dataset.panel === 'menu';
+      const opener =
+        header.dataset.panel === 'menu'
+          ? menuToggle
+          : megaTriggers.find((trigger) => trigger.dataset.megaTrigger === header.dataset.mega);
       closePanel();
-      (wasMenu ? menuToggle : megaTrigger)?.focus();
+      opener?.focus();
     });
 
     document.addEventListener('click', (event) => {

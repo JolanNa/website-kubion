@@ -1,0 +1,136 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../config';
+import { getTeam, loadPage, pageAlternates } from '../lib/content';
+import { resolveImage } from '../lib/images';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CtaPanel from './CtaPanel.astro';
+import DraftTag from './DraftTag.astro';
+import PageHero from './PageHero.astro';
+import SectionHeader from './SectionHeader.astro';
+import Steps from './Steps.astro';
+
+/**
+ * The Über-uns page: who we are, the team, how we work, and a way to get in
+ * touch. Team and "about" are one page on purpose, so the nav needs a single
+ * entry for both.
+ *
+ * Section copy comes from src/content/pages/ueber-uns/<locale>.mdx frontmatter
+ * (DECISIONS.md §3); the people come from the CMS-managed team collection.
+ */
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const source = `src/content/pages/ueber-uns/${locale}.mdx`;
+const entry = await loadPage('ueber-uns', locale);
+const { hero, about } = entry.data;
+
+if (!hero || !about) {
+  throw new Error(`The Über-uns page needs a \`hero\` and an \`about\` block in ${source}.`);
+}
+
+const team = await getTeam(locale);
+
+/** Stands in for the portrait until a photo is uploaded. */
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return [parts[0], parts.length > 1 ? parts.at(-1) : undefined]
+    .map((part) => part?.[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates('ueber-uns')}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
+>
+  <PageHero hero={hero} />
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto max-w-[84rem]">
+      <div class="grid gap-10 lg:grid-cols-2 lg:gap-16">
+        <div>
+          <p class="kicker text-marine-70">{about.intro.kicker}</p>
+          <h2
+            class="mt-6 max-w-[18ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl"
+          >
+            {about.intro.heading}
+          </h2>
+          {about.intro.draft && <DraftTag locale={locale} class="mt-5" />}
+        </div>
+        <div class="space-y-5 text-lg leading-relaxed text-pretty text-marine-70 lg:pt-10">
+          {about.intro.body.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+
+      {
+        about.intro.facts.length > 0 && (
+          <dl class="mt-16 grid border-t border-marine-15 sm:grid-cols-3 lg:mt-24">
+            {about.intro.facts.map((fact) => (
+              <div class="border-b border-marine-15 py-6 sm:border-b-0 sm:border-l sm:py-8 sm:pl-6 sm:first:border-l-0 sm:first:pl-0">
+                <dt class="kicker text-marine-70">{fact.label}</dt>
+                <dd class="mt-3 text-xl font-semibold tracking-[-0.01em]">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="px-4">
+    <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
+      <div class="mx-auto max-w-[84rem]">
+        <SectionHeader section={about.team} locale={locale} />
+
+        <ul class="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4">
+          {
+            team.map((member) => {
+              const photo = resolveImage(member.data.photo);
+              return (
+                <li>
+                  {photo ? (
+                    <Image
+                      src={photo}
+                      alt=""
+                      widths={[320, 480, 640]}
+                      sizes="(min-width: 1024px) 20rem, 50vw"
+                      class="aspect-[4/5] w-full rounded-2xl object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div
+                      class="flex aspect-[4/5] w-full items-center justify-center rounded-2xl bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
+                      aria-hidden="true"
+                    >
+                      {initials(member.data.name)}
+                    </div>
+                  )}
+                  <p class="mt-4 text-lg font-semibold tracking-[-0.01em]">{member.data.name}</p>
+                  <p class="kicker mt-1.5 text-marine-70">{member.data.role}</p>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto max-w-[84rem]">
+      <SectionHeader section={about.collaboration} locale={locale} />
+      <Steps items={about.collaboration.steps} class="mt-12 lg:mt-16" />
+    </div>
+  </section>
+
+  <CtaPanel section={about.cta} locale={locale} source={source} />
+</BaseLayout>

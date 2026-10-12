@@ -1,0 +1,44 @@
+---
+import type { Locale } from '../config';
+import DraftTag from './DraftTag.astro';
+
+/** Kicker, heading, draft tag and intro of a page section. */
+interface Props {
+  section: { kicker?: string; heading: string; text?: string; draft?: boolean };
+  locale: Locale;
+  /** On a Marine ground. */
+  dark?: boolean;
+  class?: string;
+}
+
+const { section, locale, dark = false, class: className } = Astro.props;
+---
+
+<div class={className}>
+  {
+    section.kicker && (
+      <p class:list={['kicker', dark ? 'text-hellblau' : 'text-marine-70']}>{section.kicker}</p>
+    )
+  }
+  <h2
+    class:list={[
+      'mt-6 max-w-[20ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl',
+      dark && 'text-weiss',
+    ]}
+  >
+    {section.heading}
+  </h2>
+  {section.draft && <DraftTag locale={locale} dark={dark} class="mt-5" />}
+  {
+    section.text && (
+      <p
+        class:list={[
+          'mt-6 max-w-[52ch] text-lg leading-relaxed text-pretty',
+          dark ? 'text-hellblau' : 'text-marine-70',
+        ]}
+      >
+        {section.text}
+      </p>
+    )
+  }
+</div>

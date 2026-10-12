@@ -1,0 +1,19 @@
+---
+/**
+ * A hatched box standing in for an image or logo that does not exist yet.
+ * Size and aspect ratio come from the caller's classes.
+ */
+interface Props {
+  label?: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+<div
+  class:list={['placeholder-hatch flex items-center justify-center', className]}
+  aria-hidden="true"
+>
+  {label && <span class="kicker rounded-full bg-weiss px-3 py-1 text-marine-70">{label}</span>}
+</div>

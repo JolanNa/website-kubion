@@ -1,0 +1,76 @@
+---
+import type { Locale } from '../config';
+import { ctaHref, loadPage, pageAlternates, pageSection } from '../lib/content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CtaPanel from './CtaPanel.astro';
+import PageHero from './PageHero.astro';
+import SectionHeader from './SectionHeader.astro';
+import Steps from './Steps.astro';
+
+/** The Karriere page: why work here, open roles, and how to apply. */
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const entry = await loadPage('karriere', locale);
+const source = `src/content/pages/${entry.id}.mdx`;
+const { hero } = entry.data;
+if (!hero) throw new Error(`The Karriere page needs a \`hero\` block in ${source}.`);
+
+const why = pageSection(entry, 'why');
+const jobs = pageSection(entry, 'jobs');
+const cta = pageSection(entry, 'cta');
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.data.title}
+  description={entry.data.description}
+  alternates={pageAlternates('karriere')}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
+>
+  <PageHero hero={hero} />
+
+  <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
+    <div class="mx-auto max-w-[84rem]">
+      <SectionHeader section={why} locale={locale} />
+      <Steps items={why.items} class="mt-12 lg:mt-16" />
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto max-w-[84rem]">
+      <SectionHeader section={jobs} locale={locale} />
+      <ul class="mt-12 border-t border-marine-15 lg:mt-16">
+        {
+          jobs.items.map((item) => (
+            <li class="border-b border-marine-15">
+              <a
+                href={ctaHref(item, locale, source)}
+                class="group flex items-center justify-between gap-6 py-6 sm:py-8"
+              >
+                <span>
+                  <span class="block text-xl font-semibold tracking-[-0.01em] sm:text-2xl">
+                    {item.title}
+                  </span>
+                  {item.meta && <span class="kicker mt-2 block text-marine-70">{item.meta}</span>}
+                </span>
+                <span
+                  class="text-2xl transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  →
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaPanel section={cta} locale={locale} source={source} />
+</BaseLayout>
