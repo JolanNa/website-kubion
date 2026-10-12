@@ -38,7 +38,7 @@ const section = z.object({
    * leave this unset.
    */
   layout: z
-    .enum(['rows', 'cards', 'chips', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
+    .enum(['rows', 'cards', 'carousel', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
     .optional(),
   /** Describes the image that belongs here; rendered as a labelled placeholder. */
   imageNote: z.string().optional(),
@@ -51,6 +51,9 @@ const section = z.object({
         /** Small mono label: a category, a location, a contact value. */
         meta: z.string().optional(),
         points: z.array(z.string()).default([]),
+        /** Photo for the `carousel` layout: a path under src/assets/uploads/. */
+        image: z.string().optional(),
+        imageAlt: z.string().optional(),
         ...link,
       }),
     )

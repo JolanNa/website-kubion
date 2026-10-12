@@ -72,6 +72,8 @@ export const UI = {
     'draft.label': 'Entwurf',
     'draft.hint': 'Dieser Abschnitt ist ein Entwurf – Text und Inhalt sind noch nicht final.',
     'common.more': 'Mehr erfahren',
+    'carousel.prev': 'Zurück',
+    'carousel.next': 'Weiter',
     'placeholder.image': 'Bild',
     'placeholder.logo': 'Logo',
 
@@ -142,6 +144,8 @@ export const UI = {
     'draft.label': 'Draft',
     'draft.hint': 'This section is a draft – copy and content are not final yet.',
     'common.more': 'Learn more',
+    'carousel.prev': 'Previous',
+    'carousel.next': 'Next',
     'placeholder.image': 'Image',
     'placeholder.logo': 'Logo',
 
@@ -180,9 +184,8 @@ export type MegaId = 'leistungen' | 'about';
 
 export interface MegaPanel {
   heading: string;
-  items: { title: string; description: string; page: PageKey }[];
-  /** An optional second column of short links, e.g. the industries. */
-  aside?: { heading: string; items: string[]; page: PageKey; anchor?: string };
+  /** `anchor` points at a section of the page, e.g. the industries on Leistungen. */
+  items: { title: string; description: string; page: PageKey; anchor?: string }[];
   overviewHeading: string;
   overviewBody: string;
   overviewCta: string;
@@ -192,7 +195,7 @@ export interface MegaPanel {
 export const MEGA_MENU = {
   de: {
     leistungen: {
-      heading: 'Was wir machen',
+      heading: 'Unsere Expertise',
       overviewHeading: 'Überblick',
       overviewBody:
         'Wir lösen Probleme in der Produktion mit Kameras, Daten und KI — von der ersten Analyse bis zum laufenden Betrieb.',
@@ -214,13 +217,13 @@ export const MEGA_MENU = {
           description: 'Für Probleme, die in kein Raster passen',
           page: 'datenprojekte',
         },
+        {
+          title: 'Branchen',
+          description: 'Ein breites Spektrum an Anwendungsmöglichkeiten',
+          page: 'leistungen',
+          anchor: 'branchen',
+        },
       ],
-      aside: {
-        heading: 'Branchen',
-        items: ['Recycling & Entsorgung', 'Druck & Verpackung', 'Lebensmittel', 'Kunststoff', 'Metall'],
-        page: 'leistungen',
-        anchor: 'branchen',
-      },
     },
     about: {
       heading: 'Wer wir sind',
@@ -238,7 +241,7 @@ export const MEGA_MENU = {
   },
   en: {
     leistungen: {
-      heading: 'What we do',
+      heading: 'Our expertise',
       overviewHeading: 'Overview',
       overviewBody:
         'We solve problems in production with cameras, data and AI — from the first analysis through to day-to-day operation.',
@@ -260,13 +263,13 @@ export const MEGA_MENU = {
           description: 'For problems that fit no template',
           page: 'datenprojekte',
         },
+        {
+          title: 'Industries',
+          description: 'A broad range of applications',
+          page: 'leistungen',
+          anchor: 'industries',
+        },
       ],
-      aside: {
-        heading: 'Industries',
-        items: ['Recycling & waste', 'Print & packaging', 'Food', 'Plastics', 'Metal'],
-        page: 'leistungen',
-        anchor: 'industries',
-      },
     },
     about: {
       heading: 'Who we are',
