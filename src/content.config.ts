@@ -38,7 +38,7 @@ const section = z.object({
    * leave this unset.
    */
   layout: z
-    .enum(['rows', 'cards', 'chips', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
+    .enum(['rows', 'cards', 'carousel', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
     .optional(),
   /** Describes the image that belongs here; rendered as a labelled placeholder. */
   imageNote: z.string().optional(),
@@ -51,6 +51,9 @@ const section = z.object({
         /** Small mono label: a category, a location, a contact value. */
         meta: z.string().optional(),
         points: z.array(z.string()).default([]),
+        /** Photo for the `carousel` layout: a path under src/assets/uploads/. */
+        image: z.string().optional(),
+        imageAlt: z.string().optional(),
         ...link,
       }),
     )
@@ -90,6 +93,8 @@ const pages = defineCollection({
         eyebrow: z.string().optional(),
         /** Footnote under the hero, e.g. the location line. */
         note: z.string().optional(),
+        /** Longer intro paragraph next to the headline (Über-uns hero). */
+        body: z.string().optional(),
         primaryCta: cta.optional(),
         secondaryCta: cta.optional(),
         textLink: cta.optional(),
@@ -104,12 +109,28 @@ const pages = defineCollection({
     /** Sections of the Über-uns page (src/components/AboutPage.astro). */
     about: z
       .object({
-        intro: z.object({
+        /** The founding story, set next to the team photo. */
+        story: z.object({
           draft: z.boolean().default(false),
-          kicker: z.string(),
+          kicker: z.string().optional(),
           heading: z.string(),
           body: z.array(z.string()),
-          facts: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+          /** A path under src/assets/uploads/. */
+          image: z.string(),
+          imageAlt: z.string(),
+        }),
+        /** Key figures, counted up one after another as they scroll in. */
+        stats: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          items: z.array(
+            z.object({
+              value: z.number().int().nonnegative(),
+              /** Appended to the number, e.g. "+". */
+              suffix: z.string().default(''),
+              label: z.string(),
+            }),
+          ),
         }),
         team: z.object({
           draft: z.boolean().default(false),
