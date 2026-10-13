@@ -73,6 +73,7 @@ const blobs = [
   */}
   <div
     data-hero
+    data-spotlight
     class="hero relative isolate flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(1.5rem,5svh,3.5rem)] sm:px-12 lg:px-16"
   >
     {/*
@@ -243,44 +244,6 @@ const blobs = [
 </section>
 
 <style>
-  /*
-   * Grid backdrop. Lines are Hellblau at low opacity; the radial mask fades the
-   * grid out towards the panel edges so it reads as depth, not wallpaper.
-   */
-  .hero-grid {
-    --grid-line: color-mix(in srgb, var(--color-hellblau) 9%, transparent);
-    background-image:
-      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-    background-size: 48px 48px;
-    background-position: center center;
-    mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 100%);
-  }
-
-  /*
-   * The same grid, brighter, visible only in a circle around the pointer. The
-   * script writes --spot-x/--spot-y; --spot-size is 0 until the pointer enters.
-   */
-  .hero-grid--spot {
-    --grid-line: color-mix(in srgb, var(--color-hellblau) 32%, transparent);
-    mask-image: radial-gradient(
-      circle var(--spot-size, 0px) at var(--spot-x, 50%) var(--spot-y, 50%),
-      #000 0%,
-      transparent 100%
-    );
-    transition: --spot-size 0.6s var(--ease-out-quint);
-  }
-
-  .hero:hover .hero-grid--spot {
-    --spot-size: 260px;
-  }
-
-  @property --spot-size {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-  }
-
   /* Pre-intro state (set by the inline script before first paint). */
   .hero[data-intro='pending'] [data-reveal],
   .hero[data-intro='pending'] [data-mark-path] {

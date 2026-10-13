@@ -109,6 +109,46 @@
 }
 
 /*
+ * Hero grid backdrop (HomeHero). Lines are Hellblau at low opacity;
+ * the radial mask fades the grid out towards the panel edges so it reads as
+ * depth, not wallpaper.
+ */
+.hero-grid {
+  --grid-line: color-mix(in srgb, var(--color-hellblau) 9%, transparent);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center center;
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 100%);
+}
+
+/*
+ * The same grid, brighter, visible only in a circle around the pointer. The
+ * hero's script writes --spot-x/--spot-y on its [data-spotlight] element;
+ * --spot-size is 0 until the pointer enters.
+ */
+.hero-grid--spot {
+  --grid-line: color-mix(in srgb, var(--color-hellblau) 32%, transparent);
+  mask-image: radial-gradient(
+    circle var(--spot-size, 0px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    #000 0%,
+    transparent 100%
+  );
+  transition: --spot-size 0.6s var(--ease-out-quint);
+}
+
+[data-spotlight]:hover .hero-grid--spot {
+  --spot-size: 260px;
+}
+
+@property --spot-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+/*
  * Accessibility baseline (DECISIONS.md §12).
  *
  * The site is animation-heavy, so reduced-motion support is built in from the

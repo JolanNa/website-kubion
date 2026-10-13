@@ -1,0 +1,110 @@
+---
+import type { Locale } from '../config';
+import { ctaHref } from '../lib/content';
+
+/**
+ * The Über-uns hero: a plain Marine panel the height of the viewport, with
+ * eyebrow, headline and intro text left-aligned and the CTAs (styled as on
+ * HomeHero) on the right.
+ *
+ * Copy comes from the `hero` block of src/content/pages/ueber-uns/<locale>.mdx.
+ */
+interface Props {
+  hero: {
+    eyebrow?: string;
+    headline: string;
+    body?: string;
+    primaryCta?: { label: string; page?: string; href?: string };
+    secondaryCta?: { label: string; page?: string; href?: string };
+  };
+  locale: Locale;
+}
+
+const { hero, locale } = Astro.props;
+const source = `src/content/pages/ueber-uns/${locale}.mdx`;
+---
+
+<section class="px-4 pb-4">
+  {/*
+    Fills the viewport below the sticky header, like HomeHero (same height
+    formula, see the comment there). The content is centred vertically; the
+    CTAs sit on the right, level with the last line of the intro.
+  */}
+  <div
+    class="flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,6svh,4rem)] sm:px-12 lg:px-16"
+  >
+    <div
+      class="mx-auto my-auto grid w-full max-w-[84rem] gap-10 xl:grid-cols-12 xl:items-end xl:gap-16"
+    >
+      <div class="xl:col-span-7">
+        {
+          hero.eyebrow && (
+            <p class="rise flex items-center gap-4">
+              {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+              <span class="markenkern size-7 shrink-0" aria-hidden="true" />
+              <span class="kicker text-weiss">{hero.eyebrow}</span>
+            </p>
+          )
+        }
+
+        <h1
+          class="rise mt-[clamp(2.5rem,7svh,4.5rem)] text-[clamp(3rem,min(9vw,14svh),8rem)] leading-[0.9] font-black tracking-[-0.04em] text-weiss"
+          style="animation-delay: 80ms"
+        >
+          {hero.headline}
+        </h1>
+
+        {
+          hero.body && (
+            <p
+              class="rise mt-[clamp(1.5rem,4svh,2.5rem)] max-w-[72ch] text-lg leading-relaxed text-pretty text-hellblau"
+              style="animation-delay: 160ms"
+            >
+              {hero.body}
+            </p>
+          )
+        }
+      </div>
+
+      {
+        (hero.primaryCta || hero.secondaryCta) && (
+          <div
+            class="rise flex flex-wrap items-center gap-4 xl:col-span-5 xl:flex-nowrap xl:justify-end"
+            style="animation-delay: 240ms"
+          >
+            {hero.primaryCta && (
+              <a
+                href={ctaHref(hero.primaryCta, locale, source)}
+                class="rounded-full bg-weiss px-7 py-3.5 font-medium whitespace-nowrap text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              >
+                {hero.primaryCta.label}
+              </a>
+            )}
+            {hero.secondaryCta && (
+              <a
+                href={ctaHref(hero.secondaryCta, locale, source)}
+                class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium whitespace-nowrap text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+              >
+                {hero.secondaryCta.label}
+              </a>
+            )}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  /* A short staggered rise on load; reduced motion is neutralised globally. */
+  .rise {
+    animation: rise 0.9s var(--ease-out-quint) both;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+</style>
