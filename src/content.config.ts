@@ -109,6 +109,11 @@ const pages = defineCollection({
     /** Sections of the Über-uns page (src/components/AboutPage.astro). */
     about: z
       .object({
+        /** A large one-sentence statement right below the hero, left-aligned. */
+        statement: z.object({
+          draft: z.boolean().default(false),
+          text: z.string(),
+        }),
         /** The founding story, set next to the team photo. */
         story: z.object({
           draft: z.boolean().default(false),
@@ -118,6 +123,16 @@ const pages = defineCollection({
           /** A path under src/assets/uploads/. */
           image: z.string(),
           imageAlt: z.string(),
+        }),
+        /** A large one-sentence statement after the story, right-aligned. */
+        location: z.object({
+          draft: z.boolean().default(false),
+          text: z.string(),
+        }),
+        /** Photos that run past as an endless strip; paths under src/assets/uploads/. */
+        gallery: z.object({
+          label: z.string(),
+          items: z.array(z.object({ image: z.string(), alt: z.string() })),
         }),
         /** Key figures, counted up one after another as they scroll in. */
         stats: z.object({
@@ -131,6 +146,12 @@ const pages = defineCollection({
               label: z.string(),
             }),
           ),
+        }),
+        /** Logos of partners and supporters, as one image, at the very end. */
+        partners: z.object({
+          heading: z.string(),
+          image: z.string(),
+          imageAlt: z.string(),
         }),
         team: z.object({
           draft: z.boolean().default(false),

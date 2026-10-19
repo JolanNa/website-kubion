@@ -5,6 +5,7 @@ import { getTeam, loadPage, pageAlternates } from '../lib/content';
 import { requireImage, resolveImage } from '../lib/images';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AboutHero from './AboutHero.astro';
+import AboutStats from './AboutStats.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
 import SectionHeader from './SectionHeader.astro';
@@ -33,9 +34,26 @@ if (!hero || !about) {
 }
 
 const storyImage = requireImage(about.story.image, source);
-const numberFormat = new Intl.NumberFormat(locale === 'de' ? 'de-DE' : 'en-GB');
 
 const team = await getTeam(locale);
+
+/** The two large one-sentence statements (after the hero, after the story). */
+const statement =
+  'mt-8 max-w-[26ch] text-[clamp(2rem,4.2vw,4rem)] leading-[1.08] font-bold tracking-[-0.03em] text-balance';
+
+/**
+ * A statement as quoted words: typographic quotes for the locale, each word in
+ * its own span so the scroll script can colour it in as the reader passes.
+ */
+const [quoteOpen, quoteClose] = locale === 'de' ? ['„', '“'] : ['“', '”'];
+const quoteWords = (text: string) => `${quoteOpen}${text}${quoteClose}`.split(' ');
+
+const partnersImage = requireImage(about.partners.image, source);
+
+const gallery = about.gallery.items.map((item) => ({
+  image: requireImage(item.image, source),
+  alt: item.alt,
+}));
 
 /** Stands in for the portrait until a photo is uploaded. */
 function initials(name: string): string {
@@ -73,6 +91,16 @@ function initials(name: string): string {
 
   <AboutHero hero={hero} locale={locale} />
 
+  <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
+    <div class="mx-auto max-w-[84rem]">
+      <span class="gradient-orange block h-1.5 w-16" aria-hidden="true"></span>
+      <p class={statement} data-quote>
+        {quoteWords(about.statement.text).map((word) => <span data-word>{`${word} `}</span>)}
+      </p>
+      {about.statement.draft && <DraftTag locale={locale} class="mt-6" />}
+    </div>
+  </section>
+
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
     <div class="mx-auto grid max-w-[84rem] gap-12 lg:grid-cols-2 lg:gap-20">
       <div data-scroll-reveal>
@@ -102,34 +130,44 @@ function initials(name: string): string {
     </div>
   </section>
 
-  <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
-    <div class="mx-auto max-w-[84rem]">
-      <div class="flex flex-wrap items-center gap-4">
-        {about.stats.kicker && <p class="kicker text-marine-70">{about.stats.kicker}</p>}
-        {about.stats.draft && <DraftTag locale={locale} />}
-      </div>
-      <dl class="mt-8 grid border-t border-marine-15 sm:grid-cols-3">
-        {
-          about.stats.items.map((stat) => (
-            <div
-              data-scroll-reveal
-              class="flex flex-col-reverse border-b border-marine-15 py-8 sm:border-b-0 sm:border-l sm:py-12 sm:pl-8 sm:first:border-l-0 sm:first:pl-0"
-            >
-              <dt class="mt-3 text-lg font-medium text-marine-70">{stat.label}</dt>
-              <dd class="text-[clamp(4rem,9vw,8.5rem)] leading-[0.9] font-black tracking-[-0.04em] tabular-nums">
-                {/* The animated figure is decorative; screen readers get the final value. */}
-                <span class="sr-only">{`${numberFormat.format(stat.value)}${stat.suffix}`}</span>
-                <span aria-hidden="true">
-                  <span data-count-to={stat.value}>{numberFormat.format(stat.value)}</span>
-                  {stat.suffix && <span class="text-orange">{stat.suffix}</span>}
-                </span>
-              </dd>
-            </div>
-          ))
-        }
-      </dl>
+<section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
+    <div class="mx-auto flex max-w-[84rem] flex-col items-end text-right">
+      <span class="gradient-orange block h-1.5 w-16" aria-hidden="true"></span>
+      <p class={statement} data-quote>
+        {quoteWords(about.location.text).map((word) => <span data-word>{`${word} `}</span>)}
+      </p>
+      {about.location.draft && <DraftTag locale={locale} class="mt-6" />}
     </div>
   </section>
+
+  {/*
+    Photo strip, running left on its own. The set is rendered twice so the
+    loop is seamless; the copy is hidden from assistive tech. Pauses on hover,
+    and with reduced motion it becomes a strip you scroll by hand.
+  */}
+  <section aria-label={about.gallery.label} class="gallery pb-20 lg:pb-32">
+    <ul class="gallery-track flex w-max">
+      {
+        [...gallery, ...gallery].map((photo, i) => {
+          const copy = i >= gallery.length;
+          return (
+            <li class="w-[clamp(17rem,32vw,30rem)] shrink-0 pr-4" aria-hidden={copy ? 'true' : undefined}>
+              <Image
+                src={photo.image}
+                alt={copy ? '' : photo.alt}
+                widths={[480, 720, 960]}
+                sizes="(min-width: 1024px) 30rem, 70vw"
+                class="aspect-[3/2] w-full rounded-2xl object-cover"
+                loading="lazy"
+              />
+            </li>
+          );
+        })
+      }
+    </ul>
+  </section>
+
+  <AboutStats stats={about.stats} locale={locale} />
 
   <section class="px-4">
     <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
@@ -141,16 +179,18 @@ function initials(name: string): string {
             team.map((member) => {
               const photo = resolveImage(member.data.photo);
               return (
-                <li data-scroll-reveal>
+                <li data-scroll-reveal class="group">
                   {photo ? (
+                    <div class="overflow-hidden rounded-2xl">
                     <Image
                       src={photo}
                       alt=""
                       widths={[320, 480, 640, 880]}
                       sizes="(min-width: 1024px) 26rem, (min-width: 640px) 33vw, 50vw"
-                      class="aspect-square w-full rounded-2xl object-cover"
+                      class="aspect-square w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-105"
                       loading="lazy"
                     />
+                    </div>
                   ) : (
                     <div
                       class="flex aspect-square w-full items-center justify-center rounded-2xl bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
@@ -167,6 +207,20 @@ function initials(name: string): string {
           }
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-28">
+    <div class="mx-auto max-w-[84rem] text-center" data-scroll-reveal>
+      <h2 class="kicker text-marine-70">{about.partners.heading}</h2>
+      <Image
+        src={partnersImage}
+        alt={about.partners.imageAlt}
+        widths={[720, 1443]}
+        sizes="(min-width: 1024px) 64rem, 100vw"
+        class="mx-auto mt-10 h-auto w-full max-w-5xl"
+        loading="lazy"
+      />
     </div>
   </section>
 
@@ -192,36 +246,54 @@ function initials(name: string): string {
     opacity: 0;
     transform: translateY(28px);
   }
+
+  /* Quotes colour in word by word as they scroll through the viewport. */
+  [data-motion] [data-quote] [data-word] {
+    color: var(--color-marine-15);
+    transition: color 0.35s ease-out;
+  }
+  [data-motion] [data-quote] [data-word][data-lit] {
+    color: var(--color-marine);
+  }
+
+  /* Photo strip: two identical halves, so -50% loops seamlessly. */
+  .gallery {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+  .gallery-track {
+    animation: gallery 70s linear infinite;
+  }
+  .gallery-track:hover {
+    animation-play-state: paused;
+  }
+  @keyframes gallery {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gallery {
+      overflow-x: auto;
+    }
+    .gallery-track {
+      animation: none;
+    }
+  }
 </style>
 
 <script>
   /**
-   * Scroll reveals and the counting figures.
+   * Scroll reveals and the quote fill.
    *
    * Sections fade up as they scroll in; elements that enter together are
-   * staggered so they appear one after another. A figure counts up from zero
-   * once its tile is revealed. With reduced motion the inline script never set
-   * `data-motion`, so this does nothing and the page is static.
+   * staggered so they appear one after another. With reduced motion the inline
+   * script never set `data-motion`, so this does nothing and the page is static.
+   * (The figures count themselves up, see AboutStats.astro.)
    *
    * Initialised directly and on `astro:page-load` (DECISIONS.md §12).
    */
   const STAGGER_MS = 140;
-  const COUNT_MS = 1600;
-
-  function countUp(el: HTMLElement, delay: number) {
-    const target = Number(el.dataset.countTo);
-    const format = new Intl.NumberFormat(document.documentElement.lang || 'de');
-    const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5);
-    let start: number | undefined;
-
-    const step = (now: number) => {
-      start ??= now + delay;
-      const t = Math.min(Math.max((now - start) / COUNT_MS, 0), 1);
-      el.textContent = format.format(Math.round(target * easeOutQuint(t)));
-      if (t < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }
 
   function initReveals() {
     const root = document.documentElement;
@@ -229,9 +301,6 @@ function initials(name: string): string {
     root.dataset.motion = 'bound';
 
     const items = [...document.querySelectorAll<HTMLElement>('[data-scroll-reveal]')];
-    for (const item of items) {
-      item.querySelectorAll<HTMLElement>('[data-count-to]').forEach((el) => (el.textContent = '0'));
-    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -242,7 +311,6 @@ function initials(name: string): string {
             const delay = index * STAGGER_MS;
             item.style.setProperty('--reveal-delay', `${delay}ms`);
             item.dataset.revealed = '';
-            item.querySelectorAll<HTMLElement>('[data-count-to]').forEach((el) => countUp(el, delay));
             observer.unobserve(item);
           });
       },
@@ -251,6 +319,45 @@ function initials(name: string): string {
     items.forEach((item) => observer.observe(item));
   }
 
-  document.addEventListener('astro:page-load', initReveals);
-  initReveals();
+  /**
+   * Quote fill: a quote's words light up in order while it travels from the
+   * lower part of the viewport to the upper third. Only in motion mode.
+   */
+  function initQuotes() {
+    if (!document.documentElement.dataset.motion) return;
+    const quotes = [...document.querySelectorAll<HTMLElement>('[data-quote]')].map((quote) => ({
+      quote,
+      words: [...quote.querySelectorAll<HTMLElement>('[data-word]')],
+    }));
+    if (quotes.length === 0 || quotes[0].quote.dataset.bound) return;
+    quotes.forEach(({ quote }) => (quote.dataset.bound = 'true'));
+
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const vh = window.innerHeight;
+      for (const { quote, words } of quotes) {
+        const top = quote.getBoundingClientRect().top;
+        const progress = Math.min(Math.max((vh * 0.85 - top) / (vh * 0.5), 0), 1);
+        const lit = Math.round(progress * words.length);
+        words.forEach((word, i) => word.toggleAttribute('data-lit', i < lit));
+      }
+    };
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
+    update();
+  }
+
+  function init() {
+    initReveals();
+    initQuotes();
+  }
+
+  document.addEventListener('astro:page-load', init);
+  init();
 </script>
