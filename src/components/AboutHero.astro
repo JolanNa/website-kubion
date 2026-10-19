@@ -1,13 +1,11 @@
 ---
-import { Image } from 'astro:assets';
 import type { Locale } from '../config';
 import { ctaHref } from '../lib/content';
-import { requireImage } from '../lib/images';
 
 /**
- * The Über-uns hero: a Marine panel the height of the viewport, filled with
- * the team photo under a Marine overlay, with eyebrow, headline and intro text
- * left-aligned and the CTAs (styled as on HomeHero) on the right.
+ * The Über-uns hero: a Marine panel the height of the viewport, with eyebrow,
+ * headline and intro text left-aligned and the CTAs (styled as on HomeHero) on
+ * the right.
  *
  * Copy comes from the `hero` block of src/content/pages/ueber-uns/<locale>.mdx.
  */
@@ -16,8 +14,6 @@ interface Props {
     eyebrow?: string;
     headline: string;
     body?: string;
-    /** Background photo, a path under src/assets/uploads/. */
-    image?: string;
     primaryCta?: { label: string; page?: string; href?: string };
     secondaryCta?: { label: string; page?: string; href?: string };
   };
@@ -26,7 +22,6 @@ interface Props {
 
 const { hero, locale } = Astro.props;
 const source = `src/content/pages/ueber-uns/${locale}.mdx`;
-const image = hero.image ? requireImage(hero.image, source) : undefined;
 ---
 
 <section class="px-4 pb-4">
@@ -36,33 +31,8 @@ const image = hero.image ? requireImage(hero.image, source) : undefined;
     CTAs sit on the right, level with the last line of the intro.
   */}
   <div
-    class="relative isolate flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,6svh,4rem)] sm:px-12 lg:px-16"
+    class="flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,6svh,4rem)] sm:px-12 lg:px-16"
   >
-    {
-      image && (
-        <>
-          {/* Decorative: the page is about the team, the photo only sets the mood. */}
-          <Image
-            src={image}
-            alt=""
-            widths={[640, 1024, 1386]}
-            sizes="100vw"
-            class="hero-photo absolute inset-0 -z-20 size-full object-cover"
-            loading="eager"
-            fetchpriority="high"
-          />
-          {/*
-            Marine overlay, densest on the left where the text sits, so the copy
-            keeps its contrast while the photo still shows through on the right.
-          */}
-          <div
-            class="absolute inset-0 -z-10 bg-linear-to-r from-marine/95 via-marine/85 to-marine/70"
-            aria-hidden="true"
-          />
-        </>
-      )
-    }
-
     <div
       class="mx-auto my-auto grid w-full max-w-[84rem] gap-10 xl:grid-cols-12 xl:items-end xl:gap-16"
     >
@@ -129,16 +99,6 @@ const image = hero.image ? requireImage(hero.image, source) : undefined;
   /* A short staggered rise on load; reduced motion is neutralised globally. */
   .rise {
     animation: rise 0.9s var(--ease-out-quint) both;
-  }
-
-  /* The photo settles from a slight zoom while the copy rises in. */
-  .hero-photo {
-    animation: settle 2.4s var(--ease-out-quint) both;
-  }
-  @keyframes settle {
-    from {
-      transform: scale(1.12);
-    }
   }
 
   @keyframes rise {

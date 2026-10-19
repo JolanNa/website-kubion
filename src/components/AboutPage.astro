@@ -123,7 +123,7 @@ function initials(name: string): string {
           alt={about.story.imageAlt}
           widths={[480, 720, 1040, 1386]}
           sizes="(min-width: 1024px) 40rem, 100vw"
-          class="aspect-[4/3] w-full rounded-3xl object-cover"
+          class="aspect-[4/3] w-full object-cover"
           loading="lazy"
         />
       </div>
@@ -157,7 +157,7 @@ function initials(name: string): string {
                 alt={copy ? '' : photo.alt}
                 widths={[480, 720, 960]}
                 sizes="(min-width: 1024px) 30rem, 70vw"
-                class="aspect-[3/2] w-full rounded-2xl object-cover"
+                class="aspect-[3/2] w-full object-cover"
                 loading="lazy"
               />
             </li>
@@ -181,7 +181,7 @@ function initials(name: string): string {
               return (
                 <li data-scroll-reveal class="group">
                   {photo ? (
-                    <div class="overflow-hidden rounded-2xl">
+                    <div class="overflow-hidden">
                     <Image
                       src={photo}
                       alt=""
@@ -193,7 +193,7 @@ function initials(name: string): string {
                     </div>
                   ) : (
                     <div
-                      class="flex aspect-square w-full items-center justify-center rounded-2xl bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
+                      class="flex aspect-square w-full items-center justify-center bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
                       aria-hidden="true"
                     >
                       {initials(member.data.name)}

@@ -93,6 +93,11 @@ const pages = defineCollection({
         eyebrow: z.string().optional(),
         /** Footnote under the hero, e.g. the location line. */
         note: z.string().optional(),
+        /**
+         * Homepage intro: the lines of the viewfinder's inference log, typed in
+         * one after another. Without them the intro runs without a log.
+         */
+        introSteps: z.array(z.string()).max(4).optional(),
         /** Longer intro paragraph next to the headline (Über-uns hero). */
         body: z.string().optional(),
         primaryCta: cta.optional(),
