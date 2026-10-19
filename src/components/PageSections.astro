@@ -5,6 +5,7 @@ import { ctaHref } from '../lib/content';
 import { useTranslations } from '../i18n/ui';
 import ArrowLink from './ArrowLink.astro';
 import CtaPanel from './CtaPanel.astro';
+import PhotoCarousel from './PhotoCarousel.astro';
 import Placeholder from './Placeholder.astro';
 import SectionHeader from './SectionHeader.astro';
 import Steps from './Steps.astro';
@@ -131,22 +132,20 @@ const cardColumns = (count: number) =>
             </section>
           );
 
-        /* Short labels — the industries. */
-        case 'chips':
+        /* Portrait photo cards, paged with arrows — the industries. */
+        case 'carousel':
           return (
             <section id={id} class={gutter}>
-              <div class:list={[wrap, 'grid gap-10 lg:grid-cols-2 lg:gap-16']}>
-                <div>
-                  <SectionHeader section={section} locale={locale} />
-                  {inlineCta}
-                </div>
-                <ul class="flex flex-wrap content-start gap-3 lg:pt-12">
-                  {section.items.map((item) => (
-                    <li class="rounded-full border border-marine-15 px-5 py-2.5 text-lg font-medium">
-                      {item.title}
-                    </li>
-                  ))}
-                </ul>
+              <div class={wrap}>
+                <SectionHeader section={section} locale={locale} />
+                <PhotoCarousel
+                  items={section.items}
+                  label={section.heading}
+                  locale={locale}
+                  source={source}
+                  class="mt-12 lg:mt-16"
+                />
+                {inlineCta}
               </div>
             </section>
           );

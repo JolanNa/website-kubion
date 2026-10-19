@@ -2,18 +2,22 @@
 import { Image } from 'astro:assets';
 import type { Locale } from '../config';
 import { getTeam, loadPage, pageAlternates } from '../lib/content';
-import { resolveImage } from '../lib/images';
+import { requireImage, resolveImage } from '../lib/images';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AboutHero from './AboutHero.astro';
+import AboutStats from './AboutStats.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
-import PageHero from './PageHero.astro';
+import PhotoStrip from './PhotoStrip.astro';
+import ScrollMotion from './ScrollMotion.astro';
 import SectionHeader from './SectionHeader.astro';
+import Statement from './Statement.astro';
 import Steps from './Steps.astro';
 
 /**
- * The Über-uns page: who we are, the team, how we work, and a way to get in
- * touch. Team and "about" are one page on purpose, so the nav needs a single
- * entry for both.
+ * The Über-uns page: who we are, how kubion started, the key figures, the team,
+ * how we work, and a way to get in touch. Team and "about" are one page on
+ * purpose, so the nav needs a single entry for both.
  *
  * Section copy comes from src/content/pages/ueber-uns/<locale>.mdx frontmatter
  * (DECISIONS.md §3); the people come from the CMS-managed team collection.
@@ -32,7 +36,11 @@ if (!hero || !about) {
   throw new Error(`The Über-uns page needs a \`hero\` and an \`about\` block in ${source}.`);
 }
 
+const storyImage = requireImage(about.story.image, source);
+
 const team = await getTeam(locale);
+
+const partnersImage = requireImage(about.partners.image, source);
 
 /** Stands in for the portrait until a photo is uploaded. */
 function initials(name: string): string {
@@ -52,76 +60,108 @@ function initials(name: string): string {
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
-  <PageHero hero={hero} />
+  <ScrollMotion />
+
+  <AboutHero hero={hero} locale={locale} source={source} />
+
+  <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
+    <Statement text={about.statement.text} locale={locale} draft={about.statement.draft} />
+  </section>
 
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
-    <div class="mx-auto max-w-[84rem]">
-      <div class="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <div>
-          <p class="kicker text-marine-70">{about.intro.kicker}</p>
-          <h2
-            class="mt-6 max-w-[18ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl"
-          >
-            {about.intro.heading}
-          </h2>
-          {about.intro.draft && <DraftTag locale={locale} class="mt-5" />}
-        </div>
-        <div class="space-y-5 text-lg leading-relaxed text-pretty text-marine-70 lg:pt-10">
-          {about.intro.body.map((paragraph) => <p>{paragraph}</p>)}
+    <div class="mx-auto grid max-w-[84rem] gap-12 lg:grid-cols-2 lg:gap-20">
+      <div data-scroll-reveal>
+        {about.story.kicker && <p class="kicker text-marine-70">{about.story.kicker}</p>}
+        <h2
+          class="mt-6 max-w-[18ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl"
+        >
+          {about.story.heading}
+        </h2>
+        {about.story.draft && <DraftTag locale={locale} class="mt-5" />}
+        <div class="mt-10 space-y-5 text-lg leading-relaxed text-pretty text-marine-70">
+          {about.story.body.map((paragraph) => <p>{paragraph}</p>)}
         </div>
       </div>
 
-      {
-        about.intro.facts.length > 0 && (
-          <dl class="mt-16 grid border-t border-marine-15 sm:grid-cols-3 lg:mt-24">
-            {about.intro.facts.map((fact) => (
-              <div class="border-b border-marine-15 py-6 sm:border-b-0 sm:border-l sm:py-8 sm:pl-6 sm:first:border-l-0 sm:first:pl-0">
-                <dt class="kicker text-marine-70">{fact.label}</dt>
-                <dd class="mt-3 text-xl font-semibold tracking-[-0.01em]">{fact.value}</dd>
-              </div>
-            ))}
-          </dl>
-        )
-      }
+      {/* Sticks beside the story on wide screens, so the photo stays in view. */}
+      <div data-scroll-reveal class="lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:self-start">
+        <Image
+          src={storyImage}
+          alt={about.story.imageAlt}
+          widths={[480, 720, 1040, 1386]}
+          sizes="(min-width: 1024px) 40rem, 100vw"
+          class="aspect-[4/3] w-full object-cover"
+          loading="lazy"
+        />
+      </div>
     </div>
   </section>
+
+<section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
+    <Statement text={about.location.text} locale={locale} draft={about.location.draft} align="right" />
+  </section>
+
+  <PhotoStrip
+    label={about.gallery.label}
+    items={about.gallery.items}
+    source={source}
+    class="pb-20 lg:pb-32"
+  />
+
+  <AboutStats stats={about.stats} locale={locale} />
 
   <section class="px-4">
     <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
       <div class="mx-auto max-w-[84rem]">
         <SectionHeader section={about.team} locale={locale} />
 
-        <ul class="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4">
+        <ul class="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-6 lg:mt-16 lg:gap-x-8 lg:gap-y-14">
           {
             team.map((member) => {
               const photo = resolveImage(member.data.photo);
               return (
-                <li>
+                <li data-scroll-reveal class="group">
                   {photo ? (
+                    <div class="overflow-hidden">
                     <Image
                       src={photo}
                       alt=""
-                      widths={[320, 480, 640]}
-                      sizes="(min-width: 1024px) 20rem, 50vw"
-                      class="aspect-[4/5] w-full rounded-2xl object-cover"
+                      widths={[320, 480, 640, 880]}
+                      sizes="(min-width: 1024px) 26rem, (min-width: 640px) 33vw, 50vw"
+                      class="aspect-square w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-105"
                       loading="lazy"
                     />
+                    </div>
                   ) : (
                     <div
-                      class="flex aspect-[4/5] w-full items-center justify-center rounded-2xl bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
+                      class="flex aspect-square w-full items-center justify-center bg-hellblau font-mono text-3xl tracking-[0.14em] text-marine"
                       aria-hidden="true"
                     >
                       {initials(member.data.name)}
                     </div>
                   )}
                   <p class="mt-4 text-lg font-semibold tracking-[-0.01em]">{member.data.name}</p>
-                  <p class="kicker mt-1.5 text-marine-70">{member.data.role}</p>
+                  <p class="mt-1.5 font-mono text-sm text-marine-70">{member.data.role}</p>
                 </li>
               );
             })
           }
         </ul>
       </div>
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-28">
+    <div class="mx-auto max-w-[84rem] text-center" data-scroll-reveal>
+      <h2 class="kicker text-marine-70">{about.partners.heading}</h2>
+      <Image
+        src={partnersImage}
+        alt={about.partners.imageAlt}
+        widths={[720, 1443]}
+        sizes="(min-width: 1024px) 64rem, 100vw"
+        class="mx-auto mt-10 h-auto w-full max-w-5xl"
+        loading="lazy"
+      />
     </div>
   </section>
 

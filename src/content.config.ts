@@ -34,11 +34,11 @@ const section = z.object({
   draft: z.boolean().default(false),
   /**
    * How src/components/PageSections.astro lays the section out. Pages with a
-   * bespoke component (home, Karriere, Kontakt) read sections by id instead and
+   * bespoke component (home, Kontakt) read sections by id instead and
    * leave this unset.
    */
   layout: z
-    .enum(['rows', 'cards', 'chips', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
+    .enum(['rows', 'cards', 'carousel', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
     .optional(),
   /** Describes the image that belongs here; rendered as a labelled placeholder. */
   imageNote: z.string().optional(),
@@ -51,11 +51,36 @@ const section = z.object({
         /** Small mono label: a category, a location, a contact value. */
         meta: z.string().optional(),
         points: z.array(z.string()).default([]),
+        /** Photo for the `carousel` layout: a path under src/assets/uploads/. */
+        image: z.string().optional(),
+        imageAlt: z.string().optional(),
         ...link,
       }),
     )
     .default([]),
   primaryCta: cta.optional(),
+  secondaryCta: cta.optional(),
+});
+
+/** A large one-sentence statement in quotes (Statement.astro). */
+const statement = z.object({
+  draft: z.boolean().default(false),
+  text: z.string(),
+});
+
+/** Photos that run past as an endless strip; paths under src/assets/uploads/. */
+const photoStrip = z.object({
+  label: z.string(),
+  items: z.array(z.object({ image: z.string(), alt: z.string() })),
+});
+
+/** The closing Marine call-to-action panel (CtaPanel.astro). */
+const ctaPanel = z.object({
+  draft: z.boolean().default(false),
+  kicker: z.string().optional(),
+  heading: z.string(),
+  text: z.string().optional(),
+  primaryCta: cta,
   secondaryCta: cta.optional(),
 });
 
@@ -90,6 +115,28 @@ const pages = defineCollection({
         eyebrow: z.string().optional(),
         /** Footnote under the hero, e.g. the location line. */
         note: z.string().optional(),
+        /**
+         * Homepage intro: the lines of the viewfinder's inference log, typed in
+         * one after another. Without them the intro runs without a log.
+         */
+        introSteps: z.array(z.string()).max(4).optional(),
+        /**
+         * Labels of the looping inspection-line visual right of the homepage
+         * headline (HeroVisual.astro). Without them the visual is not rendered.
+         */
+        visual: z
+          .object({
+            status: z.string(),
+            title: z.string(),
+            inspected: z.string(),
+            rejected: z.string(),
+            confidence: z.string(),
+            ok: z.string(),
+            nok: z.string(),
+          })
+          .optional(),
+        /** Longer intro paragraph next to the headline (Über-uns hero). */
+        body: z.string().optional(),
         primaryCta: cta.optional(),
         secondaryCta: cta.optional(),
         textLink: cta.optional(),
@@ -104,12 +151,39 @@ const pages = defineCollection({
     /** Sections of the Über-uns page (src/components/AboutPage.astro). */
     about: z
       .object({
-        intro: z.object({
+        /** A large one-sentence statement right below the hero, left-aligned. */
+        statement,
+        /** The founding story, set next to the team photo. */
+        story: z.object({
           draft: z.boolean().default(false),
-          kicker: z.string(),
+          kicker: z.string().optional(),
           heading: z.string(),
           body: z.array(z.string()),
-          facts: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+          /** A path under src/assets/uploads/. */
+          image: z.string(),
+          imageAlt: z.string(),
+        }),
+        /** A large one-sentence statement after the story, right-aligned. */
+        location: statement,
+        gallery: photoStrip,
+        /** Key figures, counted up one after another as they scroll in. */
+        stats: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          items: z.array(
+            z.object({
+              value: z.number().int().nonnegative(),
+              /** Appended to the number, e.g. "+". */
+              suffix: z.string().default(''),
+              label: z.string(),
+            }),
+          ),
+        }),
+        /** Logos of partners and supporters, as one image, at the very end. */
+        partners: z.object({
+          heading: z.string(),
+          image: z.string(),
+          imageAlt: z.string(),
         }),
         team: z.object({
           draft: z.boolean().default(false),
@@ -124,14 +198,47 @@ const pages = defineCollection({
           text: z.string().optional(),
           steps: z.array(z.object({ title: z.string(), text: z.string() })),
         }),
-        cta: z.object({
+        cta: ctaPanel,
+      })
+      .optional(),
+    /** Sections of the Karriere page (src/components/KarrierePage.astro). */
+    career: z
+      .object({
+        /** Why work here, set next to an image placeholder. */
+        intro: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          heading: z.string(),
+          body: z.array(z.string()),
+          /** Describes the image that belongs here; shown on the placeholder. */
+          imageNote: z.string().optional(),
+        }),
+        /** What to expect: a grid of short cards. */
+        benefits: z.object({
           draft: z.boolean().default(false),
           kicker: z.string().optional(),
           heading: z.string(),
           text: z.string().optional(),
-          primaryCta: cta,
-          secondaryCta: cta.optional(),
+          items: z.array(z.object({ title: z.string(), text: z.string() })),
         }),
+        /** Open roles; each row links to the posting or a pre-filled e-mail. */
+        jobs: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          heading: z.string(),
+          text: z.string().optional(),
+          /** Where applications go; shown as a link under the intro. */
+          email: z.email().optional(),
+          items: z.array(
+            z.object({
+              title: z.string(),
+              /** Small mono label: department, location, hours. */
+              meta: z.string().optional(),
+              ...link,
+            }),
+          ),
+        }),
+        cta: ctaPanel,
       })
       .optional(),
   }),

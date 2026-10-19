@@ -217,10 +217,7 @@ const navItemClass =
               megaPanels.map(([id, mega]) => (
                 <div
                   data-mega-panel={id}
-                  class:list={[
-                    'invisible col-start-1 row-start-1 grid gap-6 px-6 pt-5 pb-6 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100',
-                    mega.aside ? 'grid-cols-[1.15fr_0.8fr_1fr]' : 'grid-cols-[1.15fr_1fr]',
-                  ]}
+                  class="invisible col-start-1 row-start-1 grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-5 pb-6 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100"
                 >
                   <div>
                     <p class="kicker text-marine-45">{mega.heading}</p>
@@ -228,10 +225,14 @@ const navItemClass =
                       {mega.items.map((item, index) => (
                         <li>
                           <a
-                            href={localizedPath(item.page, locale)}
+                            href={`${localizedPath(item.page, locale)}${item.anchor ? `#${item.anchor}` : ''}`}
                             class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
                           >
-                            <span class="kicker mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-marine text-weiss">
+                            {/* The Markenkern square as the item marker, numbered. */}
+                            <span
+                              class="markenkern mt-[3px] flex size-[18px] shrink-0 items-center justify-center font-mono text-[0.5625rem] leading-none font-medium text-weiss"
+                              aria-hidden="true"
+                            >
                               {String(index + 1).padStart(2, '0')}
                             </span>
                             <span>
@@ -244,25 +245,6 @@ const navItemClass =
                     </ul>
                   </div>
 
-                  {mega.aside && (
-                    <div class="border-l border-marine-15 pl-6">
-                      <p class="kicker text-marine-45">{mega.aside.heading}</p>
-                      <ul class="mt-5">
-                        {mega.aside.items.map((label) => (
-                          <li>
-                            <a
-                              href={`${localizedPath(mega.aside!.page, locale)}${mega.aside!.anchor ? `#${mega.aside!.anchor}` : ''}`}
-                              class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-[0.9375rem] text-marine-70 transition-colors duration-200 hover:bg-nebel hover:text-marine"
-                            >
-                              <span class="h-[3px] w-3 shrink-0 rounded-full bg-marine-15" aria-hidden="true" />
-                              {label}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
                   <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
                     <div>
                       <p class="kicker text-hellblau">{mega.overviewHeading}</p>
@@ -274,7 +256,7 @@ const navItemClass =
                       href={localizedPath(mega.overviewPage, locale)}
                       class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
                     >
-                      <span class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
+                      <span class="flex size-9 items-center justify-center gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                           <path
                             d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
@@ -348,7 +330,7 @@ const navItemClass =
                 class="group/cta mt-5 inline-flex items-center gap-3 font-medium text-weiss"
               >
                 <span
-                  class="flex size-9 items-center justify-center rounded-lg gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                  class="flex size-9 items-center justify-center gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path

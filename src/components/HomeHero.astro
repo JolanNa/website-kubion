@@ -2,12 +2,22 @@
 import type { CollectionEntry } from 'astro:content';
 import type { Locale } from '../config';
 import { isPageKey, localizedPath } from '../i18n/routes';
+import HeroVisual from './HeroVisual.astro';
 
 /**
  * The homepage hero.
  *
- * Layout and shape follow the Figma design. Colour and type follow the brand
- * guideline (Marine / Orange / Hellblau, Geist Sans + Geist Mono).
+ * Colour and type follow the brand guideline (Marine / Orange / Hellblau, Geist
+ * Sans + Geist Mono): a large left-aligned white headline on plain Marine, with the
+ * Markenkern and kicker above it.
+ *
+ * The intro is a camera viewfinder, because a camera is where most kubion
+ * projects start (Computer Vision). The frame opens, a scan line passes, an
+ * inference log names the disciplines (Computer Vision, Deep Learning, Data
+ * Science) and the autofocus hunts until the headline is sharp and locked in a
+ * detection box. Then the viewfinder clears and the copy rises in. Deliberately
+ * restrained: thin Hellblau lines, Geist Mono readouts, orange only for the REC
+ * dot.
  *
  * All copy comes from src/content/pages/home/<locale>.mdx frontmatter
  * (DECISIONS.md §3). CTAs reference page KEYS, so localised slugs resolve
@@ -39,6 +49,8 @@ function href(cta: { page?: string; href?: string }): string {
   }
   return cta.href ?? '#';
 }
+
+const corners = ['tl', 'tr', 'br', 'bl'] as const;
 ---
 
 <section class="px-4 pb-4">
@@ -47,108 +59,394 @@ function href(cta: { page?: string; href?: string }): string {
     visible without scrolling.
 
     `min-h` rather than `h`: on a viewport too short for the content the panel
-    grows instead of clipping it. `100svh` is the SMALL viewport height — the
-    height when mobile browser chrome is expanded — so the panel still fits when
-    the address bar is showing, which `100vh` would not guarantee.
+    grows instead of clipping it. `100svh` is the SMALL viewport height, so the
+    panel still fits when mobile browser chrome is showing. The subtraction is
+    the header plus this section's own bottom padding.
 
-    The subtraction is the header plus this section's own bottom padding.
-
-    The vertical rhythm inside is expressed in `svh` as well as rem, so a wide
-    but short window (a laptop with browser chrome, say) scales the type and
-    spacing down rather than overflowing. `svh` not `dvh`: dvh changes as mobile
-    chrome hides on scroll, which would resize the headline mid-scroll.
+    Vertical rhythm is in `svh` as well as rem, so a wide but short window scales
+    the type and spacing down rather than overflowing.
   */}
   <div
-    class="relative flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,8svh,6.5rem)] sm:px-12 lg:px-16"
+    data-hero
+    class="hero relative isolate flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(1.5rem,5svh,3.5rem)] sm:px-12 lg:px-16"
   >
-    <div class="mx-auto flex w-full max-w-[84rem] flex-1 flex-col">
-      {
-        hero.eyebrow && (
-          <p class="flex items-center gap-4">
-            {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
-            <span class="markenkern size-7 shrink-0" aria-hidden="true" />
-            <span class="kicker text-weiss">{hero.eyebrow}</span>
-          </p>
-        )
-      }
+    {/*
+      Hide what the intro will reveal BEFORE first paint, so it never flashes in
+      and back out. Only when motion is allowed — with reduced motion the hero is
+      static. The timeout is a failsafe: if the animation script never runs, the
+      content is shown anyway rather than staying invisible.
+    */}
+    <script is:inline>
+      (function (hero) {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        hero.dataset.intro = 'pending';
+        setTimeout(function () {
+          if (hero.dataset.intro === 'pending') hero.dataset.intro = 'done';
+        }, 4000);
+      })(document.currentScript.parentElement);
+    </script>
 
-      <h1
-        class="mt-[clamp(1.75rem,5svh,3.5rem)] max-w-[15ch] text-[clamp(2.5rem,min(8vw,12svh),8rem)] leading-[0.9] font-black tracking-[-0.035em] text-weiss text-balance"
-      >
-        {hero.headline}
-      </h1>
+    {/*
+      Viewfinder overlay for the intro. Hidden until the script shows it, and
+      removed when the intro ends, so with reduced motion (or without JS) it is
+      never seen. Decorative throughout.
+    */}
+    <div data-cam hidden class="pointer-events-none absolute inset-0 z-10" aria-hidden="true">
+      <div data-cam-frame class="absolute inset-[clamp(0.75rem,2.5vw,1.75rem)]">
+        {corners.map((c) => <span data-cam-corner class={`cam-corner cam-corner--${c}`} />)}
 
-      {
-        hero.subline && (
-          <p class="mt-[clamp(1.25rem,3.5svh,2.75rem)] max-w-[34ch] text-lg leading-relaxed text-hellblau sm:text-xl">
-            {hero.subline}
-          </p>
-        )
-      }
+        {/* Scan line with a faint wake above it. */}
+        <div data-cam-scan class="cam-scan absolute inset-x-0 top-0 h-24 opacity-0" />
 
-      <div class="mt-[clamp(1.75rem,5svh,3.5rem)] flex flex-wrap items-center gap-4">
+        <p data-cam-hud class="kicker absolute top-3 left-4 flex items-center gap-2 text-hellblau/80 sm:top-4 sm:left-5">
+          <span data-cam-rec class="size-1.5 rounded-full bg-orange" />
+          <span>Rec</span>
+          <span class="text-hellblau/45">Cam 01</span>
+        </p>
+        <p data-cam-hud data-cam-time class="kicker absolute top-3 right-4 text-hellblau/80 tabular-nums sm:top-4 sm:right-5">
+          00:00:00:00
+        </p>
+        <p data-cam-hud class="kicker absolute top-8 right-4 text-hellblau/80 tabular-nums sm:top-auto sm:right-5 sm:bottom-4">
+          AF <span data-cam-focus>000</span>%
+        </p>
         {
-          hero.primaryCta && (
-            <a
-              href={href(hero.primaryCta)}
-              class="rounded-full bg-weiss px-7 py-3.5 font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
-            >
-              {hero.primaryCta.label}
-            </a>
-          )
-        }
-        {
-          hero.secondaryCta && (
-            <a
-              href={href(hero.secondaryCta)}
-              class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
-            >
-              {hero.secondaryCta.label}
-            </a>
+          hero.introSteps && (
+            <ol data-cam-log class="absolute bottom-3 left-4 space-y-1 font-mono text-[0.625rem] leading-tight tracking-wide text-hellblau sm:bottom-4 sm:left-5 sm:text-xs">
+              {hero.introSteps.map((step, i) => (
+                <li class="whitespace-nowrap opacity-0">
+                  <span class="text-hellblau/45">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="ml-2">{step}</span>
+                </li>
+              ))}
+            </ol>
           )
         }
       </div>
 
-      {
-        hero.textLink && (
-          <p class="mt-[clamp(1rem,3svh,2.25rem)]">
-            <a
-              href={href(hero.textLink)}
-              class="group inline-flex items-center gap-2 text-hellblau transition-colors duration-200 hover:text-weiss"
-            >
-              {hero.textLink.label}
-              <span
-                class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
-                aria-hidden="true"
-              >
-                →
-              </span>
-            </a>
-          </p>
-        )
-      }
-
-      {
-        hero.note && (
-          <p class="mt-auto flex items-center gap-4 pt-[clamp(1.5rem,6svh,5rem)]">
-            {/* Pixel heart, drawn inline so it inherits the accent colour. */}
-            <svg
-              width="18"
-              height="16"
-              viewBox="0 0 9 8"
-              class="shrink-0 text-orange"
-              aria-hidden="true"
-              fill="currentColor"
-              shape-rendering="crispEdges"
-            >
-              <path
-                d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z"
-              />
-            </svg>
-            <span class="kicker text-weiss">{hero.note}</span>
-          </p>
-        )
-      }
+      {/* Detection box; the script places it over the headline. */}
+      <div data-cam-target class="absolute opacity-0">
+        {corners.map((c) => <span class={`cam-corner cam-corner--small cam-corner--${c}`} />)}
+        <span data-cam-cross class="cam-cross absolute top-1/2 left-1/2" />
+        <p data-cam-label class="kicker absolute top-full left-0 mt-2 whitespace-nowrap text-hellblau opacity-0">
+          kubion <span class="text-hellblau/45">· 0.99</span>
+        </p>
+      </div>
     </div>
+
+    {
+      hero.eyebrow && (
+        <p data-reveal class="flex items-center gap-4">
+          {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+          <span class="markenkern size-6 shrink-0" aria-hidden="true" />
+          <span class="kicker text-weiss">{hero.eyebrow}</span>
+        </p>
+      )
+    }
+
+    {/*
+      Text left; from `lg` up, the looping inspection-line visual right of it.
+    */}
+    <div class="my-auto grid items-center gap-12 py-[clamp(1.5rem,5svh,3.5rem)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:gap-20">
+      <div class="flex flex-col items-start text-left">
+        {/*
+          The headline is the subject the intro's camera brings into focus and
+          locks onto (data-mark), so it is not one of the [data-reveal] elements.
+        */}
+        <h1
+          data-mark
+          class="max-w-[16ch] text-[clamp(2.5rem,min(7.5vw,11svh),6.5rem)] lg:text-[clamp(3rem,min(5.4vw,10svh),5.75rem)] leading-[0.95] font-black tracking-[-0.035em] text-weiss text-balance"
+        >
+          {hero.headline}
+        </h1>
+
+        {
+          hero.subline && (
+            <p data-reveal class="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[40ch] text-lg leading-relaxed text-hellblau sm:text-xl">
+              {hero.subline}
+            </p>
+          )
+        }
+
+        <div data-reveal class="mt-[clamp(1.5rem,4svh,2.75rem)] flex flex-wrap items-center gap-4">
+          {
+            hero.primaryCta && (
+              <a
+                href={href(hero.primaryCta)}
+                class="rounded-full bg-weiss px-7 py-3.5 font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              >
+                {hero.primaryCta.label}
+              </a>
+            )
+          }
+          {
+            hero.secondaryCta && (
+              <a
+                href={href(hero.secondaryCta)}
+                class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+              >
+                {hero.secondaryCta.label}
+              </a>
+            )
+          }
+        </div>
+
+        {
+          hero.textLink && (
+            <p data-reveal class="mt-[clamp(1rem,2.5svh,1.75rem)]">
+              <a
+                href={href(hero.textLink)}
+                class="group inline-flex items-center gap-2 text-hellblau transition-colors duration-200 hover:text-weiss"
+              >
+                {hero.textLink.label}
+                <span
+                  class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                  aria-hidden="true"
+                >
+                  →
+                </span>
+              </a>
+            </p>
+          )
+        }
+      </div>
+
+      {hero.visual && <HeroVisual labels={hero.visual} locale={locale} />}
+    </div>
+
+    {
+      hero.note && (
+        <p data-reveal class="flex items-center gap-4">
+          {/* Pixel heart, drawn inline so it inherits the accent colour. */}
+          <svg
+            width="18"
+            height="16"
+            viewBox="0 0 9 8"
+            class="shrink-0 text-orange"
+            aria-hidden="true"
+            fill="currentColor"
+            shape-rendering="crispEdges"
+          >
+            <path
+              d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z"
+            />
+          </svg>
+          <span class="kicker text-weiss">{hero.note}</span>
+        </p>
+      )
+    }
   </div>
 </section>
+
+<style>
+  /* Pre-intro state (set by the inline script before first paint). */
+  .hero[data-intro='pending'] [data-reveal],
+  .hero[data-intro='pending'] [data-mark] {
+    opacity: 0;
+  }
+
+  /* Viewfinder corner brackets: two 1px edges each. */
+  .cam-corner {
+    position: absolute;
+    width: clamp(1rem, 3vw, 1.75rem);
+    height: clamp(1rem, 3vw, 1.75rem);
+    border: 0 solid color-mix(in srgb, var(--color-hellblau) 70%, transparent);
+  }
+  .cam-corner--small {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-color: var(--color-weiss);
+  }
+  .cam-corner--tl {
+    top: 0;
+    left: 0;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+  .cam-corner--tr {
+    top: 0;
+    right: 0;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+  .cam-corner--br {
+    right: 0;
+    bottom: 0;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+  }
+  .cam-corner--bl {
+    bottom: 0;
+    left: 0;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+
+  /* A thin line at the bottom edge, fading upwards into a faint wake. */
+  .cam-scan {
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-hellblau) 7%, transparent) 96%,
+      color-mix(in srgb, var(--color-hellblau) 55%, transparent) 100%
+    );
+  }
+
+  /* Centre crosshair of the detection box. */
+  .cam-cross {
+    width: 1.25rem;
+    height: 1.25rem;
+    translate: -50% -50%;
+    background:
+      linear-gradient(var(--color-weiss), var(--color-weiss)) center / 1px 100% no-repeat,
+      linear-gradient(var(--color-weiss), var(--color-weiss)) center / 100% 1px no-repeat;
+    opacity: 0.8;
+  }
+</style>
+
+<script>
+  /**
+   * Hero intro: a camera viewfinder.
+   *
+   * The frame opens, a scan line passes over the panel, the inference log
+   * types its lines, and the autofocus hunts until the headline is sharp; a
+   * detection box closes in on it and locks. Then the viewfinder clears and the
+   * rest of the hero rises in. Any pointer, key, wheel or resize skips to the
+   * end.
+   *
+   * Initialised directly and on `astro:page-load` (DECISIONS.md §12). Skipped
+   * entirely with reduced motion — the inline script then never hid anything,
+   * so the hero is simply static.
+   */
+  import { gsap } from 'gsap';
+
+  const FPS = 25;
+
+  /** Frames → `HH:MM:SS:FF` timecode. */
+  function timecode(frames: number) {
+    const ff = frames % FPS;
+    const total = Math.floor(frames / FPS);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(Math.floor(total / 3600))}:${pad(Math.floor(total / 60) % 60)}:${pad(total % 60)}:${pad(ff)}`;
+  }
+
+  function initHero() {
+    const hero = document.querySelector<HTMLElement>('[data-hero]');
+    // Bound once: init runs both directly and on `astro:page-load` (below).
+    if (!hero || hero.dataset.heroBound) return;
+    hero.dataset.heroBound = 'true';
+
+    const cam = hero.querySelector<HTMLElement>('[data-cam]');
+    if (hero.dataset.intro !== 'pending' || !cam) {
+      cam?.remove();
+      return;
+    }
+
+    const mark = hero.querySelector<HTMLElement>('[data-mark]')!;
+    const reveals = [...hero.querySelectorAll<HTMLElement>('[data-reveal]')];
+    const frame = cam.querySelector<HTMLElement>('[data-cam-frame]')!;
+    const frameCorners = [...cam.querySelectorAll<HTMLElement>('[data-cam-corner]')];
+    const scan = cam.querySelector<HTMLElement>('[data-cam-scan]')!;
+    const hud = [...cam.querySelectorAll<HTMLElement>('[data-cam-hud]')];
+    const rec = cam.querySelector<HTMLElement>('[data-cam-rec]')!;
+    const time = cam.querySelector<HTMLElement>('[data-cam-time]')!;
+    const focusReadout = cam.querySelector<HTMLElement>('[data-cam-focus]')!;
+    const log = [...cam.querySelectorAll<HTMLElement>('[data-cam-log] li')];
+    const target = cam.querySelector<HTMLElement>('[data-cam-target]')!;
+    const cross = cam.querySelector<HTMLElement>('[data-cam-cross]')!;
+    const label = cam.querySelector<HTMLElement>('[data-cam-label]')!;
+
+    cam.hidden = false;
+
+    // The detection box, in hero pixels: it starts as a small square on the
+    // headline's centre and closes in on its bounds.
+    const heroRect = hero.getBoundingClientRect();
+    // Measure the text itself, not the <h1> box: balanced lines are often
+    // narrower than the element's max-width.
+    const range = document.createRange();
+    range.selectNodeContents(mark);
+    const markRect = range.getBoundingClientRect();
+    const pad = Math.max(8, markRect.height * 0.08);
+    const box = {
+      left: markRect.left - heroRect.left - pad,
+      top: markRect.top - heroRect.top - pad,
+      width: markRect.width + pad * 2,
+      height: markRect.height + pad * 2,
+    };
+    const seed = Math.min(56, box.height * 0.6);
+    const centre = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+
+    gsap.set(target, { left: centre.x - seed / 2, top: centre.y - seed / 2, width: seed, height: seed });
+    gsap.set(frame, { opacity: 0, scale: 1.04 });
+    gsap.set(frameCorners, { opacity: 0 });
+    gsap.set(hud, { opacity: 0 });
+    gsap.set(mark, { opacity: 0, filter: 'blur(18px)', scale: 1.03 });
+    gsap.set(reveals, { opacity: 0, y: 14 });
+    // From here GSAP owns the hidden state, so the CSS pre-intro rule can go.
+    hero.dataset.intro = 'running';
+
+    const blink = gsap.to(rec, { opacity: 0.2, duration: 0.5, repeat: -1, yoyo: true, ease: 'steps(1)' });
+    const focus = { value: 0 };
+    const showFocus = () => {
+      focusReadout.textContent = String(Math.round(focus.value)).padStart(3, '0');
+    };
+
+    const skipEvents = ['pointerdown', 'keydown', 'wheel', 'touchstart', 'resize'] as const;
+    const skip = () => tl.progress(1);
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'power3.out' },
+      onUpdate: () => {
+        time.textContent = timecode(Math.floor(tl.time() * FPS));
+      },
+      onComplete: () => {
+        skipEvents.forEach((type) => window.removeEventListener(type, skip));
+        blink.kill();
+        cam.remove();
+        gsap.set(mark, { clearProps: 'filter,opacity,transform' });
+        hero.dataset.intro = 'done';
+      },
+    });
+
+    // The frame opens.
+    tl.to(frame, { opacity: 1, scale: 1, duration: 0.7 }, 0)
+      .to(frameCorners, { opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power1.out' }, 0.05)
+      .to(hud, { opacity: 1, duration: 0.4, stagger: 0.06 }, 0.3)
+      // A single slow scan pass over the panel.
+      .fromTo(scan, { opacity: 1, y: '-6rem' }, { y: () => frame.offsetHeight, duration: 1.6, ease: 'power1.inOut' }, 0.45)
+      .to(scan, { opacity: 0, duration: 0.25 }, 1.85)
+      // The subject appears, out of focus.
+      .to(mark, { opacity: 0.5, duration: 0.6, ease: 'power1.out' }, 0.4)
+      .to(target, { opacity: 1, duration: 0.3 }, 1.0);
+
+    // Inference log: each line types in; earlier lines step back.
+    log.forEach((line, i) => {
+      const at = 0.6 + i * 0.45;
+      tl.fromTo(line, { opacity: 1, clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.4, ease: 'steps(18)' }, at);
+      if (i > 0) tl.to(log[i - 1], { opacity: 0.45, duration: 0.3 }, at);
+    });
+
+    // Autofocus hunts: over, back, then sharp.
+    tl.to(mark, { filter: 'blur(5px)', opacity: 0.8, duration: 0.45, ease: 'power2.inOut' }, 1.3)
+      .to(mark, { filter: 'blur(9px)', duration: 0.25, ease: 'power1.inOut' }, 1.75)
+      .to(mark, { filter: 'blur(0px)', opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 2.0)
+      .to(focus, { value: 62, duration: 0.45, ease: 'power2.inOut', onUpdate: showFocus }, 1.3)
+      .to(focus, { value: 41, duration: 0.25, onUpdate: showFocus }, 1.75)
+      .to(focus, { value: 100, duration: 0.5, ease: 'power2.out', onUpdate: showFocus }, 2.0)
+      // The detection box closes in and locks.
+      .to(target, { ...box, duration: 0.6, ease: 'power3.inOut' }, 1.95)
+      .to(cross, { opacity: 0, duration: 0.25 }, 1.95)
+      .to(target, { scale: 0.985, duration: 0.08, yoyo: true, repeat: 1, ease: 'power1.inOut' }, 2.55)
+      .to(label, { opacity: 1, duration: 0.3 }, 2.6)
+      // The viewfinder clears; the copy rises in.
+      .to(cam, { opacity: 0, duration: 0.5, ease: 'power2.in' }, 3.25)
+      .to(reveals, { opacity: 1, y: 0, duration: 0.8, stagger: 0.08 }, 3.45)
+      .set(reveals, { clearProps: 'transform,opacity' });
+
+    skipEvents.forEach((type) => window.addEventListener(type, skip, { passive: true }));
+  }
+
+  // Same pattern as Header.astro: `astro:page-load` only fires with client-side
+  // routing enabled, so also run once directly.
+  document.addEventListener('astro:page-load', initHero);
+  initHero();
+</script>
