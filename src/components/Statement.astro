@@ -1,0 +1,37 @@
+---
+import type { Locale } from '../config';
+import DraftTag from './DraftTag.astro';
+
+/**
+ * A large one-sentence statement in typographic quotes, under a short orange
+ * bar. Each word is its own span, so ScrollMotion.astro can colour the quote in
+ * as the reader passes. `align="right"` sets it flush right.
+ */
+interface Props {
+  text: string;
+  locale: Locale;
+  draft?: boolean;
+  align?: 'left' | 'right';
+}
+
+const { text, locale, draft = false, align = 'left' } = Astro.props;
+
+const [quoteOpen, quoteClose] = locale === 'de' ? ['„', '“'] : ['“', '”'];
+const words = `${quoteOpen}${text}${quoteClose}`.split(' ');
+---
+
+<div
+  class:list={[
+    'mx-auto max-w-[84rem]',
+    align === 'right' && 'flex flex-col items-end text-right',
+  ]}
+>
+  <span class="gradient-orange block h-1.5 w-16" aria-hidden="true"></span>
+  <p
+    class="mt-8 max-w-[26ch] text-[clamp(2rem,4.2vw,4rem)] leading-[1.08] font-bold tracking-[-0.03em] text-balance"
+    data-quote
+  >
+    {words.map((word) => <span data-word>{`${word} `}</span>)}
+  </p>
+  {draft && <DraftTag locale={locale} class="mt-6" />}
+</div>

@@ -1,0 +1,72 @@
+---
+import { Image } from 'astro:assets';
+import { requireImage } from '../lib/images';
+
+/**
+ * Photo strip, running left on its own. The set is rendered twice so the loop
+ * is seamless; the copy is hidden from assistive tech. Pauses on hover, and
+ * with reduced motion it becomes a strip you scroll by hand.
+ */
+interface Props {
+  /** Accessible name of the strip. */
+  label: string;
+  /** Paths under src/assets/uploads/. */
+  items: { image: string; alt: string }[];
+  /** Content file, for the error message when an image is missing. */
+  source: string;
+  class?: string;
+}
+
+const { label, items, source, class: className } = Astro.props;
+
+const photos = items.map((item) => ({ image: requireImage(item.image, source), alt: item.alt }));
+---
+
+<section aria-label={label} class:list={['gallery', className]}>
+  <ul class="gallery-track flex w-max">
+    {
+      [...photos, ...photos].map((photo, i) => {
+        const copy = i >= photos.length;
+        return (
+          <li class="w-[clamp(17rem,32vw,30rem)] shrink-0 pr-4" aria-hidden={copy ? 'true' : undefined}>
+            <Image
+              src={photo.image}
+              alt={copy ? '' : photo.alt}
+              widths={[480, 720, 960]}
+              sizes="(min-width: 1024px) 30rem, 70vw"
+              class="aspect-[3/2] w-full object-cover"
+              loading="lazy"
+            />
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>
+
+<style>
+  /* Two identical halves, so -50% loops seamlessly. */
+  .gallery {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+  .gallery-track {
+    animation: gallery 70s linear infinite;
+  }
+  .gallery-track:hover {
+    animation-play-state: paused;
+  }
+  @keyframes gallery {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gallery {
+      overflow-x: auto;
+    }
+    .gallery-track {
+      animation: none;
+    }
+  }
+</style>

@@ -3,11 +3,11 @@ import type { Locale } from '../config';
 import { ctaHref } from '../lib/content';
 
 /**
- * The Über-uns hero: a Marine panel the height of the viewport, with eyebrow,
+ * The Über-uns and Karriere hero: a Marine panel the height of the viewport, with eyebrow,
  * headline and intro text left-aligned and the CTAs (styled as on HomeHero) on
  * the right.
  *
- * Copy comes from the `hero` block of src/content/pages/ueber-uns/<locale>.mdx.
+ * Copy comes from the `hero` block of the page's content file (`source`).
  */
 interface Props {
   hero: {
@@ -18,10 +18,11 @@ interface Props {
     secondaryCta?: { label: string; page?: string; href?: string };
   };
   locale: Locale;
+  /** The content file the hero came from, for error messages. */
+  source: string;
 }
 
-const { hero, locale } = Astro.props;
-const source = `src/content/pages/ueber-uns/${locale}.mdx`;
+const { hero, locale, source } = Astro.props;
 ---
 
 <section class="px-4 pb-4">

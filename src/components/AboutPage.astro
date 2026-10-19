@@ -8,7 +8,10 @@ import AboutHero from './AboutHero.astro';
 import AboutStats from './AboutStats.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
+import PhotoStrip from './PhotoStrip.astro';
+import ScrollMotion from './ScrollMotion.astro';
 import SectionHeader from './SectionHeader.astro';
+import Statement from './Statement.astro';
 import Steps from './Steps.astro';
 
 /**
@@ -37,23 +40,7 @@ const storyImage = requireImage(about.story.image, source);
 
 const team = await getTeam(locale);
 
-/** The two large one-sentence statements (after the hero, after the story). */
-const statement =
-  'mt-8 max-w-[26ch] text-[clamp(2rem,4.2vw,4rem)] leading-[1.08] font-bold tracking-[-0.03em] text-balance';
-
-/**
- * A statement as quoted words: typographic quotes for the locale, each word in
- * its own span so the scroll script can colour it in as the reader passes.
- */
-const [quoteOpen, quoteClose] = locale === 'de' ? ['„', '“'] : ['“', '”'];
-const quoteWords = (text: string) => `${quoteOpen}${text}${quoteClose}`.split(' ');
-
 const partnersImage = requireImage(about.partners.image, source);
-
-const gallery = about.gallery.items.map((item) => ({
-  image: requireImage(item.image, source),
-  alt: item.alt,
-}));
 
 /** Stands in for the portrait until a photo is uploaded. */
 function initials(name: string): string {
@@ -73,32 +60,12 @@ function initials(name: string): string {
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
-  {/*
-    Pre-hide the scroll reveals BEFORE first paint, only when motion is allowed
-    and the browser can observe. The timeout is a failsafe: if the reveal script
-    never binds, everything is shown rather than staying invisible.
-  */}
-  <script is:inline>
-    (function (root) {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      if (!('IntersectionObserver' in window)) return;
-      root.dataset.motion = 'pending';
-      setTimeout(function () {
-        if (root.dataset.motion === 'pending') delete root.dataset.motion;
-      }, 4000);
-    })(document.documentElement);
-  </script>
+  <ScrollMotion />
 
-  <AboutHero hero={hero} locale={locale} />
+  <AboutHero hero={hero} locale={locale} source={source} />
 
   <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
-    <div class="mx-auto max-w-[84rem]">
-      <span class="gradient-orange block h-1.5 w-16" aria-hidden="true"></span>
-      <p class={statement} data-quote>
-        {quoteWords(about.statement.text).map((word) => <span data-word>{`${word} `}</span>)}
-      </p>
-      {about.statement.draft && <DraftTag locale={locale} class="mt-6" />}
-    </div>
+    <Statement text={about.statement.text} locale={locale} draft={about.statement.draft} />
   </section>
 
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
@@ -131,41 +98,15 @@ function initials(name: string): string {
   </section>
 
 <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
-    <div class="mx-auto flex max-w-[84rem] flex-col items-end text-right">
-      <span class="gradient-orange block h-1.5 w-16" aria-hidden="true"></span>
-      <p class={statement} data-quote>
-        {quoteWords(about.location.text).map((word) => <span data-word>{`${word} `}</span>)}
-      </p>
-      {about.location.draft && <DraftTag locale={locale} class="mt-6" />}
-    </div>
+    <Statement text={about.location.text} locale={locale} draft={about.location.draft} align="right" />
   </section>
 
-  {/*
-    Photo strip, running left on its own. The set is rendered twice so the
-    loop is seamless; the copy is hidden from assistive tech. Pauses on hover,
-    and with reduced motion it becomes a strip you scroll by hand.
-  */}
-  <section aria-label={about.gallery.label} class="gallery pb-20 lg:pb-32">
-    <ul class="gallery-track flex w-max">
-      {
-        [...gallery, ...gallery].map((photo, i) => {
-          const copy = i >= gallery.length;
-          return (
-            <li class="w-[clamp(17rem,32vw,30rem)] shrink-0 pr-4" aria-hidden={copy ? 'true' : undefined}>
-              <Image
-                src={photo.image}
-                alt={copy ? '' : photo.alt}
-                widths={[480, 720, 960]}
-                sizes="(min-width: 1024px) 30rem, 70vw"
-                class="aspect-[3/2] w-full object-cover"
-                loading="lazy"
-              />
-            </li>
-          );
-        })
-      }
-    </ul>
-  </section>
+  <PhotoStrip
+    label={about.gallery.label}
+    items={about.gallery.items}
+    source={source}
+    class="pb-20 lg:pb-32"
+  />
 
   <AboutStats stats={about.stats} locale={locale} />
 
@@ -233,131 +174,3 @@ function initials(name: string): string {
 
   <CtaPanel section={about.cta} locale={locale} source={source} />
 </BaseLayout>
-
-<style is:global>
-  /* Scroll reveals (see the script below); only while the page is in motion mode. */
-  [data-motion] [data-scroll-reveal] {
-    transition:
-      opacity 0.9s var(--ease-out-quint),
-      transform 0.9s var(--ease-out-quint);
-    transition-delay: var(--reveal-delay, 0ms);
-  }
-  [data-motion] [data-scroll-reveal]:not([data-revealed]) {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-
-  /* Quotes colour in word by word as they scroll through the viewport. */
-  [data-motion] [data-quote] [data-word] {
-    color: var(--color-marine-15);
-    transition: color 0.35s ease-out;
-  }
-  [data-motion] [data-quote] [data-word][data-lit] {
-    color: var(--color-marine);
-  }
-
-  /* Photo strip: two identical halves, so -50% loops seamlessly. */
-  .gallery {
-    overflow: hidden;
-    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
-  }
-  .gallery-track {
-    animation: gallery 70s linear infinite;
-  }
-  .gallery-track:hover {
-    animation-play-state: paused;
-  }
-  @keyframes gallery {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .gallery {
-      overflow-x: auto;
-    }
-    .gallery-track {
-      animation: none;
-    }
-  }
-</style>
-
-<script>
-  /**
-   * Scroll reveals and the quote fill.
-   *
-   * Sections fade up as they scroll in; elements that enter together are
-   * staggered so they appear one after another. With reduced motion the inline
-   * script never set `data-motion`, so this does nothing and the page is static.
-   * (The figures count themselves up, see AboutStats.astro.)
-   *
-   * Initialised directly and on `astro:page-load` (DECISIONS.md §12).
-   */
-  const STAGGER_MS = 140;
-
-  function initReveals() {
-    const root = document.documentElement;
-    if (root.dataset.motion !== 'pending') return;
-    root.dataset.motion = 'bound';
-
-    const items = [...document.querySelectorAll<HTMLElement>('[data-scroll-reveal]')];
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries
-          .filter((entry) => entry.isIntersecting)
-          .forEach((entry, index) => {
-            const item = entry.target as HTMLElement;
-            const delay = index * STAGGER_MS;
-            item.style.setProperty('--reveal-delay', `${delay}ms`);
-            item.dataset.revealed = '';
-            observer.unobserve(item);
-          });
-      },
-      { rootMargin: '0px 0px -12% 0px', threshold: 0.15 },
-    );
-    items.forEach((item) => observer.observe(item));
-  }
-
-  /**
-   * Quote fill: a quote's words light up in order while it travels from the
-   * lower part of the viewport to the upper third. Only in motion mode.
-   */
-  function initQuotes() {
-    if (!document.documentElement.dataset.motion) return;
-    const quotes = [...document.querySelectorAll<HTMLElement>('[data-quote]')].map((quote) => ({
-      quote,
-      words: [...quote.querySelectorAll<HTMLElement>('[data-word]')],
-    }));
-    if (quotes.length === 0 || quotes[0].quote.dataset.bound) return;
-    quotes.forEach(({ quote }) => (quote.dataset.bound = 'true'));
-
-    let queued = false;
-    const update = () => {
-      queued = false;
-      const vh = window.innerHeight;
-      for (const { quote, words } of quotes) {
-        const top = quote.getBoundingClientRect().top;
-        const progress = Math.min(Math.max((vh * 0.85 - top) / (vh * 0.5), 0), 1);
-        const lit = Math.round(progress * words.length);
-        words.forEach((word, i) => word.toggleAttribute('data-lit', i < lit));
-      }
-    };
-    const queue = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(update);
-    };
-    window.addEventListener('scroll', queue, { passive: true });
-    window.addEventListener('resize', queue);
-    update();
-  }
-
-  function init() {
-    initReveals();
-    initQuotes();
-  }
-
-  document.addEventListener('astro:page-load', init);
-  init();
-</script>

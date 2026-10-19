@@ -34,7 +34,7 @@ const section = z.object({
   draft: z.boolean().default(false),
   /**
    * How src/components/PageSections.astro lays the section out. Pages with a
-   * bespoke component (home, Karriere, Kontakt) read sections by id instead and
+   * bespoke component (home, Kontakt) read sections by id instead and
    * leave this unset.
    */
   layout: z
@@ -59,6 +59,28 @@ const section = z.object({
     )
     .default([]),
   primaryCta: cta.optional(),
+  secondaryCta: cta.optional(),
+});
+
+/** A large one-sentence statement in quotes (Statement.astro). */
+const statement = z.object({
+  draft: z.boolean().default(false),
+  text: z.string(),
+});
+
+/** Photos that run past as an endless strip; paths under src/assets/uploads/. */
+const photoStrip = z.object({
+  label: z.string(),
+  items: z.array(z.object({ image: z.string(), alt: z.string() })),
+});
+
+/** The closing Marine call-to-action panel (CtaPanel.astro). */
+const ctaPanel = z.object({
+  draft: z.boolean().default(false),
+  kicker: z.string().optional(),
+  heading: z.string(),
+  text: z.string().optional(),
+  primaryCta: cta,
   secondaryCta: cta.optional(),
 });
 
@@ -130,10 +152,7 @@ const pages = defineCollection({
     about: z
       .object({
         /** A large one-sentence statement right below the hero, left-aligned. */
-        statement: z.object({
-          draft: z.boolean().default(false),
-          text: z.string(),
-        }),
+        statement,
         /** The founding story, set next to the team photo. */
         story: z.object({
           draft: z.boolean().default(false),
@@ -145,15 +164,8 @@ const pages = defineCollection({
           imageAlt: z.string(),
         }),
         /** A large one-sentence statement after the story, right-aligned. */
-        location: z.object({
-          draft: z.boolean().default(false),
-          text: z.string(),
-        }),
-        /** Photos that run past as an endless strip; paths under src/assets/uploads/. */
-        gallery: z.object({
-          label: z.string(),
-          items: z.array(z.object({ image: z.string(), alt: z.string() })),
-        }),
+        location: statement,
+        gallery: photoStrip,
         /** Key figures, counted up one after another as they scroll in. */
         stats: z.object({
           draft: z.boolean().default(false),
@@ -186,14 +198,47 @@ const pages = defineCollection({
           text: z.string().optional(),
           steps: z.array(z.object({ title: z.string(), text: z.string() })),
         }),
-        cta: z.object({
+        cta: ctaPanel,
+      })
+      .optional(),
+    /** Sections of the Karriere page (src/components/KarrierePage.astro). */
+    career: z
+      .object({
+        /** Why work here, set next to an image placeholder. */
+        intro: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          heading: z.string(),
+          body: z.array(z.string()),
+          /** Describes the image that belongs here; shown on the placeholder. */
+          imageNote: z.string().optional(),
+        }),
+        /** What to expect: a grid of short cards. */
+        benefits: z.object({
           draft: z.boolean().default(false),
           kicker: z.string().optional(),
           heading: z.string(),
           text: z.string().optional(),
-          primaryCta: cta,
-          secondaryCta: cta.optional(),
+          items: z.array(z.object({ title: z.string(), text: z.string() })),
         }),
+        /** Open roles; each row links to the posting or a pre-filled e-mail. */
+        jobs: z.object({
+          draft: z.boolean().default(false),
+          kicker: z.string().optional(),
+          heading: z.string(),
+          text: z.string().optional(),
+          /** Where applications go; shown as a link under the intro. */
+          email: z.email().optional(),
+          items: z.array(
+            z.object({
+              title: z.string(),
+              /** Small mono label: department, location, hours. */
+              meta: z.string().optional(),
+              ...link,
+            }),
+          ),
+        }),
+        cta: ctaPanel,
       })
       .optional(),
   }),
