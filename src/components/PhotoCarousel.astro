@@ -1,0 +1,156 @@
+---
+import { Image } from 'astro:assets';
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import { requireImage } from '../lib/images';
+
+/**
+ * Portrait photo cards in a horizontal, snapping track, paged with two arrow
+ * buttons at its sides. Used for the industries on Leistungen.
+ *
+ * Each photo is shown as a duotone in the brand colours: shadows Marine,
+ * highlights Hellblau. Pure CSS — the photo is greyscaled and multiplied onto
+ * a Hellblau ground, then a Marine layer is blended with `lighten`, so nothing
+ * darker than Marine and nothing lighter than Hellblau survives.
+ *
+ * The track is a plain scroll container, so touch swiping and trackpads work
+ * natively; the buttons scroll it by one visible page. Without JS the cards
+ * still scroll, only the buttons stay hidden.
+ */
+interface Props {
+  items: { title: string; image?: string; imageAlt?: string }[];
+  /** Accessible name of the carousel region. */
+  label: string;
+  locale: Locale;
+  /** Content file, for the error message when an image is missing. */
+  source: string;
+  class?: string;
+}
+
+const { items, label, locale, source, class: className } = Astro.props;
+const t = useTranslations(locale);
+
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
+const button =
+  'absolute top-1/2 z-10 flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center gradient-orange text-weiss shadow-panel transition-opacity duration-300 disabled:pointer-events-none disabled:opacity-0';
+---
+
+<div
+  class:list={['relative', className]}
+  role="region"
+  aria-roledescription="carousel"
+  aria-label={label}
+  data-carousel
+>
+  <ul
+    class="carousel-track -my-2 flex snap-x snap-mandatory gap-4 overflow-x-auto py-2 lg:gap-6"
+    data-carousel-track
+  >
+    {
+      items.map((item, index) => (
+        <li class="group w-[72%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-4.5rem)/4)]">
+          <figure class="relative isolate aspect-[3/4] overflow-hidden rounded-2xl bg-hellblau">
+            {item.image && (
+              <Image
+                src={requireImage(item.image, `${source} → ${item.title}`)}
+                alt={item.imageAlt ?? ''}
+                widths={[400, 800]}
+                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 72vw"
+                class="absolute inset-0 size-full object-cover mix-blend-multiply grayscale contrast-125 transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-105"
+                loading="lazy"
+              />
+            )}
+            {/* Duotone shadows: lift everything darker than Marine up to Marine. */}
+            <div class="absolute inset-0 bg-marine mix-blend-lighten" aria-hidden="true" />
+            {/* Keeps the caption readable whatever the photo. */}
+            <div
+              class="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-marine/90 to-transparent"
+              aria-hidden="true"
+            />
+            <figcaption class="absolute inset-x-0 bottom-0 p-5 lg:p-6">
+              <span class="kicker block text-hellblau">{String(index + 1).padStart(2, '0')}</span>
+              <span class="mt-2 block text-xl leading-tight font-semibold text-weiss text-balance">
+                {item.title}
+              </span>
+            </figcaption>
+          </figure>
+        </li>
+      ))
+    }
+  </ul>
+
+  <button
+    type="button"
+    class:list={[button, 'left-3 lg:-left-5']}
+    data-carousel-prev
+    aria-label={t('carousel.prev')}
+    hidden
+  >
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" class="rotate-180">
+      <path d={arrow} stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+  <button
+    type="button"
+    class:list={[button, 'right-3 lg:-right-5']}
+    data-carousel-next
+    aria-label={t('carousel.next')}
+    hidden
+  >
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d={arrow} stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+</div>
+
+<style>
+  /* Scrolls by touch, trackpad and the buttons — the bar itself is noise. */
+  .carousel-track {
+    scrollbar-width: none;
+  }
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<script>
+  /**
+   * Arrow buttons: scroll the track by one visible page, and disable a button
+   * at its end of the track. Both stay hidden when everything fits.
+   *
+   * Initialised directly and on `astro:page-load`, like Header.astro.
+   */
+  function initCarousels() {
+    for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
+      if (root.dataset.carouselBound) continue;
+      root.dataset.carouselBound = 'true';
+
+      const track = root.querySelector<HTMLElement>('[data-carousel-track]')!;
+      const prev = root.querySelector<HTMLButtonElement>('[data-carousel-prev]')!;
+      const next = root.querySelector<HTMLButtonElement>('[data-carousel-next]')!;
+
+      const sync = () => {
+        const max = track.scrollWidth - track.clientWidth;
+        const fits = max <= 1;
+        prev.hidden = next.hidden = fits;
+        // A pixel of slack: snapping can land a fraction short of either end.
+        prev.disabled = track.scrollLeft <= 1;
+        next.disabled = track.scrollLeft >= max - 1;
+      };
+
+      const page = (direction: 1 | -1) => {
+        const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        track.scrollBy({ left: direction * track.clientWidth, behavior: reduce ? 'auto' : 'smooth' });
+      };
+
+      prev.addEventListener('click', () => page(-1));
+      next.addEventListener('click', () => page(1));
+      track.addEventListener('scroll', sync, { passive: true });
+      new ResizeObserver(sync).observe(track);
+      sync();
+    }
+  }
+
+  document.addEventListener('astro:page-load', initCarousels);
+  initCarousels();
+</script>

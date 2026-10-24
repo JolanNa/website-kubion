@@ -72,8 +72,19 @@ export const UI = {
     'draft.label': 'Entwurf',
     'draft.hint': 'Dieser Abschnitt ist ein Entwurf – Text und Inhalt sind noch nicht final.',
     'common.more': 'Mehr erfahren',
+
+    'flow.alt':
+      'Isometrische Produktionslinie mit drei Stationen. Darunter die Qualität über die Zeit: Alle Messpunkte liegen in einem verengten Toleranzkorridor.',
+    'flow.time': 'Zeit',
+    'flow.quality': 'Qualität',
+    'flow.tolerance': 'Toleranz',
+    'flow.scrap': 'Ausschuss',
     'placeholder.image': 'Bild',
     'placeholder.logo': 'Logo',
+    'carousel.prev': 'Zurück',
+    'carousel.next': 'Weiter',
+    'slider.prev': 'Zurück',
+    'slider.next': 'Weiter',
 
     'footer.rights': 'Alle Rechte vorbehalten.',
 
@@ -142,8 +153,19 @@ export const UI = {
     'draft.label': 'Draft',
     'draft.hint': 'This section is a draft – copy and content are not final yet.',
     'common.more': 'Learn more',
+
+    'flow.alt':
+      'Isometric production line with three stations. Beneath it, quality over time: every measurement lies inside a narrowed tolerance corridor.',
+    'flow.time': 'Time',
+    'flow.quality': 'Quality',
+    'flow.tolerance': 'Tolerance',
+    'flow.scrap': 'Scrap',
     'placeholder.image': 'Image',
     'placeholder.logo': 'Logo',
+    'carousel.prev': 'Previous',
+    'carousel.next': 'Next',
+    'slider.prev': 'Previous',
+    'slider.next': 'Next',
 
     'footer.rights': 'All rights reserved.',
 

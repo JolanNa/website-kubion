@@ -1,0 +1,401 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import { CHART, SCENE, processChart, processScene } from '../lib/processScene';
+import SectionHeader from './SectionHeader.astro';
+
+/**
+ * The production line on the Prozessoptimierung page: an isometric line across
+ * the full width that stays pinned while the section scrolls, with the three
+ * phases and the chart beneath it.
+ *
+ * Scrolling plays one story in three phases, one per item of the section: the
+ * process runs and loses part of its output; every station gets a gauge and
+ * its data lands in the chart, where quality keeps leaving its tolerance; the
+ * parameters move into their optimal range, quality stays inside the corridor
+ * and the corridor narrows. The `points` of the items name the parameters.
+ *
+ * The artwork is drawn in src/lib/processScene.ts and is the finished picture.
+ * The script only winds it back when motion is allowed, so reduced-motion and
+ * no-JS visitors get an ordinary section showing the end state.
+ */
+interface Props {
+  section: CollectionEntry<'pages'>['data']['sections'][string];
+  locale: Locale;
+}
+
+const { section, locale } = Astro.props;
+const t = useTranslations(locale);
+
+const scene = processScene({
+  parameters: section.items.flatMap((item) => item.points),
+  scrap: t('flow.scrap'),
+});
+const chart = processChart({
+  time: t('flow.time'),
+  quality: t('flow.quality'),
+  tolerance: t('flow.tolerance'),
+});
+---
+
+<div class="flow" data-flow>
+  <SectionHeader section={section} locale={locale} />
+
+  <div class="track" data-flow-track>
+    <div class="stage sticky top-(--header-height) pt-6 lg:pt-10" data-flow-stage>
+      <svg
+        viewBox={`${SCENE.x} ${SCENE.y} ${SCENE.width} ${SCENE.height}`}
+        class="scene mx-auto block w-full"
+        role="img"
+        aria-label={t('flow.alt')}
+        data-flow-scene
+        set:html={scene}
+      />
+
+      <div class="mt-6 grid gap-x-6 gap-y-6 lg:mt-8 lg:grid-cols-[repeat(3,1fr)_1.6fr]">
+        <ol class="contents">
+          {
+            section.items.map((item, index) => (
+              <li class="phase border-t-2 border-marine-15 pt-5" data-flow-phase>
+                <span class="kicker flex size-9 items-center justify-center rounded-lg bg-marine text-weiss">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <h3 class="mt-4 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+                {item.text && <p class="mt-2 leading-relaxed text-pretty text-marine-70">{item.text}</p>}
+              </li>
+            ))
+          }
+        </ol>
+        <svg
+          viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+          class="chart order-first mx-auto block w-full max-w-64 overflow-visible lg:order-none lg:max-w-none"
+          aria-hidden="true"
+          data-flow-chart
+          set:html={chart}
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .scene {
+    max-height: 46svh;
+  }
+
+  /* The dots fly in from the stations above, so the chart sits on top. */
+  .chart {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* The artwork is injected markup, so its rules cannot be scoped. Sizes are in
+     drawing units: the scene is drawn 1410 wide, so its labels grow as it shrinks. */
+  .flow :global(.flow-label) {
+    fill: var(--color-marine-70);
+    font-family: var(--font-mono);
+    font-size: 40px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .flow :global(.flow-label-chart) {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  @media (min-width: 48rem) {
+    .flow :global(.flow-label) {
+      font-size: 24px;
+      letter-spacing: 0.08em;
+    }
+
+    .flow :global(.flow-label-chart) {
+      font-size: 12px;
+    }
+  }
+
+  @media (min-width: 80rem) {
+    .flow :global(.flow-label) {
+      font-size: 18px;
+    }
+
+    .flow :global(.flow-label-chart) {
+      font-size: 12px;
+    }
+  }
+
+  .flow :global([data-flow-dot]) {
+    fill: var(--color-marine-70);
+    stroke: var(--color-marine-70);
+    stroke-width: 2;
+  }
+
+  /* Out of tolerance: an empty outline, like the scrap on the belt. */
+  .flow :global([data-flow-dot][data-outside]) {
+    fill: var(--color-weiss);
+    stroke: var(--color-marine-45);
+  }
+
+  /* What each phase is about stands out in the scene: the scrap is named in
+     the first, and in the second the line steps back behind its gauges. */
+  .flow :global([data-flow-line]),
+  .flow :global([data-flow-callout]) {
+    transition: opacity 500ms var(--ease-out-quint);
+  }
+
+  .flow :global([data-flow-callout]) {
+    opacity: 0;
+  }
+
+  .flow[data-phase='0'] :global([data-flow-callout]) {
+    opacity: 1;
+  }
+
+  .flow[data-phase='1'] :global([data-flow-line]) {
+    opacity: 0.45;
+  }
+
+  /* Elements with two looks: scrap instead of a good piece, a marker that is
+     not yet in range. */
+  .flow :global([data-alt]),
+  .flow :global([data-swap] > [data-main]) {
+    display: none;
+  }
+
+  .flow :global([data-swap] > [data-alt]) {
+    display: inline;
+  }
+
+  /* Only once the script runs: the section becomes a scroll track, and the
+     phase the story is in stands out. */
+  .flow[data-scroll] .track {
+    height: 300svh;
+  }
+
+  .phase {
+    transition:
+      opacity 400ms var(--ease-out-quint),
+      border-color 400ms var(--ease-out-quint);
+  }
+
+  .flow[data-scroll] .phase:not([data-active]) {
+    opacity: 0.35;
+  }
+
+  .flow[data-scroll] .phase[data-active] {
+    border-color: var(--color-marine);
+  }
+
+  /* Beneath lg there is room for one phase at a time. */
+  @media (max-width: 63.99rem) {
+    .flow[data-scroll] .phase:not([data-active]) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from 'gsap';
+  import { CHART, TRACK, trackAt } from '../lib/processScene';
+
+  /** Scene units per second. */
+  const SPEED = 100;
+  const SCRAP_RATE = 0.4;
+  /** How far a rejected piece travels while it is pushed off, and while it drops. */
+  const PUSH = 50;
+  const FALL = 40;
+
+  const clamp = (n: number) => Math.min(1, Math.max(0, n));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-flow]')) {
+    if (reduceMotion.matches) continue;
+
+    const track = root.querySelector<HTMLElement>('[data-flow-track]')!;
+    const stage = root.querySelector<HTMLElement>('[data-flow-stage]')!;
+    const scene = root.querySelector('[data-flow-scene]')!;
+    const chart = root.querySelector('[data-flow-chart]')!;
+    const controls = root.querySelectorAll('[data-flow-control]');
+    const knobs = [...root.querySelectorAll<SVGGElement>('[data-flow-knob]')];
+    const targets = root.querySelectorAll('[data-flow-target]');
+    const sources = [...root.querySelectorAll('[data-flow-source]')];
+    const band = root.querySelector<SVGRectElement>('[data-flow-band]')!;
+    const limits = [...root.querySelectorAll<SVGPathElement>('[data-flow-limit]')];
+    const before = root.querySelector('[data-flow-before]');
+    const after = root.querySelector('[data-flow-after]');
+    const dots = [...root.querySelectorAll<SVGCircleElement>('[data-flow-dot]')];
+    const phases = [...root.querySelectorAll<HTMLElement>('[data-flow-phase]')];
+    root.setAttribute('data-scroll', '');
+
+    // --- The material: runs all the time, whatever the scroll position. -----
+    const scrap = { rate: SCRAP_RATE };
+    const elements = [...root.querySelectorAll<SVGGElement>('[data-flow-piece]')];
+    const pieces = elements.map((element, i) => {
+      const distance = (i * TRACK.cycle) / elements.length;
+      return { element, distance, judged: distance >= TRACK.exit, reject: false };
+    });
+    let judgedCount = 0;
+    let visible = false;
+
+    gsap.ticker.add((_time, delta) => {
+      if (!visible) return;
+      const step = (SPEED * Math.min(delta, 50)) / 1000;
+      for (const piece of pieces) {
+        piece.distance += step;
+        if (piece.distance >= TRACK.cycle) {
+          piece.distance -= TRACK.cycle;
+          piece.judged = piece.reject = false;
+          piece.element.removeAttribute('data-swap');
+        }
+        const past = piece.distance - TRACK.exit;
+        if (past >= 0 && !piece.judged) {
+          piece.judged = true;
+          // Golden-ratio steps: an even spread of rejects without a visible rhythm.
+          piece.reject = (judgedCount++ * 0.618) % 1 < scrap.rate;
+          piece.element.toggleAttribute('data-swap', piece.reject);
+        }
+
+        let [x, y] = trackAt(Math.min(piece.distance, piece.reject ? TRACK.exit : TRACK.end));
+        let opacity = clamp(piece.distance / 40);
+        if (piece.reject) {
+          // Scrap is pushed off the belt and drops into the bin.
+          const pushed = clamp(past / PUSH) ** 2;
+          const fallen = clamp((past - PUSH) / FALL);
+          x += TRACK.push[0] * pushed;
+          y += TRACK.push[1] * pushed + TRACK.drop * fallen ** 2;
+          opacity = 1 - fallen;
+        } else if (past > 0) {
+          opacity = 1 - clamp(past / (TRACK.end - TRACK.exit));
+        }
+        piece.element.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+        piece.element.setAttribute('opacity', opacity.toFixed(2));
+      }
+    });
+    new IntersectionObserver(([entry]) => (visible = entry.isIntersecting)).observe(scene);
+
+    // --- The story: a paused timeline that the scroll position plays. -------
+    let story: gsap.core.Timeline | undefined;
+
+    const sync = () => {
+      const time = story!.time();
+      const { measure, optimise } = story!.labels;
+      const phase = time < measure ? 0 : time < optimise ? 1 : 2;
+      root.dataset.phase = String(phase);
+      phases.forEach((element, i) => element.toggleAttribute('data-active', i === phase));
+      // A marker turns orange when it arrives in its range, a point solid when
+      // it is back inside the corridor.
+      knobs.forEach((knob, i) => knob.toggleAttribute('data-swap', time < optimise + 1.3 + i * 0.15));
+      dots.forEach((dot, i) =>
+        dot.toggleAttribute('data-outside', 'out' in dot.dataset && time < optimise + 1.4 + i * 0.02),
+      );
+    };
+
+    const build = () => {
+      const time = story?.time() ?? 0;
+      story?.kill();
+      gsap.set(dots, { x: 0, y: 0 });
+
+      // Each dot flies in from the gauge of the station that measured it. The
+      // chart is a separate drawing, so the way there is measured on the page.
+      const middle = (element: Element) => {
+        const box = element.getBoundingClientRect();
+        return [box.left + box.width / 2, box.top + box.height / 2];
+      };
+      const scale = chart.getBoundingClientRect().width / CHART.width;
+      const starts = sources.map(middle);
+      const offsets = dots.map((dot) => {
+        const [fromX, fromY] = starts[Number(dot.dataset.station)];
+        const [x, y] = middle(dot);
+        return { x: (fromX - x) / scale, y: (fromY - y) / scale };
+      });
+      /** Where a point lay before the optimisation, relative to where it ends up. */
+      const rise = (_: number, dot: SVGCircleElement) => Number(dot.dataset.rise);
+
+      story = gsap
+        .timeline({ paused: true, onUpdate: sync })
+        // The data arrives: quality over time, in and out of the corridor.
+        .addLabel('measure', 1)
+        .fromTo(
+          controls,
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.15 },
+          'measure',
+        )
+        .fromTo(dots, { opacity: 0 }, { opacity: 1, duration: 0.15, stagger: 0.05 }, 'measure+=0.6')
+        .fromTo(
+          dots,
+          { x: (i) => offsets[i].x, y: (i) => offsets[i].y },
+          { x: 0, y: rise, duration: 1, ease: 'power2.inOut', stagger: 0.05 },
+          'measure+=0.6',
+        )
+        .fromTo(before, { opacity: 0 }, { opacity: 1, duration: 0.5 }, '-=0.4')
+
+        // The parameters move into their range, and quality into the corridor.
+        .addLabel('optimise', '+=0.5')
+        .fromTo(targets, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 'optimise')
+        .fromTo(
+          knobs,
+          { y: (_, knob: SVGGElement) => Number(knob.dataset.from) },
+          {
+            y: (_, knob: SVGGElement) => Number(knob.dataset.to),
+            duration: 1,
+            ease: 'power3.inOut',
+            stagger: 0.15,
+          },
+          'optimise+=0.5',
+        )
+        .fromTo(scrap, { rate: SCRAP_RATE }, { rate: 0, duration: 1.3, ease: 'none' }, 'optimise+=0.5')
+        .to(before, { opacity: 0, duration: 0.4 }, 'optimise+=0.7')
+        .to(dots, { y: 0, duration: 1, ease: 'power3.inOut', stagger: 0.02 }, 'optimise+=0.7')
+        .fromTo(after, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 'optimise+=2')
+
+        // With everything inside, the corridor can become narrower.
+        .fromTo(
+          limits,
+          { opacity: 0, y: (_, limit: SVGPathElement) => Number(limit.dataset.shift) },
+          { opacity: 1, duration: 0.4 },
+          'optimise+=2.4',
+        )
+        .to(limits, { y: 0, duration: 1, ease: 'power2.inOut' }, 'optimise+=2.8')
+        .fromTo(
+          band,
+          { scaleY: Number(band.dataset.scale), transformOrigin: '50% 50%' },
+          { scaleY: 1, duration: 1, ease: 'power2.inOut' },
+          'optimise+=2.8',
+        )
+        // Leave the result standing for the last stretch of the scroll.
+        .to({}, { duration: 1 });
+      story.time(time);
+      sync();
+    };
+
+    /** Plays the story to where the scroll position is. */
+    const follow = () => {
+      const pinnedAt = parseFloat(getComputedStyle(stage).top) || 0;
+      const range = track.offsetHeight - stage.offsetHeight;
+      const progress = clamp((pinnedAt - track.getBoundingClientRect().top) / range);
+      gsap.to(story!, {
+        time: progress * story!.duration(),
+        duration: 0.5,
+        ease: 'power2.out',
+        overwrite: true,
+      });
+    };
+
+    let frame = 0;
+    const request = () => (frame ||= requestAnimationFrame(() => ((frame = 0), follow())));
+    let resized = 0;
+
+    build();
+    follow();
+    // The way to the chart shifts once fonts and images have settled.
+    window.addEventListener('load', () => (build(), follow()));
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', () => {
+      clearTimeout(resized);
+      resized = window.setTimeout(() => (build(), follow()), 150);
+    });
+  }
+</script>

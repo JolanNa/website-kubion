@@ -7,54 +7,96 @@ hero:
   subline: "Wir entwickeln nicht nur das Modell. Wir bauen das ganze System — Hardware, Software und die Einbindung in Ihre Produktion."
 sections:
   system:
-    layout: layers
+    layout: vision-system
     kicker: "Alles aus einer Hand"
     heading: "Ein Vision-System, auseinandergenommen."
-    text: "Ein Bild allein löst noch kein Problem. Damit aus einer Kamera eine Lösung wird, müssen mehrere Schichten zusammenpassen — wir bauen sie alle."
+    text: "Ein Vision-System ist kein einzelnes Produkt, sondern ein System aus mehreren Teilen. Erst wenn alle zusammenpassen, wird aus einem Bild eine Entscheidung — wir bauen sie alle."
+    imageNote: "Platzhalter-Grafik"
     draft: true
     primaryCta:
       label: "Über Ihr Vorhaben sprechen"
       page: "kontakt"
     items:
-      - meta: "Hardware"
-        title: "Aufbau & Beleuchtung"
-        text: "Halterung, Einhausung und Licht, abgestimmt auf Material und Umgebung."
-      - meta: "Hardware"
+      - part: process
+        meta: "Ausgangspunkt"
+        imageNote: "Foto: Wir an der Linie eines Kunden, beim Ansehen der Teile"
+        title: "Ihr Prozess"
+        text: "Am Anfang steht, was geprüft werden soll: Ihre Teile, in Ihrem Takt, auf Ihrer Anlage. Material, Geschwindigkeit und Platz bestimmen alles Weitere."
+      - part: lighting
+        meta: "Hardware"
+        imageNote: "Foto: Beleuchtung wird am Aufbau ausgerichtet"
+        title: "Beleuchtung"
+        text: "Licht entscheidet, was die Kamera überhaupt sehen kann. Wir stimmen Art, Winkel und Farbe auf Material und Merkmal ab, damit ein Fehler in jeder Schicht gleich aussieht."
+      - part: camera
+        meta: "Hardware"
+        imageNote: "Foto: Kamera und Objektiv werden montiert und scharfgestellt"
         title: "Kamera & Optik"
-        text: "Flächen- oder Zeilenkamera, Objektiv und Trigger — passend zur Aufgabe."
-      - meta: "KI"
-        title: "Modell"
-        text: "Trainiert auf Ihren Bildern, bewertet an Ihren Qualitätskriterien."
-      - meta: "Software"
+        text: "Flächen- oder Zeilenkamera, Objektiv, Trigger und eine Halterung, die an Ihre Linie passt — ausgelegt auf Teilegröße, Bandgeschwindigkeit und die kleinste Abweichung, die erkannt werden soll."
+      - part: compute
+        meta: "KI"
+        imageNote: "Foto: Rechner im Schaltschrank, jemand mit Laptop davor"
+        title: "Recheneinheit & Modell"
+        text: "Ein Rechner direkt an der Linie wertet jedes Bild im Takt aus. Das Modell darauf ist auf Ihren Bildern trainiert und an Ihren Qualitätskriterien gemessen."
+      - part: application
+        meta: "Software"
+        imageNote: "Foto: Verdrahtung zur Steuerung, Test der Ausschleusung"
         title: "Anwendung"
-        text: "Die Software, die Bilder aufnimmt, auswertet und Entscheidungen weitergibt."
-      - meta: "Software"
-        title: "Integration & Dashboard"
-        text: "Anbindung an Steuerung und Systeme — und ein Dashboard, das Ergebnisse sichtbar macht."
+        text: "Die Software, die aus einem Befund eine Handlung macht: Sie nimmt Bilder auf, wertet sie aus und meldet das Ergebnis im Takt an die Linie zurück — damit ein auffälliges Teil ausgeschleust wird, bevor es weiterläuft."
+      - part: interface
+        meta: "Software"
+        imageNote: "Foto: Jemand an der Linie am Bildschirm mit der Übersicht"
+        title: "Übersicht an der Linie"
+        text: "Die Oberfläche für die Menschen vor Ort: Live-Bild, die letzten Befunde und der Verlauf der Schicht. Hier sehen sie, was das System erkannt und entschieden hat — und können nachvollziehen, warum."
   aufgaben:
-    layout: cards
+    layout: vision-tasks
     kicker: "Aufgaben"
     heading: "Welche Probleme wir mit Bildern lösen."
+    text: "Fünf Fragen, die ein Bild beantworten kann. Welche davon Ihre ist, entscheidet, wie das System gebaut wird."
     draft: true
-    primaryCta:
-      label: "Ihre Aufgabe ist nicht dabei? Fragen Sie uns"
+    variant: a
+    primaryCta: &tasksCta
+      lead: "Ihre Aufgabe ist nicht dabei?"
+      label: "Fragen Sie uns"
       page: "kontakt"
-    items:
-      - meta: "Was ist das?"
+    items: &tasks
+      - part: classify
+        meta: "Was ist das?"
         title: "Klassifizieren"
         text: "Teile, Materialien oder Zustände einer Klasse zuordnen."
-      - meta: "Wo ist was?"
+      - part: detect
+        meta: "Wo ist was?"
         title: "Erkennen & lokalisieren"
         text: "Objekte, Fehler oder Fremdkörper im Bild finden und verorten."
-      - meta: "Gut oder schlecht?"
+      - part: inspect
+        meta: "Gut oder schlecht?"
         title: "Attributive Prüfung"
         text: "Gut-Schlecht-Entscheidungen — auch dort, wo die Grenze unscharf ist und ein Fehler in die eine Richtung teurer ist als in die andere."
-      - meta: "Läuft es richtig?"
+      - part: monitor
+        meta: "Läuft es richtig?"
         title: "Prozessüberwachung"
         text: "Nicht nur Fehler suchen, sondern den Ablauf prüfen: Liegt das richtige Teil vor? Ist plausibel, was gerade passiert?"
-      - meta: "Wohin greifen?"
+      - part: guide
+        meta: "Wohin greifen?"
         title: "Vision für Robotik"
         text: "Robotersysteme mit Bildinformation unterstützen — Lage, Position, Greifpunkt."
+  aufgaben-b:
+    layout: vision-tasks
+    kicker: "Aufgaben"
+    heading: "Welche Probleme wir mit Bildern lösen."
+    text: "Fünf Fragen, die ein Bild beantworten kann. Welche davon Ihre ist, entscheidet, wie das System gebaut wird."
+    draft: true
+    variant: b
+    primaryCta: *tasksCta
+    items: *tasks
+  aufgaben-c:
+    layout: vision-tasks
+    kicker: "Aufgaben"
+    heading: "Welche Probleme wir mit Bildern lösen."
+    text: "Fünf Fragen, die ein Bild beantworten kann. Welche davon Ihre ist, entscheidet, wie das System gebaut wird."
+    draft: true
+    variant: c
+    primaryCta: *tasksCta
+    items: *tasks
   bildgebung:
     layout: spectrum
     kicker: "Kamera & Bildgebung"
@@ -85,6 +127,19 @@ sections:
       - title: "Anbindung an Steuerung und Systeme"
       - title: "Dashboards für Linie und Leitung"
       - title: "Auswertungen über Zeit"
+  werkstatt:
+    layout: photos
+    kicker: "Aus der Werkstatt"
+    heading: "Wir schrauben selbst."
+    text: "Unsere Systeme entstehen nicht nur am Bildschirm. Wir konstruieren, verdrahten und justieren selbst — in der Werkstatt und bei Ihnen an der Anlage."
+    draft: true
+    items:
+      - title: "Aufbau in der Werkstatt"
+        imageNote: "Foto: Einer von uns schraubt an einem Kameraaufbau"
+      - title: "Testaufnahmen"
+        imageNote: "Foto: Teile unter der Kamera, Laptop mit Bild daneben"
+      - title: "Inbetriebnahme vor Ort"
+        imageNote: "Foto: Wir an der Linie beim Einstellen"
   ablauf:
     layout: steps
     kicker: "Zusammenarbeit"

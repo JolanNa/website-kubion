@@ -4,7 +4,7 @@ import DraftTag from './DraftTag.astro';
 
 /** Kicker, heading, draft tag and intro of a page section. */
 interface Props {
-  section: { kicker?: string; heading: string; text?: string; draft?: boolean };
+  section: { kicker?: string; heading: string; text?: string; draft?: boolean; variant?: string };
   locale: Locale;
   /** On a Marine ground. */
   dark?: boolean;
@@ -28,7 +28,7 @@ const { section, locale, dark = false, class: className } = Astro.props;
   >
     {section.heading}
   </h2>
-  {section.draft && <DraftTag locale={locale} dark={dark} class="mt-5" />}
+  {section.draft && <DraftTag locale={locale} dark={dark} variant={section.variant} class="mt-5" />}
   {
     section.text && (
       <p

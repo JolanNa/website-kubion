@@ -18,7 +18,12 @@ const link = {
   anchor: z.string().optional(),
 };
 
-const cta = z.object({ label: z.string(), ...link });
+const cta = z.object({
+  label: z.string(),
+  /** A question or remark that leads into the link, where the layout shows one. */
+  lead: z.string().optional(),
+  ...link,
+});
 
 /**
  * A page section: a heading block plus an optional list of cards, steps or rows.
@@ -33,12 +38,30 @@ const section = z.object({
   text: z.string().optional(),
   draft: z.boolean().default(false),
   /**
+   * Which of several designs of the section to render, while more than one is
+   * up for review; shown next to the draft tag. Only `vision-tasks` reads it.
+   */
+  variant: z.enum(['a', 'b', 'c']).optional(),
+  /**
    * How src/components/PageSections.astro lays the section out. Pages with a
    * bespoke component (home, Karriere, Kontakt) read sections by id instead and
    * leave this unset.
    */
   layout: z
-    .enum(['rows', 'cards', 'chips', 'steps', 'split', 'layers', 'spectrum', 'projects', 'cta'])
+    .enum([
+      'rows',
+      'cards',
+      'chips',
+      'steps',
+      'split',
+      'vision-system',
+      'vision-tasks',
+      'photos',
+      'spectrum',
+      'projects',
+      'flow',
+      'cta',
+    ])
     .optional(),
   /** Describes the image that belongs here; rendered as a labelled placeholder. */
   imageNote: z.string().optional(),
@@ -50,7 +73,12 @@ const section = z.object({
         imageNote: z.string().optional(),
         /** Small mono label: a category, a location, a contact value. */
         meta: z.string().optional(),
+        /** `vision-system`, `vision-tasks`: the piece of the visual this item describes. */
+        part: z.string().optional(),
         points: z.array(z.string()).default([]),
+        /** Photo for the photo carousel: a path under src/assets/uploads/. */
+        image: z.string().optional(),
+        imageAlt: z.string().optional(),
         ...link,
       }),
     )

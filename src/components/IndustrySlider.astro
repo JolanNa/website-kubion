@@ -1,0 +1,149 @@
+---
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import Placeholder from './Placeholder.astro';
+import SectionHeader from './SectionHeader.astro';
+
+/**
+ * The industries as a horizontal slider: one card per industry, each with a
+ * placeholder for its visualisation (labelled with the item's `imageNote`).
+ *
+ * The track is a native scroll-snap container, so touch, trackpad and keyboard
+ * scrolling work without JS; the script only drives the two arrow buttons.
+ */
+interface Props {
+  section: {
+    kicker?: string;
+    heading: string;
+    text?: string;
+    draft?: boolean;
+    items: { title: string; text?: string; imageNote?: string }[];
+  };
+  locale: Locale;
+}
+
+const { section, locale } = Astro.props;
+const t = useTranslations(locale);
+
+const button =
+  'flex size-11 items-center justify-center rounded-lg border border-marine-15 text-marine transition-colors duration-300 hover:bg-nebel disabled:pointer-events-none disabled:opacity-35';
+---
+
+<section class="py-14 lg:py-24" data-slider>
+  <div class="px-4 sm:px-16 lg:px-20">
+    <div class="mx-auto flex max-w-[84rem] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <SectionHeader section={section} locale={locale} />
+      <div class="flex gap-2">
+        <button type="button" class={button} aria-label={t('slider.prev')} data-slider-prev disabled>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M13 8H4m0 0 3.5-3.5M4 8l3.5 3.5"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+        </button>
+        <button type="button" class={button} aria-label={t('slider.next')} data-slider-next>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ul
+    class="track mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth lg:mt-16 lg:gap-6"
+    tabindex="0"
+    aria-label={section.kicker ?? section.heading}
+    data-slider-track
+  >
+    {
+      section.items.map((item, index) => (
+        <li class="w-[82%] shrink-0 snap-start rounded-2xl bg-nebel p-4 sm:w-[24rem] lg:w-[28rem]">
+          <Placeholder
+            label={item.imageNote ?? t('placeholder.image')}
+            class="aspect-[4/3] w-full rounded-xl p-6 text-center"
+          />
+          <div class="px-2 pt-6 pb-2">
+            <p class="kicker text-marine-70">
+              {String(index + 1).padStart(2, '0')} / {String(section.items.length).padStart(2, '0')}
+            </p>
+            <h3 class="mt-3 text-xl font-semibold tracking-[-0.01em]">{item.title}</h3>
+            {item.text && <p class="mt-2 leading-relaxed text-pretty text-marine-70">{item.text}</p>}
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  /*
+   * The track bleeds to the viewport edge, but its first card lines up with the
+   * page's content column: the same gutters and 84rem cap as HomeSections.
+   */
+  .track {
+    --gutter: 1rem;
+    padding-inline: max(var(--gutter), calc((100% - 84rem) / 2));
+    scroll-padding-inline: max(var(--gutter), calc((100% - 84rem) / 2));
+    scrollbar-width: none;
+  }
+  .track::-webkit-scrollbar {
+    display: none;
+  }
+  @media (min-width: 40rem) {
+    .track {
+      --gutter: 4rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .track {
+      --gutter: 5rem;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Arrow buttons for the slider. Initialised the same way as Header.astro.
+   * Smooth scrolling comes from CSS, so reduced motion is already handled by the
+   * global rule.
+   */
+  function initSliders() {
+    for (const slider of document.querySelectorAll<HTMLElement>('[data-slider]')) {
+      const track = slider.querySelector<HTMLElement>('[data-slider-track]');
+      const prev = slider.querySelector<HTMLButtonElement>('[data-slider-prev]');
+      const next = slider.querySelector<HTMLButtonElement>('[data-slider-next]');
+      if (!track || !prev || !next || slider.dataset.sliderReady) continue;
+      slider.dataset.sliderReady = 'true';
+
+      /** One card plus the gap to the next. */
+      function step() {
+        const [first, second] = track!.children as unknown as HTMLElement[];
+        if (first && second) return second.offsetLeft - first.offsetLeft;
+        return track!.clientWidth;
+      }
+
+      function sync() {
+        prev!.disabled = track!.scrollLeft <= 1;
+        next!.disabled = track!.scrollLeft >= track!.scrollWidth - track!.clientWidth - 1;
+      }
+
+      prev.addEventListener('click', () => track.scrollBy({ left: -step() }));
+      next.addEventListener('click', () => track.scrollBy({ left: step() }));
+      track.addEventListener('scroll', sync, { passive: true });
+      window.addEventListener('resize', sync);
+      sync();
+    }
+  }
+
+  document.addEventListener('astro:page-load', initSliders);
+  initSliders();
+</script>

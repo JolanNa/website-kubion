@@ -7,54 +7,96 @@ hero:
   subline: "We don't just develop the model. We build the whole system — hardware, software and the integration into your production."
 sections:
   system:
-    layout: layers
+    layout: vision-system
     kicker: "Everything from one source"
     heading: "A vision system, taken apart."
-    text: "An image alone solves nothing. For a camera to become a solution, several layers have to fit together — we build all of them."
+    text: "A vision system is not a single product but a system of several parts. Only when all of them fit together does an image become a decision — we build every one of them."
+    imageNote: "Placeholder artwork"
     draft: true
     primaryCta:
       label: "Talk about your project"
       page: "kontakt"
     items:
-      - meta: "Hardware"
-        title: "Mounting & lighting"
-        text: "Mount, enclosure and light, matched to material and surroundings."
-      - meta: "Hardware"
+      - part: process
+        meta: "Starting point"
+        imageNote: "Photo: us at a customer line, looking at the parts"
+        title: "Your process"
+        text: "It starts with what needs inspecting: your parts, at your cycle time, on your line. Material, speed and space determine everything that follows."
+      - part: lighting
+        meta: "Hardware"
+        imageNote: "Photo: lighting being aligned on the set-up"
+        title: "Lighting"
+        text: "Light decides what the camera can see at all. We match type, angle and colour to material and feature, so a defect looks the same on every shift."
+      - part: camera
+        meta: "Hardware"
+        imageNote: "Photo: camera and lens being mounted and focused"
         title: "Camera & optics"
-        text: "Area-scan or line-scan camera, lens and trigger — chosen for the task."
-      - meta: "AI"
-        title: "Model"
-        text: "Trained on your images, judged against your quality criteria."
-      - meta: "Software"
+        text: "Area-scan or line-scan camera, lens, trigger and a mount that fits your line — specified for part size, belt speed and the smallest deviation that has to be caught."
+      - part: compute
+        meta: "AI"
+        imageNote: "Photo: computer in the control cabinet, someone with a laptop"
+        title: "Compute unit & model"
+        text: "A computer right at the line evaluates every image in cycle. The model on it is trained on your images and measured against your quality criteria."
+      - part: application
+        meta: "Software"
+        imageNote: "Photo: wiring to the controller, testing the reject gate"
         title: "Application"
-        text: "The software that captures images, evaluates them and passes decisions on."
-      - meta: "Software"
-        title: "Integration & dashboard"
-        text: "Connection to controls and systems — and a dashboard that makes results visible."
+        text: "The software that turns a finding into an action: it captures images, evaluates them and reports the result back to the line in cycle — so a conspicuous part is rejected before it travels on."
+      - part: interface
+        meta: "Software"
+        imageNote: "Photo: someone at the line using the overview screen"
+        title: "Overview at the line"
+        text: "The interface for the people on site: live image, the latest findings and the course of the shift. This is where they see what the system detected and decided — and can trace why."
   tasks:
-    layout: cards
+    layout: vision-tasks
     kicker: "Tasks"
     heading: "The problems we solve with images."
+    text: "Five questions an image can answer. Which one is yours decides how the system is built."
     draft: true
-    primaryCta:
-      label: "Your task isn't listed? Ask us"
+    variant: a
+    primaryCta: &tasksCta
+      lead: "Your task isn't listed?"
+      label: "Ask us"
       page: "kontakt"
-    items:
-      - meta: "What is it?"
+    items: &tasks
+      - part: classify
+        meta: "What is it?"
         title: "Classification"
         text: "Assigning parts, materials or states to a class."
-      - meta: "Where is what?"
+      - part: detect
+        meta: "Where is what?"
         title: "Detection & localisation"
         text: "Finding and locating objects, defects or foreign bodies in the image."
-      - meta: "Good or bad?"
+      - part: inspect
+        meta: "Good or bad?"
         title: "Attribute inspection"
         text: "Pass/fail decisions — including where the boundary is blurred and an error in one direction costs more than in the other."
-      - meta: "Is it running right?"
+      - part: monitor
+        meta: "Is it running right?"
         title: "Process monitoring"
         text: "Not just hunting for defects, but checking the process: is the right part there? Is what is happening plausible?"
-      - meta: "Where to grip?"
+      - part: guide
+        meta: "Where to grip?"
         title: "Vision for robotics"
         text: "Supporting robot systems with image information — orientation, position, grip point."
+  tasks-b:
+    layout: vision-tasks
+    kicker: "Tasks"
+    heading: "The problems we solve with images."
+    text: "Five questions an image can answer. Which one is yours decides how the system is built."
+    draft: true
+    variant: b
+    primaryCta: *tasksCta
+    items: *tasks
+  tasks-c:
+    layout: vision-tasks
+    kicker: "Tasks"
+    heading: "The problems we solve with images."
+    text: "Five questions an image can answer. Which one is yours decides how the system is built."
+    draft: true
+    variant: c
+    primaryCta: *tasksCta
+    items: *tasks
   imaging:
     layout: spectrum
     kicker: "Camera & imaging"
@@ -85,6 +127,19 @@ sections:
       - title: "Connection to controls and systems"
       - title: "Dashboards for line and management"
       - title: "Evaluations over time"
+  workshop:
+    layout: photos
+    kicker: "From the workshop"
+    heading: "We build it ourselves."
+    text: "Our systems don't only take shape on a screen. We design, wire and adjust them ourselves — in the workshop and at your line."
+    draft: true
+    items:
+      - title: "Assembly in the workshop"
+        imageNote: "Photo: one of us working on a camera set-up"
+      - title: "Test images"
+        imageNote: "Photo: parts under the camera, laptop with the image beside it"
+      - title: "Commissioning on site"
+        imageNote: "Photo: us at the line, adjusting the system"
   process:
     layout: steps
     kicker: "Working together"

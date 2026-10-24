@@ -6,6 +6,7 @@ import { useTranslations } from '../i18n/ui';
 import ArrowLink from './ArrowLink.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
+import PhotoCarousel from './PhotoCarousel.astro';
 import Placeholder from './Placeholder.astro';
 import SectionHeader from './SectionHeader.astro';
 import Steps from './Steps.astro';
@@ -13,7 +14,7 @@ import Steps from './Steps.astro';
 /**
  * Everything on the homepage below the hero.
  *
- * Order: clients → services → projects → process → about → blog → contact.
+ * Order: clients → services → industries → projects → process → about → blog → contact.
  * Copy comes from the `sections` block of src/content/pages/home/<locale>.mdx.
  */
 interface Props {
@@ -27,6 +28,7 @@ const source = `src/content/pages/${entry.id}.mdx`;
 
 const clients = pageSection(entry, 'clients');
 const services = pageSection(entry, 'services');
+const industries = pageSection(entry, 'industries');
 const projects = pageSection(entry, 'projects');
 const process = pageSection(entry, 'process');
 const about = pageSection(entry, 'about');
@@ -96,6 +98,19 @@ const gutter = 'px-4 sm:px-16 lg:px-20';
         ))
       }
     </ul>
+  </div>
+</section>
+
+<section class:list={[gutter, 'py-14 lg:py-24']}>
+  <div class={wrap}>
+    <SectionHeader section={industries} locale={locale} />
+    <PhotoCarousel
+      items={industries.items}
+      label={industries.heading}
+      locale={locale}
+      source={source}
+      class="mt-12 lg:mt-16"
+    />
   </div>
 </section>
 

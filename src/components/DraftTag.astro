@@ -13,10 +13,12 @@ interface Props {
   locale: Locale;
   /** On a Marine ground. */
   dark?: boolean;
+  /** Tells apart several designs of one section while they are up for review. */
+  variant?: string;
   class?: string;
 }
 
-const { locale, dark = false, class: className } = Astro.props;
+const { locale, dark = false, variant, class: className } = Astro.props;
 const t = useTranslations(locale);
 ---
 
@@ -29,5 +31,5 @@ const t = useTranslations(locale);
   ]}
 >
   <span class="size-1.5 rounded-full bg-orange" aria-hidden="true"></span>
-  {t('draft.label')}
+  {t('draft.label')}{variant && ` ${variant.toUpperCase()}`}
 </span>

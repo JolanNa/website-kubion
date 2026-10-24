@@ -6,8 +6,11 @@ import { useTranslations } from '../i18n/ui';
 import ArrowLink from './ArrowLink.astro';
 import CtaPanel from './CtaPanel.astro';
 import Placeholder from './Placeholder.astro';
+import ProcessFlow from './ProcessFlow.astro';
 import SectionHeader from './SectionHeader.astro';
 import Steps from './Steps.astro';
+import VisionSystem from './VisionSystem.astro';
+import VisionTasks from './VisionTasks.astro';
 
 /**
  * Renders a page's `sections` in the order they appear in its frontmatter.
@@ -56,6 +59,16 @@ const cardColumns = (count: number) =>
             <div id={id} class="scroll-mt-28 py-6 lg:py-10">
               <CtaPanel section={section} locale={locale} source={source} />
             </div>
+          );
+
+        /* The animated production line of the Prozessoptimierung page. */
+        case 'flow':
+          return (
+            <section id={id} class={gutter}>
+              <div class={wrap}>
+                <ProcessFlow section={section} locale={locale} />
+              </div>
+            </section>
           );
 
         /* Large linked rows — the services on the overview page. */
@@ -196,42 +209,37 @@ const cardColumns = (count: number) =>
             </section>
           );
 
-        /*
-          One system pulled apart into its layers. The layers start collapsed
-          into a stack and spread as the section scrolls into view — see the
-          <style> block. Without scroll-timeline support, or with reduced
-          motion, they simply render spread out.
-        */
-        case 'layers':
+        case 'vision-system':
+          return <VisionSystem id={id} section={section} locale={locale} source={source} />;
+
+        case 'vision-tasks':
+          return <VisionTasks id={id} section={section} locale={locale} source={source} />;
+
+        /* Photos of us at work: one large, the rest stacked beside it. */
+        case 'photos':
           return (
             <section id={id} class={gutter}>
-              <div class:list={[wrap, 'grid gap-10 lg:grid-cols-[1fr_1.2fr] lg:gap-16']}>
-                <div class="lg:sticky lg:top-32 lg:self-start">
-                  <SectionHeader section={section} locale={locale} />
-                  {inlineCta}
-                </div>
-                <ol class="layers grid gap-3" style={`--count:${section.items.length}`}>
+              <div class={wrap}>
+                <SectionHeader section={section} locale={locale} />
+                <div class="mt-12 grid gap-4 lg:mt-16 lg:grid-cols-[2fr_1fr] lg:gap-6">
                   {section.items.map((item, index) => (
-                    <li
-                      class="layer flex items-start gap-5 rounded-2xl border border-marine-15 bg-weiss p-5 shadow-island sm:p-6"
-                      style={`--i:${index}`}
+                    <figure
+                      class:list={[
+                        'relative overflow-hidden rounded-3xl',
+                        index === 0 ? 'aspect-[4/3] lg:row-span-2' : 'aspect-[4/3] lg:aspect-auto',
+                      ]}
                     >
-                      <span class={numberTile}>{number(index)}</span>
-                      <span class="flex-1">
-                        {item.meta && <span class="kicker block text-marine-70">{item.meta}</span>}
-                        <span class="mt-1 block text-xl font-semibold tracking-[-0.01em]">
-                          {item.title}
-                        </span>
-                        {item.text && (
-                          <span class="mt-2 block leading-relaxed text-pretty text-marine-70">
-                            {item.text}
-                          </span>
-                        )}
-                      </span>
-                      <Placeholder class="hidden size-20 shrink-0 rounded-xl sm:flex" />
-                    </li>
+                      <Placeholder
+                        label={item.imageNote ?? t('placeholder.image')}
+                        class="size-full p-6 pb-16 text-center"
+                      />
+                      <figcaption class="kicker absolute bottom-4 left-4 rounded-full bg-weiss px-3 py-1 text-marine">
+                        {item.title}
+                      </figcaption>
+                    </figure>
                   ))}
-                </ol>
+                </div>
+                {inlineCta}
               </div>
             </section>
           );
@@ -303,32 +311,3 @@ const cardColumns = (count: number) =>
   }
 </div>
 
-<style>
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .layers {
-        view-timeline-name: --layers;
-      }
-
-      .layer {
-        /* Collapsed, every layer sits near the middle of the stack, each one
-           peeking 0.75rem past the one above it. */
-        --collapsed: calc(((var(--count) - 1) / 2 - var(--i)) * 5.5rem + var(--i) * 0.75rem);
-        position: relative;
-        z-index: calc(var(--count) - var(--i));
-        animation: layer-spread linear both;
-        animation-timeline: --layers;
-        animation-range: entry 35% cover 45%;
-      }
-
-      @keyframes layer-spread {
-        from {
-          transform: translateY(var(--collapsed)) scale(0.96);
-        }
-        to {
-          transform: none;
-        }
-      }
-    }
-  }
-</style>
