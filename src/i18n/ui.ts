@@ -86,6 +86,13 @@ export const UI = {
     'placeholder.logo': 'Logo',
 
     'footer.rights': 'Alle Rechte vorbehalten.',
+    'footer.cta': 'Kontakt aufnehmen',
+    'footer.projects': 'Unsere Projekte',
+    'footer.company': 'Unternehmen',
+    'footer.contact': 'Kontakt',
+    'footer.social': 'Social Media',
+    'footer.info': 'Info',
+    'footer.legal': 'Rechtliches',
 
     '404.title': 'Seite nicht gefunden',
     '404.body': 'Diese Seite existiert nicht (mehr).',
@@ -166,6 +173,13 @@ export const UI = {
     'placeholder.logo': 'Logo',
 
     'footer.rights': 'All rights reserved.',
+    'footer.cta': 'Get in touch',
+    'footer.projects': 'Our projects',
+    'footer.company': 'Company',
+    'footer.contact': 'Contact',
+    'footer.social': 'Social media',
+    'footer.info': 'Info',
+    'footer.legal': 'Legal',
 
     '404.title': 'Page not found',
     '404.body': 'This page does not exist (any more).',

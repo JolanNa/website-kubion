@@ -1,7 +1,9 @@
 ---
-import { SITE_NAME, type Locale } from '../config';
+import type { Locale } from '../config';
 import { localizedPath, type PageKey } from '../i18n/routes';
 import { useTranslations, type UIKey } from '../i18n/ui';
+import ArrowLink from './ArrowLink.astro';
+import Logo from './Logo.astro';
 
 interface Props {
   locale: Locale;
@@ -10,30 +12,121 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 
+/*
+ * A Nebel panel inset like the header island and the CTA panel, so the page
+ * closes on the same rounded shape it opens with. Content follows the old
+ * kubion.io footer: contact up front, then address, social and info, and the
+ * wordmark large in the bottom-right corner.
+ */
+
+const COMPANY = {
+  name: 'kubion GmbH',
+  street: 'Albert-Einstein-Str. 1',
+  city: '49076 Osnabrück',
+  phone: '+49 (0) 541 20280 830',
+  phoneHref: 'tel:+4954120280830',
+  email: 'info@kubion.io',
+  linkedin: 'https://www.linkedin.com/company/kubion-gmbh/',
+};
+
 // Impressum must be reachable within two clicks from every page (§5 DDG),
 // which is why it lives in the footer on every page rather than only on Kontakt.
-const LEGAL: { key: PageKey; label: UIKey }[] = [
+const INFO: { key: PageKey; label: UIKey }[] = [
+  { key: 'karriere', label: 'nav.karriere' },
   { key: 'impressum', label: 'nav.impressum' },
   { key: 'datenschutz', label: 'nav.datenschutz' },
 ];
 
 const year = new Date().getFullYear();
+
+const headingClass = 'kicker text-marine-45';
+const linkClass = 'transition-colors duration-200 hover:text-orange';
 ---
 
-<footer class="mt-24 border-t border-neutral-200 bg-neutral-50">
-  <div
-    class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-neutral-600 sm:flex-row sm:items-center sm:justify-between"
-  >
-    <p>&copy; {year} {SITE_NAME}. {t('footer.rights')}</p>
-
-    <nav class="flex gap-4" aria-label="Rechtliches">
-      {
-        LEGAL.map(({ key, label }) => (
-          <a href={localizedPath(key, locale)} class="underline-offset-4 hover:underline">
-            {t(label)}
+<footer class="mt-24 px-4 pb-4">
+  <div class="mx-auto max-w-[90rem] rounded-3xl bg-nebel px-6 pt-14 pb-8 text-marine sm:px-12 lg:px-16 lg:pt-20">
+    <div class="grid gap-14 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-6">
+        <p class={headingClass}>{t('footer.contact')}</p>
+        <ul class="mt-6 space-y-2 text-2xl font-black tracking-[-0.02em] sm:text-4xl">
+          <li>
+            <a href={`mailto:${COMPANY.email}`} class={linkClass}>{COMPANY.email}</a>
+          </li>
+          <li>
+            <a href={COMPANY.phoneHref} class:list={[linkClass, 'whitespace-nowrap']}>
+              {COMPANY.phone}
+            </a>
+          </li>
+        </ul>
+        <div class="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+          <ArrowLink href={localizedPath('kontakt', locale)}>{t('footer.cta')}</ArrowLink>
+          <a
+            href={localizedPath('projekte', locale)}
+            class="font-medium underline-offset-4 hover:underline"
+          >
+            {t('footer.projects')}
           </a>
-        ))
-      }
-    </nav>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-3 lg:col-span-6 lg:pt-1 lg:justify-items-end">
+        <div>
+          <p class={headingClass}>{t('footer.company')}</p>
+          <address class="mt-5 leading-relaxed not-italic">
+            {COMPANY.name}<br />
+            {COMPANY.street}<br />
+            {COMPANY.city}
+          </address>
+        </div>
+
+        <div>
+          <p class={headingClass}>{t('footer.social')}</p>
+          <ul class="mt-5 space-y-2">
+            <li>
+              <a
+                href={COMPANY.linkedin}
+                class:list={[linkClass, 'inline-flex items-center gap-2']}
+                rel="noopener"
+                target="_blank"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"
+                  ></path>
+                </svg>
+                LinkedIn
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <nav aria-label={t('footer.info')}>
+          <p class={headingClass}>{t('footer.info')}</p>
+          <ul class="mt-5 space-y-2">
+            {
+              INFO.map(({ key, label }) => (
+                <li>
+                  <a href={localizedPath(key, locale)} class={linkClass}>
+                    {t(label)}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <div
+      class="mt-16 flex flex-col-reverse gap-8 border-t border-marine-15 pt-8 sm:flex-row sm:items-end sm:justify-between"
+    >
+      <p class="font-mono text-xs text-marine-45">&copy; {year} {COMPANY.name}. {t('footer.rights')}</p>
+      <a
+        href={localizedPath('home', locale)}
+        class="transition-opacity duration-200 hover:opacity-70"
+      >
+        <Logo width={320} class="h-auto w-[200px] sm:w-[260px] lg:w-[320px]" />
+      </a>
+    </div>
   </div>
 </footer>
