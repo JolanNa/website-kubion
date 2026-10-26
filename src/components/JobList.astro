@@ -1,0 +1,99 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import { jobPath } from '../lib/content';
+import DraftTag from './DraftTag.astro';
+
+/**
+ * Open roles. Featured roles come first as a large Marine card with an orange
+ * edge, so they stand out; every other role is a plain row with an arrow.
+ * Used on the Karriere page and under each posting ("more roles").
+ */
+interface Props {
+  jobs: CollectionEntry<'jobs'>[];
+  locale: Locale;
+  /** Set to false to list featured roles as plain rows too. */
+  highlight?: boolean;
+  class?: string;
+}
+
+const { jobs, locale, highlight = true, class: className } = Astro.props;
+const t = useTranslations(locale);
+
+const featured = highlight ? jobs.filter((job) => job.data.featured) : [];
+const rest = jobs.filter((job) => !featured.includes(job));
+
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
+---
+
+<div class:list={['space-y-10', className]}>
+  {
+    featured.map((job) => (
+      <a
+        href={jobPath(job, locale)}
+        data-scroll-reveal
+        class="group relative block overflow-hidden rounded-3xl bg-marine px-6 py-10 text-weiss sm:px-12 sm:py-14 lg:px-16 lg:py-16"
+      >
+        {/* The orange edge sets the card apart from the rows below. */}
+        <span class="gradient-orange absolute inset-x-0 top-0 h-1.5" aria-hidden="true" />
+
+        <div class="relative max-w-[52rem]">
+          <p class="flex flex-wrap items-center gap-3">
+            <span class="kicker rounded-full bg-weiss px-3 py-1 text-marine">{t('jobs.featured')}</span>
+            {job.data.kicker && <span class="kicker text-weiss">{job.data.kicker}</span>}
+            {job.data.draft && <DraftTag locale={locale} dark />}
+          </p>
+          <h3 class="mt-8 text-[clamp(2rem,4.5vw,3.75rem)] leading-[0.98] font-black tracking-[-0.03em] text-balance">
+            {job.data.title}
+          </h3>
+          <p class="mt-6 max-w-[60ch] text-lg leading-relaxed text-pretty text-weiss">{job.data.intro}</p>
+        </div>
+
+        <div class="relative mt-10 flex flex-wrap items-end justify-between gap-6">
+          <ul class="flex flex-wrap gap-2">
+            {job.data.facts.map((fact) => (
+              <li class="kicker rounded-full border border-weiss/60 px-4 py-2 text-weiss">{fact.value}</li>
+            ))}
+          </ul>
+          <span class="flex items-center gap-4 font-medium">
+            {t('jobs.view')}
+            <span class="gradient-orange flex size-12 items-center justify-center rounded-full text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1">
+              <svg viewBox="0 0 16 16" class="size-5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </span>
+        </div>
+      </a>
+    ))
+  }
+
+  {
+    rest.length > 0 && (
+      <ul data-scroll-reveal class="border-t border-marine-15">
+        {rest.map((job) => (
+          <li class="border-b border-marine-15">
+            <a href={jobPath(job, locale)} class="group flex items-center justify-between gap-6 py-8 sm:py-10">
+              <span>
+                <span class="kicker block text-marine-70">{job.data.meta}</span>
+                <span class="mt-3 block text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
+                  {job.data.title}
+                </span>
+                {job.data.draft && <DraftTag locale={locale} class="mt-4" />}
+              </span>
+              <span
+                class="flex size-12 shrink-0 items-center justify-center rounded-full bg-marine text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 16 16" class="size-5" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>

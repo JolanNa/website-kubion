@@ -51,6 +51,7 @@ export function isPageKey(value: string): value is PageKey {
 export const COLLECTION_PARENTS = {
   blog: 'blog',
   projekte: 'projekte',
+  karriere: 'karriere',
 } as const satisfies Record<string, PageKey>;
 
 /**

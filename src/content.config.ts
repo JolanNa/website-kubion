@@ -221,22 +221,16 @@ const pages = defineCollection({
           text: z.string().optional(),
           items: z.array(z.object({ title: z.string(), text: z.string() })),
         }),
-        /** Open roles; each row links to the posting or a pre-filled e-mail. */
+        /** Team photos that run past as an endless strip, below the intro. */
+        gallery: photoStrip,
+        /** Heading of the open roles; the roles themselves are the `jobs` collection. */
         jobs: z.object({
           draft: z.boolean().default(false),
           kicker: z.string().optional(),
           heading: z.string(),
           text: z.string().optional(),
-          /** Where applications go; shown as a link under the intro. */
+          /** Where applications go; shown as a link next to the heading. */
           email: z.email().optional(),
-          items: z.array(
-            z.object({
-              title: z.string(),
-              /** Small mono label: department, location, hours. */
-              meta: z.string().optional(),
-              ...link,
-            }),
-          ),
         }),
         cta: ctaPanel,
       })
@@ -276,6 +270,53 @@ const projekte = defineCollection({
 });
 
 /**
+ * Stellenanzeigen — in the repo, like Projekte. Listed on the Karriere page,
+ * each with its own page at /karriere/<slug> (src/components/JobDetail.astro).
+ *
+ * Layout: src/content/jobs/<slug>/<locale>.mdx
+ */
+const jobs = defineCollection({
+  loader: glob({ pattern: '**/[^_]*.mdx', base: './src/content/jobs' }),
+  schema: z.object({
+    ...seo,
+    /** Localised URL slug. See the note on urlSlug in the projekte collection. */
+    urlSlug: z.string().optional(),
+    /** Small label above the title, e.g. the team. */
+    kicker: z.string().optional(),
+    /** One line under the title in lists, e.g. "Vollzeit · Osnabrück · Hybrid". */
+    meta: z.string(),
+    /** Highlighted on the Karriere page, above the other roles. */
+    featured: z.boolean().default(false),
+    /** Key facts, shown as chips in the hero and in the "at a glance" box. */
+    facts: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+    /** The opening paragraph in the hero. */
+    intro: z.string(),
+    /** Tasks, profile and the like: a heading with bullet points. */
+    sections: z
+      .array(
+        z.object({
+          heading: z.string(),
+          text: z.string().optional(),
+          points: z.array(z.string()).default([]),
+        }),
+      )
+      .default([]),
+    benefits: z.object({ heading: z.string(), items: z.array(z.string()) }).optional(),
+    about: z.object({ heading: z.string(), text: z.string() }).optional(),
+    /** The closing panel; the button opens an e-mail to `email`. */
+    apply: z.object({
+      heading: z.string(),
+      text: z.string().optional(),
+      email: z.email(),
+    }),
+    /** Lower sorts first. */
+    order: z.number().default(999),
+    draft: z.boolean().default(false),
+  }),
+});
+
+/**
+ * Tier 2 — CMS-managed collections/**
  * Tier 2 — CMS-managed collections (DECISIONS.md §3, §4).
  *
  * Note the id shape differs from the repo collections above: Sveltia's
@@ -327,4 +368,4 @@ const team = defineCollection({
   }),
 });
 
-export const collections = { pages, projekte, blog, team };
+export const collections = { pages, projekte, jobs, blog, team };

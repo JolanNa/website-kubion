@@ -1,0 +1,235 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+import { localizedPath } from '../i18n/routes';
+import { getJobs, jobAlternates } from '../lib/content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CtaPanel from './CtaPanel.astro';
+import DraftTag from './DraftTag.astro';
+import JobList from './JobList.astro';
+import ScrollMotion from './ScrollMotion.astro';
+
+/**
+ * A job posting, laid out like the Über-uns and Karriere pages: a Marine hero
+ * (the colours of the highlighted card on the Karriere page)
+ * with the key facts, the tasks and profile next to a sticky "at a glance" box,
+ * benefits and a word about kubion, the other open roles, and an apply panel.
+ *
+ * Copy comes from src/content/jobs/<slug>/<locale>.mdx.
+ */
+interface Props {
+  entry: CollectionEntry<'jobs'>;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const job = entry.data;
+const source = `src/content/jobs/${entry.id}.mdx`;
+
+const alternates = await jobAlternates(entry);
+const others = (await getJobs(locale)).filter((other) => other.id !== entry.id);
+
+const subject = encodeURIComponent(`${t('jobs.subject')}: ${job.title}`);
+const applyHref = `mailto:${job.apply.email}?subject=${subject}`;
+const backHref = `${localizedPath('karriere', locale)}#stellen`;
+---
+
+<BaseLayout
+  locale={locale}
+  title={job.title}
+  description={job.description}
+  alternates={alternates}
+  ogImage={job.ogImage}
+  noindex={job.noindex || job.draft}
+>
+  <ScrollMotion />
+
+  <section class="px-4 pb-4">
+    <div class="relative overflow-hidden rounded-3xl bg-marine px-6 py-12 sm:px-12 lg:px-16 lg:py-20">
+      <span class="gradient-orange absolute inset-x-0 top-0 h-1.5" aria-hidden="true"></span>
+      <div class="mx-auto max-w-[84rem]">
+        <a
+          href={backHref}
+          class="rise kicker inline-flex items-center gap-2 text-hellblau transition-colors hover:text-weiss"
+        >
+          <span aria-hidden="true">←</span>
+          {t('jobs.back')}
+        </a>
+
+        <p class="rise mt-12 flex flex-wrap items-center gap-4 lg:mt-16" style="animation-delay: 60ms">
+          <span class="markenkern size-7 shrink-0" aria-hidden="true"></span>
+          {job.kicker && <span class="kicker text-weiss">{job.kicker}</span>}
+          {job.draft && <DraftTag locale={locale} dark />}
+        </p>
+
+        <h1
+          class="rise mt-8 max-w-[18ch] text-[clamp(2.5rem,6.5vw,6rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance text-weiss"
+          style="animation-delay: 120ms"
+        >
+          {job.title}
+        </h1>
+
+        <div
+          class="rise mt-10 grid gap-10 xl:grid-cols-12 xl:items-end xl:gap-16"
+          style="animation-delay: 180ms"
+        >
+          <div class="xl:col-span-8">
+            <p class="max-w-[64ch] text-lg leading-relaxed text-pretty text-weiss">{job.intro}</p>
+            {
+              job.facts.length > 0 && (
+                <ul class="mt-8 flex flex-wrap gap-2">
+                  {job.facts.map((fact) => (
+                    <li class="kicker rounded-full border border-weiss/60 px-4 py-2 text-weiss">
+                      {fact.value}
+                    </li>
+                  ))}
+                </ul>
+              )
+            }
+          </div>
+          <div class="xl:col-span-4 xl:flex xl:justify-end">
+            <a
+              href={applyHref}
+              class="inline-block rounded-full bg-weiss px-7 py-3.5 font-medium whitespace-nowrap text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+            >
+              {t('jobs.apply')}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto grid max-w-[84rem] gap-16 lg:grid-cols-12 lg:gap-20">
+      <div class="space-y-16 lg:col-span-7 lg:space-y-20">
+        {
+          job.sections.map((section, index) => (
+            <div data-scroll-reveal>
+              <p class="font-mono text-sm tracking-[0.14em] text-marine-70">
+                {String(index + 1).padStart(2, '0')}
+              </p>
+              <h2 class="mt-4 text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">
+                {section.heading}
+              </h2>
+              {section.text && (
+                <p class="mt-6 text-lg leading-relaxed text-pretty text-marine-70">{section.text}</p>
+              )}
+              {section.points.length > 0 && (
+                <ul class="mt-8 border-t border-marine-15">
+                  {section.points.map((point) => (
+                    <li class="flex gap-5 border-b border-marine-15 py-5 text-lg leading-relaxed text-pretty">
+                      <span class="markenkern mt-[0.55em] size-2.5 shrink-0" aria-hidden="true" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))
+        }
+
+        {
+          job.benefits && (
+            <div data-scroll-reveal>
+              <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">
+                {job.benefits.heading}
+              </h2>
+              <ul class="mt-8 grid gap-3 sm:grid-cols-2">
+                {job.benefits.items.map((benefit) => (
+                  <li class="flex items-center gap-4 bg-nebel px-5 py-4 font-medium">
+                    <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+                    {benefit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        {
+          job.about && (
+            <div data-scroll-reveal>
+              <span class="gradient-orange block h-1.5 w-16" aria-hidden="true" />
+              <h2 class="mt-8 text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">
+                {job.about.heading}
+              </h2>
+              <p class="mt-6 text-lg leading-relaxed text-pretty text-marine-70">{job.about.text}</p>
+            </div>
+          )
+        }
+      </div>
+
+      {/* Stays in view beside the posting on wide screens. */}
+      <aside
+        data-scroll-reveal
+        class="rounded-3xl bg-nebel p-8 lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:col-span-5 lg:self-start lg:p-10"
+      >
+        <p class="kicker text-marine-70">{t('jobs.glance')}</p>
+        <dl class="mt-6 border-t border-marine-15">
+          {
+            job.facts.map((fact) => (
+              <div class="flex items-baseline justify-between gap-6 border-b border-marine-15 py-4">
+                <dt class="text-marine-70">{fact.label}</dt>
+                <dd class="text-right font-semibold">{fact.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <a
+          href={applyHref}
+          class="mt-8 block rounded-full bg-marine px-7 py-3.5 text-center font-medium text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+        >
+          {t('jobs.apply')}
+        </a>
+        <p class="mt-6 text-sm text-marine-70">{t('jobs.applyTo')}</p>
+        <a
+          href={applyHref}
+          class="mt-1 inline-block font-mono text-marine underline decoration-orange decoration-2 underline-offset-[5px] transition-colors hover:text-orange"
+        >
+          {job.apply.email}
+        </a>
+      </aside>
+    </div>
+  </section>
+
+  {
+    others.length > 0 && (
+      <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
+        <div class="mx-auto max-w-[84rem]">
+          <h2 data-scroll-reveal class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-5xl">
+            {t('jobs.more')}
+          </h2>
+          <JobList jobs={others} locale={locale} class="mt-12" />
+        </div>
+      </section>
+    )
+  }
+
+  <CtaPanel
+    section={{
+      heading: job.apply.heading,
+      text: job.apply.text,
+      primaryCta: { label: t('jobs.apply'), href: applyHref },
+      secondaryCta: { label: t('jobs.back'), href: backHref },
+    }}
+    locale={locale}
+    source={source}
+  />
+</BaseLayout>
+
+<style>
+  /* The same short staggered rise as the Über-uns hero. */
+  .rise {
+    animation: rise 0.9s var(--ease-out-quint) both;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+</style>

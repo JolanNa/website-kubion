@@ -54,6 +54,14 @@ export const UI = {
     'projekte.year': 'Jahr',
     'projekte.services': 'Leistungen',
     'projekte.viewProject': 'Projekt ansehen',
+    'jobs.featured': 'Aktuell gesucht',
+    'jobs.view': 'Stelle ansehen',
+    'jobs.apply': 'Jetzt bewerben',
+    'jobs.back': 'Alle Stellen',
+    'jobs.glance': 'Auf einen Blick',
+    'jobs.more': 'Weitere Stellen',
+    'jobs.applyTo': 'Bewerbung an',
+    'jobs.subject': 'Bewerbung',
 
     'team.title': 'Unser Team',
 
@@ -126,6 +134,14 @@ export const UI = {
     'projekte.year': 'Year',
     'projekte.services': 'Services',
     'projekte.viewProject': 'View project',
+    'jobs.featured': 'Now hiring',
+    'jobs.view': 'View role',
+    'jobs.apply': 'Apply now',
+    'jobs.back': 'All roles',
+    'jobs.glance': 'At a glance',
+    'jobs.more': 'More roles',
+    'jobs.applyTo': 'Send your application to',
+    'jobs.subject': 'Application',
 
     'team.title': 'Our team',
 

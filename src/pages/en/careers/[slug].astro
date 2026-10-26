@@ -1,0 +1,17 @@
+---
+import type { GetStaticPaths } from 'astro';
+import JobDetail from '../../../components/JobDetail.astro';
+import { getJobs, jobSlug } from '../../../lib/content';
+
+export const getStaticPaths = (async () => {
+  const jobs = await getJobs('en');
+  return jobs.map((entry) => ({
+    params: { slug: jobSlug(entry) },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+---
+
+<JobDetail entry={entry} locale="en" />

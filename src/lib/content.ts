@@ -112,6 +112,26 @@ export function projektPath(entry: CollectionEntry<'projekte'>, locale: Locale):
 }
 
 /* ------------------------------------------------------------------ *
+ * Stellenanzeigen (repo, Tier 1)
+ * ------------------------------------------------------------------ */
+
+/** Every published role in a locale, featured ones first. */
+export async function getJobs(locale: Locale) {
+  const jobs = await getCollection('jobs', (e) => e.id.endsWith(`/${locale}`));
+  return published(jobs).sort(
+    (a, b) => Number(b.data.featured) - Number(a.data.featured) || a.data.order - b.data.order,
+  );
+}
+
+export function jobSlug(entry: CollectionEntry<'jobs'>): string {
+  return entry.data.urlSlug ?? entry.id.split('/')[0];
+}
+
+export function jobPath(entry: CollectionEntry<'jobs'>, locale: Locale): string {
+  return localizedEntryPath('karriere', jobSlug(entry), locale);
+}
+
+/* ------------------------------------------------------------------ *
  * Team (CMS, Tier 2)
  * ------------------------------------------------------------------ */
 
@@ -172,6 +192,18 @@ export async function projektAlternates(
     const locale = sibling.id.split('/')[1] as Locale;
     if (!LOCALES.includes(locale)) return [];
     return [{ locale, path: projektPath(sibling, locale) }];
+  });
+}
+
+/** Alternates for a role — like projects, every locale should have one. */
+export async function jobAlternates(entry: CollectionEntry<'jobs'>): Promise<Alternate[]> {
+  const folder = entry.id.split('/')[0];
+  const siblings = await getCollection('jobs', (e) => e.id.startsWith(`${folder}/`));
+
+  return published(siblings).flatMap((sibling) => {
+    const locale = sibling.id.split('/')[1] as Locale;
+    if (!LOCALES.includes(locale)) return [];
+    return [{ locale, path: jobPath(sibling, locale) }];
   });
 }
 
