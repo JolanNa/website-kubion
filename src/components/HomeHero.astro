@@ -2,13 +2,13 @@
 import type { CollectionEntry } from 'astro:content';
 import type { Locale } from '../config';
 import { isPageKey, localizedPath } from '../i18n/routes';
-import HeroVisual from './HeroVisual.astro';
+import { WORDMARK_PATH, WORDMARK_VIEWBOX } from '../lib/wordmark';
 
 /**
  * The homepage hero.
  *
  * Colour and type follow the brand guideline (Marine / Orange / Hellblau, Geist
- * Sans + Geist Mono): a large left-aligned white headline on plain Marine, with the
+ * Sans + Geist Mono): a large centred white headline on plain Marine, with the
  * Markenkern and kicker above it.
  *
  * The intro is a camera viewfinder, because a camera is where most kubion
@@ -133,93 +133,101 @@ const corners = ['tl', 'tr', 'br', 'bl'] as const;
       </div>
     </div>
 
-    {
-      hero.eyebrow && (
-        <p data-reveal class="flex items-center gap-4">
-          {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
-          <span class="markenkern size-6 shrink-0" aria-hidden="true" />
-          <span class="kicker text-weiss">{hero.eyebrow}</span>
-        </p>
-      )
-    }
-
     {/*
-      Text left; from `lg` up, the looping inspection-line visual right of it.
+      Top row: the wordmark top-left, the kicker centred. Below `sm` they stack.
+      The wordmark is decorative here: the header carries the accessible logo.
     */}
-    <div class="my-auto grid items-center gap-12 py-[clamp(1.5rem,5svh,3.5rem)] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] xl:gap-20">
-      <div class="flex flex-col items-start text-left">
-        {/*
-          The headline is the subject the intro's camera brings into focus and
-          locks onto (data-mark), so it is not one of the [data-reveal] elements.
-        */}
-        <h1
-          data-mark
-          class="max-w-[16ch] text-[clamp(2.5rem,min(7.5vw,11svh),6.5rem)] lg:text-[clamp(3rem,min(5.4vw,10svh),5.75rem)] leading-[0.95] font-black tracking-[-0.035em] text-weiss text-balance"
-        >
-          {hero.headline}
-        </h1>
+    <div class="flex flex-col items-center gap-5 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-6">
+      <svg
+        data-reveal
+        viewBox={WORDMARK_VIEWBOX}
+        class="w-[clamp(7.5rem,14vw,11rem)] self-start text-weiss sm:justify-self-start"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path fill="currentColor" d={WORDMARK_PATH} />
+      </svg>
+      {
+        hero.eyebrow && (
+          <p data-reveal class="flex items-center justify-center gap-4">
+            {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+            <span class="markenkern size-[1.65rem] shrink-0" aria-hidden="true" />
+            <span class="kicker text-[0.825rem] text-weiss">{hero.eyebrow}</span>
+          </p>
+        )
+      }
+    </div>
 
+    <div class="my-auto flex flex-col items-center py-[clamp(1.5rem,5svh,3.5rem)] text-center">
+      {/*
+        The headline is the subject the intro's camera brings into focus and
+        locks onto (data-mark), so it is not one of the [data-reveal] elements.
+      */}
+      <h1
+        data-mark
+        class="max-w-[16ch] text-[clamp(2.75rem,min(8.25vw,12svh),7.25rem)] leading-[0.95] font-black tracking-[-0.035em] text-weiss text-balance"
+      >
+        {hero.headline}
+      </h1>
+
+      {
+        hero.subline && (
+          <p data-reveal class="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[44ch] text-xl leading-relaxed text-hellblau sm:text-[1.375rem]">
+            {hero.subline}
+          </p>
+        )
+      }
+
+      <div data-reveal class="mt-[clamp(1.5rem,4svh,2.75rem)] flex flex-wrap items-center justify-center gap-4">
         {
-          hero.subline && (
-            <p data-reveal class="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[40ch] text-lg leading-relaxed text-hellblau sm:text-xl">
-              {hero.subline}
-            </p>
+          hero.primaryCta && (
+            <a
+              href={href(hero.primaryCta)}
+              class="rounded-full bg-weiss px-8 py-4 text-[1.1rem] font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+            >
+              {hero.primaryCta.label}
+            </a>
           )
         }
-
-        <div data-reveal class="mt-[clamp(1.5rem,4svh,2.75rem)] flex flex-wrap items-center gap-4">
-          {
-            hero.primaryCta && (
-              <a
-                href={href(hero.primaryCta)}
-                class="rounded-full bg-weiss px-7 py-3.5 font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
-              >
-                {hero.primaryCta.label}
-              </a>
-            )
-          }
-          {
-            hero.secondaryCta && (
-              <a
-                href={href(hero.secondaryCta)}
-                class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
-              >
-                {hero.secondaryCta.label}
-              </a>
-            )
-          }
-        </div>
-
         {
-          hero.textLink && (
-            <p data-reveal class="mt-[clamp(1rem,2.5svh,1.75rem)]">
-              <a
-                href={href(hero.textLink)}
-                class="group inline-flex items-center gap-2 text-hellblau transition-colors duration-200 hover:text-weiss"
-              >
-                {hero.textLink.label}
-                <span
-                  class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
-                  aria-hidden="true"
-                >
-                  →
-                </span>
-              </a>
-            </p>
+          hero.secondaryCta && (
+            <a
+              href={href(hero.secondaryCta)}
+              class="rounded-full border border-hellblau/50 px-8 py-4 text-[1.1rem] font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+            >
+              {hero.secondaryCta.label}
+            </a>
           )
         }
       </div>
 
-      {hero.visual && <HeroVisual labels={hero.visual} locale={locale} />}
+      {
+        hero.textLink && (
+          <p data-reveal class="mt-[clamp(1rem,2.5svh,1.75rem)]">
+            <a
+              href={href(hero.textLink)}
+              class="group inline-flex items-center gap-2 text-[1.1rem] text-hellblau transition-colors duration-200 hover:text-weiss"
+            >
+              {hero.textLink.label}
+              <span
+                class="transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                aria-hidden="true"
+              >
+                →
+              </span>
+            </a>
+          </p>
+        )
+      }
     </div>
 
     {
       hero.note && (
-        <p data-reveal class="flex items-center gap-4">
+        <p data-reveal class="flex items-center justify-center gap-4">
           {/* Pixel heart, drawn inline so it inherits the accent colour. */}
           <svg
-            width="18"
-            height="16"
+            width="20"
+            height="18"
             viewBox="0 0 9 8"
             class="shrink-0 text-orange"
             aria-hidden="true"
@@ -230,7 +238,7 @@ const corners = ['tl', 'tr', 'br', 'bl'] as const;
               d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z"
             />
           </svg>
-          <span class="kicker text-weiss">{hero.note}</span>
+          <span class="kicker text-[0.825rem] text-weiss">{hero.note}</span>
         </p>
       )
     }

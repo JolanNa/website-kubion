@@ -120,21 +120,6 @@ const pages = defineCollection({
          * one after another. Without them the intro runs without a log.
          */
         introSteps: z.array(z.string()).max(4).optional(),
-        /**
-         * Labels of the looping inspection-line visual right of the homepage
-         * headline (HeroVisual.astro). Without them the visual is not rendered.
-         */
-        visual: z
-          .object({
-            status: z.string(),
-            title: z.string(),
-            inspected: z.string(),
-            rejected: z.string(),
-            confidence: z.string(),
-            ok: z.string(),
-            nok: z.string(),
-          })
-          .optional(),
         /** Longer intro paragraph next to the headline (Über-uns hero). */
         body: z.string().optional(),
         primaryCta: cta.optional(),
