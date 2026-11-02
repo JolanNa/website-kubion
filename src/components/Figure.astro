@@ -1,0 +1,43 @@
+---
+import { Image } from 'astro:assets';
+import { requireImage } from '../lib/images';
+
+/**
+ * An image with a caption inside an MDX article body. `src` is a path under
+ * src/assets/uploads/, as the CMS writes it; `source` credits a third party.
+ *
+ * In MDX: import Figure from '../../../components/Figure.astro';
+ *         <Figure src="/src/assets/uploads/blog/foo.webp" alt="…" caption="…" />
+ */
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  source?: string;
+}
+
+const { src, alt, caption, source } = Astro.props;
+const image = requireImage(src, 'a <Figure> in a blog post');
+---
+
+<figure class="my-12">
+  <Image
+    src={image}
+    alt={alt}
+    widths={[640, 1024, 1440]}
+    sizes="(min-width: 1024px) 46rem, 100vw"
+    class="w-full rounded-2xl border border-marine-15"
+    loading="lazy"
+  />
+  {
+    (caption || source) && (
+      <figcaption class="mt-4 flex gap-3 text-sm leading-relaxed text-marine-70">
+        <span class="markenkern mt-1.5 size-2.5 shrink-0" aria-hidden="true" />
+        <span>
+          {caption}
+          {source && <span class="font-mono text-xs tracking-[0.08em] text-marine-45"> {source}</span>}
+        </span>
+      </figcaption>
+    )
+  }
+</figure>

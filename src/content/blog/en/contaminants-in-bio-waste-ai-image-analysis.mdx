@@ -1,0 +1,69 @@
+---
+title: "Contaminants in bio-waste: what AI image analysis and sorting analysis show together"
+description: "Can a camera with AI tell how much plastic is in a batch of bio-waste? We compared the results of our image analysis with conventional sorting analyses – an interim report from the field."
+urlSlug: "contaminants-in-bio-waste-ai-image-analysis"
+translationKey: "bioabfall-fremdstoffe"
+publishedAt: 2026-10-28
+author: "max-mustermann"
+contributors: ["platzhalter-2", "platzhalter-3"]
+summary: "Our AI measures the share of contaminants in bio-waste as a share of the image area; sorting analysis measures it by weight. Across two test campaigns a clear trend emerges: where sorting finds more contaminants, the AI sees more too. Individual outliers and a still small data set mean the correlation has to be confirmed by further studies."
+heroImage: "/src/assets/uploads/blog/ki-segmentierung-bioabfall.webp"
+heroImageAlt: "From the field: the AI segments every detected object as its own coloured area."
+tags: ["Computer Vision", "Recycling"]
+draft: true
+---
+
+import Figure from '../../../components/Figure.astro';
+
+Plastic bags, glass, metal: contaminants in bio-waste lower compost quality and cause considerable
+effort in digestion and composting plants. How much of a delivered batch they make up is usually
+determined by **sorting analysis** today – by hand, by sample and at considerable cost in time.
+
+Our question: can the share of contaminants instead be estimated **automatically, by camera and AI** –
+for every batch, right at delivery?
+
+## How the AI sees bio-waste
+
+A camera hangs above the waste stream. A segmentation model splits each image into individual objects
+and assigns each to a class – organic material or contaminant. The image above shows the principle:
+every detected area is marked on its own.
+
+The marked areas give the **share of contaminants by area**: how much of the visible surface consists
+of contaminants?
+
+## Comparing with sorting analysis
+
+An AI that nobody checks is of no use in practice. So we took our measurements alongside sorting
+analyses. The comparison was with **variant 2** of the sorting: plastic and compostable bags are opened
+and their contents sorted according to the material group catalogue. The result is a share of
+contaminants **by weight**.
+
+<Figure
+  src="/src/assets/uploads/blog/korrelation-fremdstoffanteile.webp"
+  alt="Scatter plot: the AI's share of contaminants by area against the sorting analysis's share by weight, with a rising trend line."
+  caption="Correlation of the measured contaminant shares: AI (% by area) against sorting analysis variant 2 (% by weight), data from the first and second test campaigns."
+  source="Source: INFA"
+/>
+
+## What the data shows
+
+The trend is clear: batches with a higher share of contaminants in the sorting analysis also show more
+contaminants in the image analysis. At the same time the values scatter, and individual batches stand out.
+
+> Area is not weight – and that is exactly the interesting question.
+
+A thin plastic film covers a lot of area in the image but weighs almost nothing. A piece of glass is
+heavy but small. Outliers such as a batch with a high share by area and a low share by weight can be
+explained this way – but that is not confirmed yet.
+
+## What comes next
+
+The data so far comes from two test campaigns. Robust conclusions need more. Next up:
+
+1. **Further campaigns**, to put the correlation on a broader data base.
+2. **Analysis by material group**, so that light, large-area contaminants can be weighted differently.
+3. **A conversion model** from area to weight shares, calibrated against the sorting analyses.
+
+Our interim conclusion: AI image analysis does not replace sorting analysis – but it can assess every
+batch, not just samples. If the correlation holds, it becomes a tool that lets plant operators detect
+contaminants early and respond in a targeted way.

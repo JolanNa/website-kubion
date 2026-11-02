@@ -2,13 +2,21 @@
 import { render, type CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import { SITE_NAME, type Locale } from '../config';
-import { getAuthor, postAlternates } from '../lib/content';
+import { localizedPath } from '../i18n/routes';
+import { getAuthor, getPosts, postAlternates, postPath } from '../lib/content';
 import { resolveImage } from '../lib/images';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AuthorCard from './AuthorCard.astro';
 import CtaPanel from './CtaPanel.astro';
+import Placeholder from './Placeholder.astro';
 
+/**
+ * A blog article in a classic layout: back link, meta line, headline and lead,
+ * a wide hero image, then the article with a narrow sidebar on its left: the
+ * author's compact box (portrait, name, role, project team) and a sticky table of contents.
+ * Further posts and the CTA panel close the page.
+ */
 interface Props {
   entry: CollectionEntry<'blog'>;
   locale: Locale;
@@ -17,13 +25,23 @@ interface Props {
 const { entry, locale } = Astro.props;
 const t = useTranslations(locale);
 
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+const toc = headings.filter((heading) => heading.depth === 2);
 const alternates = await postAlternates(entry);
 const heroImage = resolveImage(entry.data.heroImage);
 
 // `author` holds a team member's translationKey; anything else is a plain name.
 const author = await getAuthor(entry.data.author, locale);
 const authorName = author?.data.name ?? entry.data.author;
+const contributors = (
+  await Promise.all(entry.data.contributors.map((key) => getAuthor(key, locale)))
+).filter((member) => member !== undefined);
+
+// ~200 words a minute, never less than one.
+const words = entry.body?.split(/\s+/).filter(Boolean).length ?? 0;
+const minutes = Math.max(1, Math.round(words / 200));
+
+const related = (await getPosts(locale)).filter((post) => post.id !== entry.id).slice(0, 3);
 
 const cta = {
   kicker: t('blog.cta.kicker'),
@@ -38,6 +56,8 @@ const dateFormat = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', 
   month: 'long',
   day: 'numeric',
 });
+
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 
 // BlogPosting structured data — helps Google render article rich results.
 const structuredData = {
@@ -63,62 +83,166 @@ const structuredData = {
   noindex={entry.data.noindex}
   structuredData={structuredData}
 >
-  <div
-    class:list={[
-      'blog-post mx-auto grid max-w-3xl gap-12 px-4 py-20 text-lila',
-      author && 'lg:max-w-[68rem] lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-16',
-    ]}
-  >
-    <article class="min-w-0">
-      <header>
-        <time datetime={entry.data.publishedAt.toISOString()} class="text-sm opacity-70">
-          {t('blog.publishedOn')} {dateFormat.format(entry.data.publishedAt)}
-          {authorName && <> · {t('blog.by')} {authorName}</>}
-        </time>
-        <h1 class="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+  <article class="blog-post">
+    <header class="px-4 pt-12 sm:px-16 lg:px-20 lg:pt-20">
+      <div class="mx-auto max-w-[84rem]">
+        <a
+          href={localizedPath('blog', locale)}
+          class="group inline-flex items-center gap-3 text-sm font-medium text-marine-70 transition-colors hover:text-marine"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            class="size-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            aria-hidden="true"
+          >
+            <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          {t('blog.back')}
+        </a>
+
+        <p class="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3">
+          <span class="flex items-center gap-3">
+            <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+            <span class="kicker font-bold!">{t('nav.blog')}</span>
+          </span>
+          {entry.data.tags.map((tag) => <span class="kicker rounded-full bg-nebel px-3 py-1">{tag}</span>)}
+          <span class="kicker text-marine-70">
+            <time datetime={entry.data.publishedAt.toISOString()}>
+              {dateFormat.format(entry.data.publishedAt)}
+            </time>
+            {' · '}
+            {minutes} {t('blog.minRead')}
+          </span>
+        </p>
+
+        <h1
+          class="mt-8 max-w-[22ch] text-[clamp(2.5rem,5.5vw,4.75rem)] leading-[0.98] font-black tracking-[-0.035em] text-balance"
+        >
           {entry.data.title}
         </h1>
-        <p class="mt-4 text-lg text-pretty opacity-80">{entry.data.description}</p>
-      </header>
-
-      {
-        heroImage && (
-          <Image
-            src={heroImage}
-            alt={entry.data.heroImageAlt ?? ''}
-            widths={[640, 1024, 1600]}
-            sizes="(min-width: 768px) 768px, 100vw"
-            class="mt-10 w-full rounded-2xl"
-            loading="eager"
-          />
-        )
-      }
-
-      {
-        entry.data.summary && (
-          <div class="mt-10 rounded-2xl bg-nebel p-6 sm:p-8">
-            <p class="kicker font-bold! opacity-70">{t('blog.summary')}</p>
-            <p class="mt-3 text-lg leading-relaxed text-pretty">{entry.data.summary}</p>
-          </div>
-        )
-      }
-
-      <div class="prose mt-12">
-        <Content />
+        <p class="mt-8 max-w-[60ch] text-xl leading-relaxed text-pretty text-marine-70">
+          {entry.data.description}
+        </p>
       </div>
-    </article>
+    </header>
 
-    {/* After the article in the source, beside it on the left from `lg` up. */}
-    {
-      author && (
-        <AuthorCard
-          member={author}
-          locale={locale}
-          class="lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:order-first lg:self-start"
-        />
-      )
-    }
-  </div>
+    <div class="px-4 pt-12 lg:pt-16">
+      {
+        heroImage ? (
+          <figure>
+            <Image
+              src={heroImage}
+              alt={entry.data.heroImageAlt ?? ''}
+              widths={[640, 1024, 1600, 2000]}
+              sizes="100vw"
+              class="aspect-[16/9] max-h-[75svh] w-full rounded-3xl object-cover"
+              loading="eager"
+            />
+            {entry.data.heroImageAlt && (
+              <figcaption class="mx-auto mt-4 max-w-[84rem] px-0 text-sm text-marine-70 sm:px-12 lg:px-16">
+                {entry.data.heroImageAlt}
+              </figcaption>
+            )}
+          </figure>
+        ) : (
+          <Placeholder class="aspect-[21/9] w-full rounded-3xl" />
+        )
+      }
+    </div>
+
+    <div class="px-4 py-16 sm:px-16 lg:px-20 lg:py-24">
+      <div class="mx-auto grid max-w-[84rem] gap-16 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-16 xl:gap-20">
+        <div class="min-w-0 max-w-[46rem]">
+          {
+            entry.data.summary && (
+              <div class="mb-12 rounded-3xl bg-marine p-8 text-weiss sm:p-10">
+                <p class="flex items-center gap-3">
+                  <span class="markenkern size-2.5 shrink-0" aria-hidden="true" />
+                  <span class="kicker text-hellblau">{t('blog.summary')}</span>
+                </p>
+                <p class="mt-4 text-xl leading-relaxed text-pretty">{entry.data.summary}</p>
+              </div>
+            )
+          }
+
+          <div class="prose text-lg">
+            <Content />
+          </div>
+        </div>
+
+        {/*
+          After the article in the source, left of it from `lg` up. The author box
+          scrolls away; the table of contents then sticks beside the text.
+        */}
+        <div class="space-y-6 lg:order-first">
+          {author && <AuthorCard member={author} contributors={contributors} locale={locale} />}
+
+          {
+            toc.length > 1 && (
+              <nav
+                aria-label={t('blog.toc')}
+                class="rounded-2xl border border-marine-15 bg-weiss p-5 text-sm lg:sticky lg:top-[calc(var(--header-height)+2rem)]"
+              >
+                <p class="kicker text-marine-70">{t('blog.toc')}</p>
+                <ol class="mt-4 space-y-3">
+                  {toc.map((heading, index) => (
+                    <li>
+                      <a href={`#${heading.slug}`} class="group flex gap-3 leading-snug">
+                        <span class="font-mono text-sm text-marine-45">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <span class="decoration-orange decoration-2 underline-offset-4 group-hover:underline">
+                          {heading.text}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </article>
+
+  {
+    related.length > 0 && (
+      <section class="px-4 pb-20 lg:pb-32">
+        <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-20">
+          <div class="mx-auto max-w-[84rem]">
+            <div class="flex flex-wrap items-end justify-between gap-6">
+              <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">{t('blog.related')}</h2>
+              <a
+                href={localizedPath('blog', locale)}
+                class="font-medium underline decoration-orange decoration-2 underline-offset-[6px]"
+              >
+                {t('blog.back')}
+              </a>
+            </div>
+            <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+              {related.map((post) => (
+                <li>
+                  <a href={postPath(post, locale)} class="group flex h-full flex-col bg-weiss p-8">
+                    <span class="kicker text-marine-70">
+                      {[dateFormat.format(post.data.publishedAt), post.data.tags[0]].filter(Boolean).join(' · ')}
+                    </span>
+                    <span class="mt-6 text-xl font-semibold tracking-[-0.02em] text-balance decoration-orange decoration-2 underline-offset-[6px] group-hover:underline">
+                      {post.data.title}
+                    </span>
+                    <span class="mt-3 leading-relaxed text-pretty text-marine-70">{post.data.description}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <CtaPanel section={cta} locale={locale} source="src/components/BlogPost.astro" />
 </BaseLayout>

@@ -1,69 +1,272 @@
 ---
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import type { Locale } from '../config';
-import { getPosts, pageAlternates, postPath } from '../lib/content';
+import { getAuthor, getPosts, loadPage, pageAlternates, pageSection, postPath } from '../lib/content';
 import { resolveImage } from '../lib/images';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { Image } from 'astro:assets';
+import CtaPanel from './CtaPanel.astro';
+import DraftTag from './DraftTag.astro';
+import Placeholder from './Placeholder.astro';
+import ScrollMotion from './ScrollMotion.astro';
+import SectionHeader from './SectionHeader.astro';
 
+/**
+ * The blog index, built from the same parts as Über uns and Karriere: a plain
+ * top-left intro on white (no Marine banner), the newest post as a large Marine card, every other
+ * post as a card in a grid (filterable by tag), and the closing CTA panel.
+ *
+ * Page copy comes from src/content/pages/blog/<locale>.mdx; the posts are the
+ * `blog` collection.
+ */
 interface Props {
   locale: Locale;
 }
 
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+
+const source = `src/content/pages/blog/${locale}.mdx`;
+const entry = await loadPage('blog', locale);
+const { hero } = entry.data;
+
+if (!hero) {
+  throw new Error(`The blog page needs a \`hero\` block in ${source}.`);
+}
+
+const postsSection = pageSection(entry, 'posts');
+const cta = pageSection(entry, 'cta');
+
 const posts = await getPosts(locale);
+const [latest, ...rest] = posts;
+const tags = [...new Set(rest.flatMap((post) => post.data.tags))];
 
 const dateFormat = new Intl.DateTimeFormat(locale === 'de' ? 'de-DE' : 'en-GB', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
 });
+
+/** Date and first tag, as the small mono line above a title. */
+const meta = (post: CollectionEntry<'blog'>) =>
+  [dateFormat.format(post.data.publishedAt), post.data.tags[0]].filter(Boolean).join(' · ');
+
+const latestAuthor = latest && (await getAuthor(latest.data.author, locale));
+const latestImage = latest && resolveImage(latest.data.heroImage);
+
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 ---
 
 <BaseLayout
   locale={locale}
-  title={t('blog.title')}
-  description={t('blog.title')}
+  title={entry.data.title}
+  description={entry.data.description}
   alternates={pageAlternates('blog')}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
 >
-  <div class="mx-auto max-w-6xl px-4 py-20">
-    <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">{t('blog.title')}</h1>
+  <ScrollMotion />
 
-    {posts.length === 0 && <p class="mt-8 text-neutral-600">{t('blog.empty')}</p>}
-
-    <ul class="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+  <section class="px-4 pt-16 sm:px-16 lg:px-20 lg:pt-24">
+    <div class="mx-auto max-w-[84rem] text-marine">
       {
-        posts.map((post) => {
-          const image = resolveImage(post.data.heroImage);
-          return (
-            <li>
-              <a href={postPath(post, locale)} class="group block">
-                {image && (
-                  <Image
-                    src={image}
-                    alt={post.data.heroImageAlt ?? ''}
-                    widths={[400, 800]}
-                    sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                    class="mb-4 aspect-[3/2] w-full rounded-xl object-cover"
-                    loading="lazy"
-                  />
-                )}
-                <time
-                  datetime={post.data.publishedAt.toISOString()}
-                  class="text-sm text-neutral-500"
-                >
-                  {dateFormat.format(post.data.publishedAt)}
-                </time>
-                <h2 class="mt-2 text-xl font-semibold tracking-tight group-hover:underline underline-offset-4">
-                  {post.data.title}
-                </h2>
-                <p class="mt-2 text-neutral-600">{post.data.description}</p>
-              </a>
-            </li>
-          );
-        })
+        hero.eyebrow && (
+          <p class="rise flex items-center gap-4">
+            {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+            <span class="markenkern size-9 shrink-0" aria-hidden="true" />
+            <span class="text-3xl font-bold tracking-[-0.02em] sm:text-4xl">{hero.eyebrow}</span>
+          </p>
+        )
       }
-    </ul>
-  </div>
+
+      <h1
+        class="rise mt-10 max-w-[18ch] text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance"
+        style="animation-delay: 80ms"
+      >
+        {hero.headline}
+      </h1>
+
+      {
+        hero.subline && (
+          <p
+            class="rise mt-8 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
+            style="animation-delay: 160ms"
+          >
+            {hero.subline}
+          </p>
+        )
+      }
+
+      {
+        hero.body && (
+          <p
+            class="rise mt-6 max-w-[64ch] text-lg leading-relaxed text-pretty"
+            style="animation-delay: 240ms"
+          >
+            {hero.body}
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto max-w-[84rem]">
+      <div data-scroll-reveal>
+        <SectionHeader section={postsSection} locale={locale} />
+      </div>
+
+      {posts.length === 0 && <p class="mt-12 text-lg text-marine-70">{t('blog.empty')}</p>}
+
+      {
+        latest && (
+          <a
+            href={postPath(latest, locale)}
+            data-scroll-reveal
+            class="group relative mt-12 grid overflow-hidden rounded-3xl bg-marine text-weiss lg:mt-16 lg:grid-cols-12"
+          >
+            <div class="flex flex-col px-6 py-10 sm:px-12 sm:py-14 lg:col-span-7 lg:px-16 lg:py-16">
+              <p class="flex flex-wrap items-center gap-3">
+                <span class="kicker rounded-full bg-weiss px-3 py-1 text-marine">{t('blog.latest')}</span>
+                <span class="kicker text-hellblau">{meta(latest)}</span>
+                {latest.data.draft && <DraftTag locale={locale} dark />}
+              </p>
+              <h3 class="mt-8 text-[clamp(2rem,4.5vw,3.75rem)] leading-[0.98] font-black tracking-[-0.03em] text-balance">
+                {latest.data.title}
+              </h3>
+              <p class="mt-6 max-w-[60ch] text-lg leading-relaxed text-pretty text-hellblau">
+                {latest.data.description}
+              </p>
+
+              <div class="mt-auto flex flex-wrap items-end justify-between gap-6 pt-10">
+                {latestAuthor ? (
+                  <span class="text-sm">
+                    <span class="block font-medium">{latestAuthor.data.name}</span>
+                    <span class="block text-hellblau">{latestAuthor.data.role}</span>
+                  </span>
+                ) : (
+                  <span />
+                )}
+                <span class="flex items-center gap-4 font-medium">
+                  {t('blog.readMore')}
+                  <span class="gradient-orange flex size-12 items-center justify-center rounded-full text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1">
+                    <svg viewBox="0 0 16 16" class="size-5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                      <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="relative min-h-64 lg:col-span-5">
+              {latestImage ? (
+                <Image
+                  src={latestImage}
+                  alt={latest.data.heroImageAlt ?? ''}
+                  widths={[640, 1024]}
+                  sizes="(min-width: 1024px) 34rem, 100vw"
+                  class="absolute inset-0 size-full object-cover"
+                  loading="eager"
+                />
+              ) : (
+                <Placeholder class="absolute inset-0 opacity-90" />
+              )}
+            </div>
+          </a>
+        )
+      }
+
+      {
+        rest.length > 0 && (
+          <div data-blog-list class="mt-16 lg:mt-24">
+            {tags.length > 1 && (
+              <div role="group" aria-label={t('blog.filter')} class="mb-10 flex flex-wrap gap-2">
+                <button type="button" data-tag="" aria-pressed="true" class="kicker cursor-pointer rounded-full border border-marine-15 px-4 py-2 text-marine-70 transition-colors duration-300 hover:border-marine hover:text-marine aria-pressed:border-marine aria-pressed:bg-marine aria-pressed:text-weiss">
+                  {t('blog.allTopics')}
+                </button>
+                {tags.map((tag) => (
+                  <button type="button" data-tag={tag} aria-pressed="false" class="kicker cursor-pointer rounded-full border border-marine-15 px-4 py-2 text-marine-70 transition-colors duration-300 hover:border-marine hover:text-marine aria-pressed:border-marine aria-pressed:bg-marine aria-pressed:text-weiss">
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <ul class="grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+              {rest.map((post) => {
+                const image = resolveImage(post.data.heroImage);
+                return (
+                  <li data-scroll-reveal data-tags={JSON.stringify(post.data.tags)}>
+                    <a href={postPath(post, locale)} class="group block">
+                      <div class="overflow-hidden rounded-2xl">
+                        {image ? (
+                          <Image
+                            src={image}
+                            alt={post.data.heroImageAlt ?? ''}
+                            widths={[400, 800]}
+                            sizes="(min-width: 1024px) 27rem, (min-width: 640px) 50vw, 100vw"
+                            class="aspect-[3/2] w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-[1.03]"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <Placeholder class="aspect-[3/2] w-full" />
+                        )}
+                      </div>
+                      <p class="mt-6 flex flex-wrap items-center gap-3">
+                        <span class="markenkern size-2.5 shrink-0" aria-hidden="true" />
+                        <span class="kicker text-marine-70">{meta(post)}</span>
+                      </p>
+                      <h3 class="mt-4 text-2xl font-semibold tracking-[-0.02em] text-balance decoration-orange decoration-2 underline-offset-[6px] group-hover:underline">
+                        {post.data.title}
+                      </h3>
+                      <p class="mt-3 leading-relaxed text-pretty text-marine-70">{post.data.description}</p>
+                      {post.data.draft && <DraftTag locale={locale} class="mt-5" />}
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <CtaPanel section={cta} locale={locale} source={source} />
 </BaseLayout>
+
+<script>
+  // Tag filter: shows only the posts carrying the chosen tag. Without JS the
+  // chips do nothing and every post stays visible.
+  for (const list of document.querySelectorAll<HTMLElement>('[data-blog-list]')) {
+    const chips = list.querySelectorAll<HTMLButtonElement>('button[data-tag]');
+    const items = list.querySelectorAll<HTMLElement>('li[data-tags]');
+
+    for (const chip of chips) {
+      chip.addEventListener('click', () => {
+        const tag = chip.dataset.tag;
+        for (const other of chips) other.setAttribute('aria-pressed', String(other === chip));
+        for (const item of items) {
+          const itemTags: string[] = JSON.parse(item.dataset.tags ?? '[]');
+          item.hidden = Boolean(tag) && !itemTags.includes(tag!);
+        }
+      });
+    }
+  }
+</script>
+
+
+<style>
+  /* A short staggered rise on load, as on AboutHero; reduced motion is neutralised globally. */
+  .rise {
+    animation: rise 0.9s var(--ease-out-quint) both;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+</style>

@@ -330,6 +330,8 @@ const blog = defineCollection({
      * A value that matches nobody is printed as a plain name.
      */
     author: z.string().optional(),
+    /** `translationKey`s of further team members who worked on the project. */
+    contributors: z.array(z.string()).default([]),
     /** A few sentences shown in a box ahead of the article body. */
     summary: z.string().optional(),
     heroImage: z.string().optional(),

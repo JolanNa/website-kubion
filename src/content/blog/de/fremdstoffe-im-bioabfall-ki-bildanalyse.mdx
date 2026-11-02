@@ -1,0 +1,72 @@
+---
+title: "Fremdstoffe im Bioabfall: Was KI-Bildanalyse und Sortieranalyse gemeinsam zeigen"
+description: "Kann eine Kamera mit KI erkennen, wie viel Plastik in einer Bioabfall-Charge steckt? Wir haben die Ergebnisse unserer Bildanalyse mit klassischen Sortieranalysen verglichen – ein Zwischenstand aus der Praxis."
+urlSlug: "fremdstoffe-im-bioabfall-ki-bildanalyse"
+translationKey: "bioabfall-fremdstoffe"
+publishedAt: 2026-10-28
+author: "max-mustermann"
+contributors: ["platzhalter-2", "platzhalter-3"]
+summary: "Unsere KI misst den Fremdstoffanteil im Bioabfall als Flächenanteil im Bild, die Sortieranalyse als Gewichtsanteil. Über zwei Untersuchungskampagnen zeigt sich ein klarer Trend: Wo die Sortierung mehr Fremdstoffe findet, sieht auch die KI mehr. Einzelne Ausreißer und die noch kleine Datenbasis heißen aber: Die Korrelation muss durch weitere Untersuchungen bestätigt werden."
+heroImage: "/src/assets/uploads/blog/ki-segmentierung-bioabfall.webp"
+heroImageAlt: "Ausschnitt aus der Praxis: Die KI segmentiert jedes erkannte Objekt als eigene farbige Fläche."
+tags: ["Computer Vision", "Recycling"]
+draft: true
+---
+
+import Figure from '../../../components/Figure.astro';
+
+Plastiktüten, Glas, Metall: Fremdstoffe im Bioabfall verschlechtern die Kompostqualität
+und verursachen in Vergärungs- und Kompostanlagen erheblichen Aufwand. Wie hoch ihr Anteil
+in einer angelieferten Charge ist, wird heute meist per **Sortieranalyse** bestimmt – von Hand,
+stichprobenartig und mit viel Zeitaufwand.
+
+Unsere Frage war: Lässt sich der Fremdstoffanteil stattdessen **automatisch per Kamera und KI**
+abschätzen – für jede Charge, direkt bei der Anlieferung?
+
+## Wie die KI den Bioabfall sieht
+
+Über dem Abfallstrom hängt eine Kamera. Ein Segmentierungsmodell zerlegt jedes Bild in einzelne
+Objekte und ordnet sie einer Klasse zu – organisches Material oder Fremdstoff. Das Bild oben zeigt
+das Prinzip: Jede erkannte Fläche wird einzeln markiert.
+
+Aus den markierten Flächen ergibt sich der **Fremdstoffanteil in Flächen-Prozent**: Wie viel der
+sichtbaren Oberfläche besteht aus Fremdstoffen?
+
+## Der Vergleich mit der Sortieranalyse
+
+Eine KI, die niemand überprüft, hilft in der Praxis nicht weiter. Deshalb haben wir unsere Messungen
+parallel zu Sortieranalysen durchgeführt. Verglichen wurde mit **Variante 2** der Sortierung:
+Kunststoff- und BAW-Beutel werden geöffnet und ihr Inhalt gemäß Stoffgruppenkatalog sortiert. Das
+Ergebnis ist ein Fremdstoffanteil in **Gewichts-Prozent**.
+
+<Figure
+  src="/src/assets/uploads/blog/korrelation-fremdstoffanteile.webp"
+  alt="Streudiagramm: Fremdstoffanteil der KI in Flächen-Prozent gegen den Fremdstoffanteil der Sortieranalyse in Gewichts-Prozent, mit steigender Trendlinie."
+  caption="Korrelation der ermittelten Fremdstoffanteile: KI (Flächen-%) gegenüber Sortieranalyse Variante 2 (Gew.-%), Datenbasis aus der ersten und zweiten Untersuchungskampagne."
+  source="Quelle: INFA"
+/>
+
+## Was die Daten zeigen
+
+Der Trend ist deutlich: Chargen mit einem höheren Fremdstoffanteil in der Sortieranalyse zeigen auch
+in der Bildanalyse mehr Fremdstoffe. Gleichzeitig streuen die Werte, und einzelne Chargen fallen aus
+dem Rahmen.
+
+> Fläche ist nicht Gewicht – und genau darin liegt die spannende Frage.
+
+Eine dünne Plastikfolie bedeckt im Bild viel Fläche, wiegt aber fast nichts. Ein Glasstück dagegen
+ist schwer, aber klein. Ausreißer wie eine Charge mit hohem Flächen- und niedrigem Gewichtsanteil
+lassen sich so plausibel erklären – bestätigt ist das aber noch nicht.
+
+## Wie es weitergeht
+
+Die bisherige Datenbasis stammt aus zwei Untersuchungskampagnen. Für belastbare Aussagen brauchen wir
+mehr. Als Nächstes stehen an:
+
+1. **Weitere Kampagnen**, um die Korrelation auf eine breitere Datenbasis zu stellen.
+2. **Auswertung nach Stoffgruppen**, damit leichte, großflächige Fremdstoffe anders gewichtet werden können.
+3. **Ein Umrechnungsmodell** von Flächen- auf Gewichtsanteile, das sich an den Sortieranalysen kalibriert.
+
+Unser Zwischenfazit: Die KI-Bildanalyse ist kein Ersatz für die Sortieranalyse – aber sie kann jede
+Charge bewerten, nicht nur Stichproben. Wenn sich die Korrelation bestätigt, wird daraus ein Werkzeug,
+mit dem Anlagenbetreiber Fremdstoffe früh erkennen und gezielt reagieren können.

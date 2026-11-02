@@ -159,7 +159,25 @@ body {
   @apply text-marine underline underline-offset-4;
 }
 
-/* Blog articles set their own text colour (--color-lila); the body follows it. */
-.blog-post .prose :where(h2, h3, p, a) {
-  color: inherit;
+/* Blog articles (BlogPost.astro): larger headings, scroll targets for the table of contents. */
+.blog-post .prose :where(h2) {
+  @apply mt-14 mb-5 scroll-mt-[calc(var(--header-height)+2rem)] text-3xl leading-tight tracking-[-0.02em];
+}
+.blog-post .prose :where(h3) {
+  @apply mt-10 text-xl;
+}
+.blog-post .prose :where(p, li) {
+  @apply leading-[1.75];
+}
+.blog-post .prose :where(ol) {
+  @apply mb-4 list-decimal pl-6;
+}
+.blog-post .prose :where(li) {
+  @apply mb-2 pl-1 marker:text-marine-45;
+}
+.blog-post .prose :where(strong) {
+  @apply font-semibold;
+}
+.blog-post .prose :where(blockquote) {
+  @apply my-10 border-l-4 border-orange pl-6 text-2xl leading-snug font-semibold tracking-[-0.02em] text-balance;
 }
