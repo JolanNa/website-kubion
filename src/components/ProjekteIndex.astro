@@ -1,11 +1,25 @@
 ---
+import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import type { Locale } from '../config';
-import { getProjekte, loadPage, pageAlternates, projektPath } from '../lib/content';
-import { requireImage } from '../lib/images';
+import { getProjekte, loadPage, pageAlternates, pageSection, projektPath } from '../lib/content';
+import { resolveImage } from '../lib/images';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AboutHero from './AboutHero.astro';
+import CtaPanel from './CtaPanel.astro';
+import Placeholder from './Placeholder.astro';
+import ScrollMotion from './ScrollMotion.astro';
+import SectionHeader from './SectionHeader.astro';
 
+/**
+ * The projects index: the Über-uns hero (a full-height Marine panel), the
+ * featured client project as a large Marine card, the other client projects as
+ * a card grid, the research projects on a Nebel panel, and the closing CTA panel.
+ *
+ * Page copy comes from src/content/pages/projekte/<locale>.mdx; the projects are
+ * the `projekte` collection (DECISIONS.md §3).
+ */
 interface Props {
   locale: Locale;
 }
@@ -13,55 +27,204 @@ interface Props {
 const { locale } = Astro.props;
 const t = useTranslations(locale);
 
-// The index page's own copy is a Tier 1 static page; the cards come from the
-// projekte collection (DECISIONS.md §3).
-const page = await loadPage('projekte', locale);
+const source = `src/content/pages/projekte/${locale}.mdx`;
+const entry = await loadPage('projekte', locale);
+const { hero } = entry.data;
+
+if (!hero) {
+  throw new Error(`The projects page needs a \`hero\` block in ${source}.`);
+}
+
+const kundenSection = pageSection(entry, 'kunden');
+const forschungSection = pageSection(entry, 'forschung');
+const cta = pageSection(entry, 'cta');
+
 const projects = await getProjekte(locale);
+const kunden = projects.filter((project) => project.data.kind === 'kunde');
+const forschung = projects.filter((project) => project.data.kind === 'forschung');
+const featured = kunden.find((project) => project.data.featured) ?? kunden[0];
+const rest = kunden.filter((project) => project !== featured);
+
+const featuredImage = featured && resolveImage(featured.data.heroImage);
+
+/** A project without a page of its own is listed but not linked. */
+const href = (project: CollectionEntry<'projekte'>) =>
+  project.data.detail ? projektPath(project, locale) : undefined;
+
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 ---
 
 <BaseLayout
   locale={locale}
-  title={page.data.title}
-  description={page.data.description}
+  title={entry.data.title}
+  description={entry.data.description}
   alternates={pageAlternates('projekte')}
-  ogImage={page.data.ogImage}
+  ogImage={entry.data.ogImage}
+  noindex={entry.data.noindex}
 >
-  <div class="mx-auto max-w-6xl px-4 py-20">
-    <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-      {page.data.hero?.headline ?? t('projekte.title')}
-    </h1>
-    {
-      page.data.hero?.subline && (
-        <p class="mt-6 max-w-2xl text-lg text-neutral-600 text-pretty">
-          {page.data.hero.subline}
-        </p>
-      )
-    }
+  <ScrollMotion />
 
-    <ul class="mt-16 grid gap-12 sm:grid-cols-2">
+  <AboutHero hero={hero} locale={locale} source={source} compact />
+
+  <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
+    <div class="mx-auto max-w-[84rem]">
+      <div data-scroll-reveal>
+        <SectionHeader section={kundenSection} locale={locale} />
+      </div>
+
       {
-        projects.map((project) => (
-          <li>
-            <a href={projektPath(project, locale)} class="group block">
-              <Image
-                src={requireImage(project.data.heroImage, `projekte/${project.id}`)}
-                alt={project.data.heroImageAlt}
-                widths={[600, 1200]}
-                sizes="(min-width: 640px) 50vw, 100vw"
-                class="aspect-[4/3] w-full rounded-xl object-cover"
-                loading="lazy"
-              />
-              <p class="mt-4 text-sm text-neutral-500">
-                {project.data.client} · {project.data.year}
+        featured && (
+          <a
+            href={href(featured)}
+            data-scroll-reveal
+            class="group relative mt-12 grid overflow-hidden rounded-3xl bg-marine text-weiss lg:mt-16 lg:grid-cols-12"
+          >
+            <div class="flex flex-col px-6 py-10 sm:px-12 sm:py-14 lg:col-span-7 lg:px-16 lg:py-16">
+              <p class="flex flex-wrap items-center gap-3">
+                <span class="kicker rounded-full bg-weiss px-3 py-1 text-marine">{t('projekte.featured')}</span>
+                {featured.data.technology && <span class="kicker text-hellblau">{featured.data.technology}</span>}
               </p>
-              <h2 class="mt-1 text-2xl font-semibold tracking-tight group-hover:underline underline-offset-4">
-                {project.data.title}
-              </h2>
-              <p class="mt-2 text-neutral-600">{project.data.description}</p>
-            </a>
-          </li>
-        ))
+              <h3 class="mt-8 text-[clamp(2rem,3.8vw,3.25rem)] leading-[0.98] font-black tracking-[-0.03em] text-balance max-sm:hyphens-auto">
+                {featured.data.title}
+              </h3>
+              <p class="mt-6 max-w-[60ch] text-lg leading-relaxed text-pretty text-hellblau">
+                {featured.data.description}
+              </p>
+
+              <div class="mt-auto flex flex-wrap items-end justify-between gap-6 pt-10">
+                {featured.data.industry ? (
+                  <span class="text-sm">
+                    <span class="block text-hellblau">{t('projekte.industry')}</span>
+                    <span class="block font-medium">{featured.data.industry}</span>
+                  </span>
+                ) : (
+                  <span />
+                )}
+                {featured.data.detail && (
+                  <span class="flex items-center gap-4 font-medium">
+                    {t('projekte.viewProject')}
+                    <span class="gradient-orange flex size-12 items-center justify-center rounded-full text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1">
+                      <svg viewBox="0 0 16 16" class="size-5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                        <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div class="relative min-h-64 lg:col-span-5">
+              {featuredImage ? (
+                <Image
+                  src={featuredImage}
+                  alt={featured.data.heroImageAlt ?? ''}
+                  widths={[640, 1024]}
+                  sizes="(min-width: 1024px) 34rem, 100vw"
+                  class="absolute inset-0 size-full object-cover"
+                  loading="eager"
+                />
+              ) : (
+                <Placeholder class="absolute inset-0 opacity-90" />
+              )}
+            </div>
+          </a>
+        )
       }
-    </ul>
-  </div>
+
+      {
+        rest.length > 0 && (
+          <ul class="mt-16 grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:mt-24">
+            {rest.map((project) => {
+              const image = resolveImage(project.data.heroImage);
+              return (
+                <li data-scroll-reveal>
+                  <a href={href(project)} class="group block">
+                    <div class="overflow-hidden rounded-2xl">
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={project.data.heroImageAlt ?? ''}
+                          widths={[600, 1200]}
+                          sizes="(min-width: 1344px) 41rem, (min-width: 640px) 50vw, 100vw"
+                          class="aspect-[3/2] w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-[1.03]"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Placeholder class="aspect-[3/2] w-full" />
+                      )}
+                    </div>
+                    <p class="mt-6 flex flex-wrap items-center gap-3">
+                      <span class="markenkern size-2.5 shrink-0" aria-hidden="true" />
+                      <span class="kicker text-marine-70">
+                        {[project.data.technology, project.data.industry].filter(Boolean).join(' · ')}
+                      </span>
+                    </p>
+                    <h3 class="mt-4 text-2xl font-semibold tracking-[-0.02em] text-balance decoration-orange decoration-2 underline-offset-[6px] group-hover:underline">
+                      {project.data.title}
+                    </h3>
+                    <p class="mt-3 leading-relaxed text-pretty text-marine-70">{project.data.description}</p>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    forschung.length > 0 && (
+      <section id="forschung" class="scroll-mt-[var(--header-height)] px-4 pb-20 lg:pb-32">
+        <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
+          <div class="mx-auto max-w-[84rem]">
+            <div data-scroll-reveal>
+              <SectionHeader section={forschungSection} locale={locale} />
+            </div>
+
+            <ul class="mt-12 grid gap-4 md:grid-cols-2 lg:mt-16 lg:gap-6">
+              {forschung.map((project) => {
+                const link = href(project);
+                const Card = link ? 'a' : 'div';
+                return (
+                  <li data-scroll-reveal>
+                    <Card href={link} class="group flex h-full flex-col bg-weiss p-8 sm:p-10">
+                      <p class="flex flex-wrap items-center gap-3">
+                        <span class="markenkern size-2.5 shrink-0" aria-hidden="true" />
+                        <span class="kicker text-marine-70">
+                          {[t('projekte.research'), project.data.technology].filter(Boolean).join(' · ')}
+                        </span>
+                      </p>
+                      <h3
+                        class:list={[
+                          'mt-6 text-3xl font-bold tracking-[-0.02em] text-balance decoration-orange decoration-2 underline-offset-[6px]',
+                          link && 'group-hover:underline',
+                        ]}
+                      >
+                        {project.data.title}
+                      </h3>
+                      <p class="mt-4 leading-relaxed text-pretty text-marine-70">{project.data.description}</p>
+                      {link && (
+                        <span class="mt-auto flex items-center gap-3 pt-8 font-medium">
+                          <span class="gradient-orange flex size-9 shrink-0 items-center justify-center rounded-lg text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1">
+                            <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                              <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                          </span>
+                          {t('projekte.viewProject')}
+                        </span>
+                      )}
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <CtaPanel section={cta} locale={locale} source={source} />
 </BaseLayout>
+

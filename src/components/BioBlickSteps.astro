@@ -1,0 +1,557 @@
+---
+import type { Locale } from '../config';
+
+/**
+ * "So funktioniert BioBlick": the three steps of the product as a list on the
+ * left and, on the right, a light mock-up of the BioBlick app that plays each
+ * step out — the camera overview with a new delivery, marking the delivery's
+ * area on the camera image, and the result with its documentation. It takes
+ * the idea of the screen recordings on the old solution page and redraws it in
+ * the site's own style.
+ *
+ * The script steps `data-active` through 1 → 2 → 3 while the tour is on
+ * screen; a click on a step jumps to it. Only the active scene is displayed, so
+ * its CSS animations restart each time it comes up. With reduced motion the
+ * tour does not advance on its own and the animations jump to their end
+ * state. Without JS there is no `data-active`: every step's text shows and the
+ * mock-up shows the finished result.
+ */
+interface Props {
+  steps: { heading: string; text?: string; items: { title: string; text: string }[] };
+  locale: Locale;
+}
+
+const { steps, locale } = Astro.props;
+const de = locale === 'de';
+
+const ui = {
+  nav: de ? ['Übersicht', 'Abladezonen', 'Analysen'] : ['Overview', 'Unloading zones', 'Analyses'],
+  start: de ? 'KI-Analyse starten' : 'Start AI analysis',
+  running: de ? 'Analyse läuft …' : 'Analysing …',
+  newDelivery: de ? 'Neue Anlieferung' : 'New delivery',
+  camera: de ? 'Kamera' : 'Camera',
+  line: de ? 'Linie' : 'Line',
+  zone: de ? 'Abladezone A · Kamera 1' : 'Unloading zone A · camera 1',
+  apply: de ? 'Bereich übernehmen' : 'Use area',
+  applied: de ? 'Übernommen' : 'Selected',
+  delivery: de ? 'Anlieferung · 12:13 Uhr' : 'Delivery · 12:13',
+  analysis: de ? 'Störstoffanalyse' : 'Contaminant analysis',
+  share: de ? 'Störstoffanteil' : 'Contaminant share',
+  limit: de ? 'Grenzwert 3 %' : 'Limit 3%',
+  below: de ? 'Unter dem Grenzwert' : 'Below the limit',
+  document: de ? 'KI-Analyse dokumentieren' : 'Document AI analysis',
+  documented: de ? 'Dokumentiert' : 'Documented',
+  pile: de ? 'Biomüll-Haufen' : 'Bio-waste pile',
+  contaminant: de ? 'Störstoff' : 'Contaminant',
+  weighbridge: de ? 'Wiegeschein' : 'Weighbridge',
+};
+
+// Shapes in a 600 × 300 box, stretched over the camera image.
+const oldPile = 'M40 230 C30 180 70 130 130 130 C190 130 230 170 225 220 C220 260 160 280 100 275 C60 272 45 255 40 230 Z';
+const newPile = 'M300 210 C290 140 340 70 420 65 C500 60 560 110 560 180 C560 240 510 275 430 275 C350 275 305 250 300 210 Z';
+const selection = 'M285 205 L300 95 L420 45 L545 80 L580 190 L520 285 L340 290 Z';
+const contaminants = [
+  { x: 360, y: 120, r: 7 },
+  { x: 450, y: 95, r: 5 },
+  { x: 500, y: 150, r: 8 },
+  { x: 400, y: 190, r: 6 },
+  { x: 340, y: 230, r: 5 },
+  { x: 470, y: 230, r: 7 },
+  { x: 530, y: 200, r: 4 },
+  { x: 425, y: 140, r: 4 },
+];
+---
+
+<div data-tour class="tour mt-12 grid gap-10 lg:mt-16 lg:grid-cols-12 lg:items-center lg:gap-12">
+  <ol class="lg:col-span-4">
+    {
+      steps.items.map((step, i) => (
+        <li>
+          <button type="button" data-tour-step={i + 1} class="tour-step group relative block w-full cursor-pointer border-t border-marine-15 py-6 text-left">
+            <span class="flex items-baseline gap-4">
+              <span class="font-mono text-sm text-marine-45">{String(i + 1).padStart(2, '0')}</span>
+              <span class="text-xl font-semibold tracking-[-0.01em] text-balance decoration-orange decoration-2 underline-offset-[6px] group-hover:underline sm:text-2xl">
+                {step.title}
+              </span>
+            </span>
+            <span class="tour-text mt-3 block pl-9 leading-relaxed text-pretty text-marine-70">{step.text}</span>
+          </button>
+        </li>
+      ))
+    }
+  </ol>
+
+  <div class="lg:col-span-8" aria-hidden="true">
+    <div class="overflow-hidden rounded-2xl border border-marine-15 bg-weiss shadow-[0_30px_60px_-30px_rgb(10_38_95/0.35)]">
+      <div class="flex h-8 items-center gap-1.5 border-b border-marine-15 bg-nebel px-4">
+        <span class="size-2 rounded-full bg-marine-15" />
+        <span class="size-2 rounded-full bg-marine-15" />
+        <span class="size-2 rounded-full bg-marine-15" />
+      </div>
+
+      <div class="grid sm:grid-cols-[8.5rem_1fr]">
+        <nav class="hidden border-r border-marine-15 p-3 text-xs sm:block">
+          <p class="flex items-center gap-2 px-2 pt-1 pb-4">
+            <span class="markenkern size-4 shrink-0" />
+            <span class="font-bold">BioBlick</span>
+          </p>
+          {ui.nav.map((item, i) => (
+            <p data-nav={i + 1} class="tour-nav rounded-md px-2 py-1.5 text-marine-70">{item}</p>
+          ))}
+        </nav>
+
+        <div class="relative aspect-[4/3] text-[0.625rem] sm:aspect-[16/11] sm:text-xs">
+          {/* 1 — Overview: the cameras of both lines; a new delivery comes in, the analysis is started. */}
+          <div data-scene="1" class="tour-scene absolute inset-0 flex flex-col p-3 sm:p-5">
+            <div class="flex items-center justify-between gap-3">
+              <p class="kicker tour-label text-marine-45">BioScan › {ui.nav[0]}</p>
+              <span class="relative overflow-hidden rounded-md">
+                <span class="block bg-marine px-2.5 py-1.5 font-medium whitespace-nowrap text-weiss">{ui.start}</span>
+                <span class="tour-swap absolute inset-0 flex items-center justify-center bg-orange font-medium whitespace-nowrap text-weiss" style="--d: 4.6s">
+                  {ui.running}
+                </span>
+              </span>
+            </div>
+            <div class="mt-3 grid flex-1 grid-cols-2 gap-3 sm:mt-4 sm:gap-4">
+              {['A', 'B'].map((line, l) => (
+                <div class="flex flex-col">
+                  <p class="kicker tour-label text-marine-70">{ui.line} {line}</p>
+                  <div class="mt-2 grid flex-1 grid-cols-2 grid-rows-2 gap-1.5 sm:gap-2">
+                    {[0, 1, 2, 3].map((c) => (
+                      <div class="tour-in tour-cam relative overflow-hidden rounded-md" style={`--d: ${(l * 4 + c) * 0.08}s`}>
+                        {l === 0 && c === 0 && (
+                          <>
+                            <svg viewBox="0 0 100 75" preserveAspectRatio="none" class="absolute inset-0 size-full">
+                              <path d="M25 60 C15 40 30 20 55 18 C80 16 90 35 85 52 C80 66 40 72 25 60 Z" class="tour-pop fill-hellblau/60" style="--d: 1.6s" />
+                            </svg>
+                            <span class="tour-ring absolute inset-0 rounded-md" style="--d: 2.2s" />
+                            <span class="tour-in kicker tour-label absolute top-1 left-1 rounded bg-orange px-1 text-weiss" style="--d: 2.3s">
+                              {ui.newDelivery}
+                            </span>
+                          </>
+                        )}
+                        <span class="kicker tour-label absolute bottom-1 left-1 flex items-center gap-1 text-hellblau">
+                          <span class="tour-live size-1 rounded-full bg-orange" />
+                          {ui.camera} {c + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <span class="tour-cursor tour-cursor--1" />
+          </div>
+
+          {/* 2 — Select the area of the current delivery on the camera image. */}
+          <div data-scene="2" class="tour-scene absolute inset-0 flex flex-col p-3 sm:p-5">
+            <div class="flex items-center justify-between gap-3">
+              <p class="kicker tour-label text-marine-45">{ui.zone}</p>
+              <span class="relative overflow-hidden rounded-md">
+                <span class="block bg-marine px-2.5 py-1.5 font-medium whitespace-nowrap text-weiss">{ui.apply}</span>
+                <span class="tour-swap absolute inset-0 flex items-center justify-center bg-orange font-medium whitespace-nowrap text-weiss" style="--d: 5.6s">
+                  ✓ {ui.applied}
+                </span>
+              </span>
+            </div>
+            <div class="tour-cam relative mt-3 flex-1 overflow-hidden rounded-lg sm:mt-4">
+              <svg viewBox="0 0 600 300" preserveAspectRatio="none" class="absolute inset-0 size-full">
+                <path d={oldPile} class="fill-hellblau/25" />
+                <path d={newPile} class="fill-hellblau/55" />
+                <path d={selection} class="tour-in fill-orange/15" style="--d: 4s" />
+                <path d={selection} pathLength="1" class="tour-draw fill-none stroke-orange" stroke-width="2.5" stroke-linejoin="round" style="--d: 0.8s; --t: 3s" />
+              </svg>
+              <span class="tour-in kicker tour-label absolute top-[4%] left-[48%] rounded bg-orange px-1.5 py-0.5 text-weiss" style="--d: 4.2s">
+                {ui.delivery}
+              </span>
+            </div>
+            <span class="tour-cursor tour-cursor--2" />
+          </div>
+
+          {/* 3 — The result: contaminant share against the limit, the analysed image, documentation. */}
+          <div data-scene="3" class="tour-scene absolute inset-0 flex flex-col p-3 sm:p-5">
+            <p class="kicker tour-label text-marine-45">BioScan › {ui.analysis}</p>
+            <div class="mt-3 grid flex-1 grid-cols-[38%_1fr] gap-3 sm:mt-4 sm:gap-4">
+              <div class="flex flex-col rounded-lg border border-marine-15 p-2.5 sm:p-4">
+                <p class="text-marine-70">{ui.share}</p>
+                <p class="mt-1 text-2xl leading-none font-black tracking-[-0.03em] sm:text-5xl">
+                  <span data-count="2.71" data-decimals="2" style="--d: 0.8s">{de ? '2,71' : '2.71'}</span>
+                  <span class="text-base text-marine-70 sm:text-2xl">%</span>
+                </p>
+                <div class="relative mt-3 h-1.5 rounded-full bg-nebel sm:mt-4">
+                  <div class="tour-grow h-full w-[54%] rounded-full bg-marine" style="--d: 0.8s" />
+                  <span class="absolute -top-1 left-[60%] h-3.5 w-0.5 bg-orange" />
+                </div>
+                <p class="kicker tour-label mt-1.5 self-end pr-[30%] text-orange">{ui.limit}</p>
+                <p class="tour-in mt-1 font-medium" style="--d: 2s">✓ {ui.below}</p>
+
+                <span class="relative mt-auto overflow-hidden rounded-md">
+                  <span class="block bg-marine px-2 py-1.5 text-center font-medium text-weiss">{ui.document}</span>
+                  <span class="tour-swap absolute inset-0 flex items-center justify-center bg-orange font-medium text-weiss" style="--d: 5s">
+                    ✓ {ui.documented}
+                  </span>
+                </span>
+                <p class="mt-2 flex gap-1.5">
+                  <span class="tour-in kicker tour-label rounded bg-nebel px-1.5 py-0.5" style="--d: 5.4s">ERP</span>
+                  <span class="tour-in kicker tour-label rounded bg-nebel px-1.5 py-0.5" style="--d: 5.6s">{ui.weighbridge}</span>
+                </p>
+              </div>
+
+              <div class="flex flex-col">
+                <div class="tour-cam relative flex-1 overflow-hidden rounded-lg">
+                  <svg viewBox="270 30 320 270" preserveAspectRatio="xMidYMid meet" class="absolute inset-0 size-full">
+                    <path d={newPile} class="fill-hellblau/45" />
+                    <path d={newPile} pathLength="1" class="tour-draw fill-none stroke-weiss" stroke-width="2.5" style="--d: 0.4s; --t: 1.4s" />
+                    {contaminants.map((c, i) => (
+                      <circle cx={c.x} cy={c.y} r={c.r * 1.6} class="tour-pop fill-orange stroke-weiss" stroke-width="1.5" style={`--d: ${1.4 + i * 0.15}s`} />
+                    ))}
+                  </svg>
+                </div>
+                <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-marine-70">
+                  <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-hellblau ring-1 ring-marine/30" />{ui.pile}</span>
+                  <span class="flex items-center gap-1.5"><span class="size-2 rounded-full bg-orange" />{ui.contaminant}</span>
+                </p>
+              </div>
+            </div>
+            <span class="tour-cursor tour-cursor--3" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Only the active scene shows; without JS the finished result does. */
+  .tour-scene {
+    display: none;
+  }
+  .tour:not([data-active]) [data-scene='3'],
+  .tour[data-active='1'] [data-scene='1'],
+  .tour[data-active='2'] [data-scene='2'],
+  .tour[data-active='3'] [data-scene='3'] {
+    display: flex;
+  }
+
+  /* Steps: the active one is open, the others show their title only. */
+  .tour[data-active] .tour-step {
+    opacity: 0.45;
+    transition: opacity 0.3s;
+  }
+  .tour[data-active] .tour-step:hover,
+  .tour[data-active] .tour-step[aria-current='step'] {
+    opacity: 1;
+  }
+  .tour[data-active] .tour-step:not([aria-current='step']) .tour-text {
+    display: none;
+  }
+  .tour-step::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background: var(--color-orange);
+  }
+  .tour[data-active] .tour-step[aria-current='step']::before {
+    width: 100%;
+  }
+  .tour[data-playing] .tour-step[aria-current='step']::before {
+    animation: tour-progress var(--step-ms, 8s) linear both;
+  }
+  @keyframes tour-progress {
+    from {
+      width: 0;
+    }
+  }
+  .tour[data-active='1'] [data-nav='1'],
+  .tour[data-active='2'] [data-nav='2'],
+  .tour[data-active='3'] [data-nav='3'],
+  .tour:not([data-active]) [data-nav='3'] {
+    background: var(--color-nebel);
+    color: var(--color-marine);
+    font-weight: 500;
+  }
+
+  .tour-label {
+    font-size: clamp(0.4375rem, 0.9vw, 0.625rem);
+    letter-spacing: 0.08em;
+  }
+
+  /* A camera image: Marine with a fine speckle, like compost seen from above. */
+  .tour-cam {
+    background-color: var(--color-marine);
+    background-image:
+      radial-gradient(circle, rgb(186 203 237 / 0.35) 1px, transparent 1.6px),
+      radial-gradient(circle, rgb(186 203 237 / 0.18) 1px, transparent 1.6px);
+    background-size:
+      9px 11px,
+      13px 7px;
+    background-position:
+      0 0,
+      4px 3px;
+  }
+
+  /* Building blocks; each waits for its --d. */
+  .tour-in {
+    animation: tour-in 0.6s var(--ease-out-quint) var(--d, 0s) both;
+  }
+  @keyframes tour-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  .tour-pop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: tour-pop 0.5s var(--ease-out-quint) var(--d, 0s) both;
+  }
+  @keyframes tour-pop {
+    from {
+      opacity: 0;
+      transform: scale(0);
+    }
+  }
+  .tour-draw {
+    stroke-dasharray: 1;
+    animation: tour-draw var(--t, 1.5s) ease-in-out var(--d, 0s) both;
+  }
+  @keyframes tour-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .tour-grow {
+    transform-origin: left;
+    animation: tour-grow 1.2s var(--ease-out-quint) var(--d, 0s) both;
+  }
+  @keyframes tour-grow {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  /* A button label that switches to its "done" state when the cursor clicks. */
+  .tour-swap {
+    animation: tour-swap 0.25s var(--d, 0s) both;
+  }
+  @keyframes tour-swap {
+    from {
+      opacity: 0;
+    }
+  }
+  .tour-ring {
+    box-shadow: inset 0 0 0 2px var(--color-orange);
+    animation: tour-in 0.4s var(--d, 0s) both;
+  }
+  .tour-live {
+    animation: tour-blink 1s steps(1) infinite;
+  }
+  @keyframes tour-blink {
+    50% {
+      opacity: 0.2;
+    }
+  }
+
+  /* The pointer: an arrow that travels to where the user would click, and clicks. */
+  .tour-cursor {
+    position: absolute;
+    width: 1.1rem;
+    height: 1.1rem;
+    pointer-events: none;
+    background: no-repeat center / contain
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 1l11 6.5-4.8 1.2L6 13.5z' fill='%230a265f' stroke='%23fff' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+    filter: drop-shadow(0 2px 3px rgb(10 38 95 / 0.3));
+  }
+  .tour-cursor--1 {
+    animation: cursor-1 6s var(--ease-out-quint) both;
+  }
+  @keyframes cursor-1 {
+    0%,
+    40% {
+      left: 70%;
+      top: 85%;
+      opacity: 0;
+    }
+    50% {
+      left: 70%;
+      top: 85%;
+      opacity: 1;
+    }
+    72% {
+      left: 88%;
+      top: 9%;
+      scale: 1;
+    }
+    76% {
+      scale: 0.8;
+    }
+    80%,
+    100% {
+      left: 88%;
+      top: 9%;
+      scale: 1;
+      opacity: 1;
+    }
+  }
+  .tour-cursor--2 {
+    animation: cursor-2 6.5s linear both;
+  }
+  /* Around the selection polygon (in % of the image, offset by the header), then to the button. */
+  @keyframes cursor-2 {
+    0%,
+    10% {
+      left: 48%;
+      top: 76%;
+      opacity: 0;
+    }
+    12% {
+      left: 48%;
+      top: 76%;
+      opacity: 1;
+    }
+    22% {
+      left: 50%;
+      top: 40%;
+    }
+    32% {
+      left: 70%;
+      top: 25%;
+    }
+    42% {
+      left: 90%;
+      top: 35%;
+    }
+    50% {
+      left: 95%;
+      top: 66%;
+    }
+    56% {
+      left: 86%;
+      top: 94%;
+    }
+    62% {
+      left: 57%;
+      top: 95%;
+    }
+    78% {
+      left: 86%;
+      top: 9%;
+      scale: 1;
+    }
+    83% {
+      scale: 0.8;
+    }
+    87%,
+    100% {
+      left: 86%;
+      top: 9%;
+      scale: 1;
+      opacity: 1;
+    }
+  }
+  .tour-cursor--3 {
+    animation: cursor-3 5.6s var(--ease-out-quint) both;
+  }
+  @keyframes cursor-3 {
+    0%,
+    55% {
+      left: 60%;
+      top: 60%;
+      opacity: 0;
+    }
+    62% {
+      left: 60%;
+      top: 60%;
+      opacity: 1;
+    }
+    84% {
+      left: 22%;
+      top: 80%;
+      scale: 1;
+    }
+    88% {
+      scale: 0.8;
+    }
+    92%,
+    100% {
+      left: 22%;
+      top: 80%;
+      scale: 1;
+      opacity: 1;
+    }
+  }
+  .tour:not([data-active]) .tour-cursor {
+    display: none;
+  }
+</style>
+
+<script>
+  /**
+   * Plays the tour while it is on screen: each step for its own time, then the
+   * next. A click on a step jumps there and carries on from it. With reduced
+   * motion it only switches on click. Initialised directly and on
+   * `astro:page-load` (DECISIONS.md §12).
+   */
+  import { countUp } from '../lib/count-up';
+
+  const STEP_MS = [7500, 8000, 9000];
+
+  function initTours() {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    for (const tour of document.querySelectorAll<HTMLElement>('[data-tour]')) {
+      if (tour.dataset.tourBound) continue;
+      tour.dataset.tourBound = 'true';
+
+      const buttons = [...tour.querySelectorAll<HTMLButtonElement>('[data-tour-step]')];
+      let active = 1;
+      let timer: number | undefined;
+      let visible = false;
+
+      const show = (step: number) => {
+        active = step;
+        tour.dataset.active = String(step);
+        const ms = STEP_MS[step - 1];
+        tour.style.setProperty('--step-ms', `${ms}ms`);
+        buttons.forEach((button, i) => {
+          if (i + 1 === step) button.setAttribute('aria-current', 'step');
+          else button.removeAttribute('aria-current');
+        });
+        for (const el of tour.querySelectorAll<HTMLElement>(`[data-scene="${step}"] [data-count]`)) countUp(el);
+
+        window.clearTimeout(timer);
+        timer = undefined;
+        if (!reduced && visible) {
+          timer = window.setTimeout(() => show((step % buttons.length) + 1), ms);
+        }
+      };
+
+      buttons.forEach((button, i) => button.addEventListener('click', () => show(i + 1)));
+
+      if (reduced) {
+        show(1);
+        continue;
+      }
+      tour.dataset.playing = 'true';
+      new IntersectionObserver(
+        ([entry]) => {
+          visible = entry.isIntersecting;
+          if (visible && timer === undefined) show(active);
+          else if (!visible) {
+            window.clearTimeout(timer);
+            timer = undefined;
+          }
+        },
+        { threshold: 0.35 },
+      ).observe(tour);
+    }
+  }
+
+  initTours();
+  document.addEventListener('astro:page-load', initTours);
+</script>

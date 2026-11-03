@@ -20,9 +20,11 @@ interface Props {
   locale: Locale;
   /** The content file the hero came from, for error messages. */
   source: string;
+  /** A size smaller headline, for a sentence rather than one or two words (Projekte). */
+  compact?: boolean;
 }
 
-const { hero, locale, source } = Astro.props;
+const { hero, locale, source, compact = false } = Astro.props;
 ---
 
 <section class="px-4 pb-4">
@@ -49,7 +51,12 @@ const { hero, locale, source } = Astro.props;
         }
 
         <h1
-          class="rise mt-[clamp(2.5rem,7svh,4.5rem)] text-[clamp(3rem,min(9vw,14svh),8rem)] leading-[0.9] font-black tracking-[-0.04em] text-weiss"
+          class:list={[
+            'rise mt-[clamp(2.5rem,7svh,4.5rem)] leading-[0.9] font-black tracking-[-0.04em] text-weiss',
+            compact
+              ? 'max-w-[18ch] text-[clamp(2.75rem,min(6.5vw,11svh),6rem)] text-balance'
+              : 'text-[clamp(3rem,min(9vw,14svh),8rem)]',
+          ]}
           style="animation-delay: 80ms"
         >
           {hero.headline}

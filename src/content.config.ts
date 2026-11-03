@@ -223,6 +223,14 @@ const pages = defineCollection({
   }),
 });
 
+/** A block of a project page: heading, intro and labelled points. */
+const projectBlock = z.object({
+  heading: z.string(),
+  text: z.string().optional(),
+  /** A point without `text` is a plain statement rather than a labelled one. */
+  points: z.array(z.object({ title: z.string(), text: z.string().optional() })).default([]),
+});
+
 /**
  * Projekte — deliberately in the repo, not the CMS (DECISIONS.md §3).
  * Each project is visually bespoke and composes custom MDX components.
@@ -239,14 +247,79 @@ const projekte = defineCollection({
      * to override the entry id — which would erase the locale from the id.
      */
     urlSlug: z.string().optional(),
-    client: z.string(),
-    year: z.number().int(),
+    /** Customer project or research project — each gets its own block on the index. */
+    kind: z.enum(['kunde', 'forschung']).default('kunde'),
+    /** Small mono label on cards and in the hero, e.g. "Computer Vision". */
+    technology: z.string().optional(),
+    /** Industry or setting, shown in the facts box; for when the client stays anonymous. */
+    industry: z.string().optional(),
+    client: z.string().optional(),
+    year: z.number().int().optional(),
     services: z.array(z.string()).default([]),
-    heroImage: z.string(),
-    heroImageAlt: z.string(),
+    /** Photo for the cards on the index and under "Weitere Projekte"; a placeholder without one. */
+    heroImage: z.string().optional(),
+    heroImageAlt: z.string().optional(),
+    /**
+     * The image beside the overview on the project page, anchored top-left and
+     * cropped at the right and bottom (made for screenshots). Without one the
+     * page shows a placeholder; heroImage is for cards.
+     */
+    pageImage: z.string().optional(),
+    pageImageAlt: z.string().optional(),
+    /** `false` lists the project on the index without a page of its own. */
+    detail: z.boolean().default(true),
+    /**
+     * The explainer animation. `bioblick` is the step-by-step product tour
+     * (BioBlickSteps.astro, copy from `steps`); the others are ProjektAnimation.astro.
+     */
+    animation: z.enum(['bioblick', 'druck', 'lager', 'precursor']).optional(),
+    /** Copy for a step-by-step explainer: heading, intro and one entry per step. */
+    steps: z
+      .object({
+        heading: z.string(),
+        text: z.string().optional(),
+        items: z.array(z.object({ title: z.string(), text: z.string() })),
+      })
+      .optional(),
+    /** Customer or partner the project was built with, shown in the hero. */
+    partner: z
+      .object({ label: z.string(), name: z.string(), logo: z.string(), href: z.string().optional() })
+      .optional(),
+    /** Square-ish project logo, shown in the hero instead of the facts (research projects). */
+    logo: z.string().optional(),
+    logoAlt: z.string().optional(),
+    /** One headline figure from the results, e.g. "~30 %" — shown large in the results panel. */
+    keyFigure: z.object({ value: z.string(), label: z.string() }).optional(),
+    /**
+     * The fixed parts of a project page (ProjektDetail.astro): overview and
+     * approach side by side, results on Marine, related use cases on Nebel.
+     * The MDX body, if any, runs as free prose above them.
+     */
+    overview: projectBlock.optional(),
+    approach: projectBlock.optional(),
+    results: projectBlock.optional(),
+    useCases: projectBlock.optional(),
+    /** Funding notice with the funders' logos — required wording for EFRE projects. */
+    funding: z
+      .object({
+        heading: z.string(),
+        text: z.string(),
+        logos: z.string(),
+        logosAlt: z.string(),
+        poster: z.object({ label: z.string(), href: z.string() }).optional(),
+      })
+      .optional(),
     gallery: z
       .array(z.object({ src: z.string(), alt: z.string() }))
       .default([]),
+    /** Overrides the heading and text of the closing CTA panel. */
+    cta: z
+      .object({ heading: z.string(), text: z.string().optional(), primaryLabel: z.string().optional() })
+      .optional(),
+    /** Questions a prospective customer might ask; rendered as an accordion with FAQPage data. */
+    faq: z.array(z.object({ question: z.string(), answer: z.string() })).default([]),
+    /** Intro under the FAQ heading. */
+    faqText: z.string().optional(),
     featured: z.boolean().default(false),
     /** Lower sorts first on the index page. */
     order: z.number().default(999),

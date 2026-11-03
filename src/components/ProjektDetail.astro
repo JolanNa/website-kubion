@@ -2,15 +2,28 @@
 import { render, type CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import type { Locale } from '../config';
-import { projektAlternates } from '../lib/content';
-import { requireImage } from '../lib/images';
+import { localizedPath } from '../i18n/routes';
+import { getProjekte, projektAlternates, projektPath } from '../lib/content';
+import { requireImage, resolveImage } from '../lib/images';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import CtaPanel from './CtaPanel.astro';
+import Placeholder from './Placeholder.astro';
+import BioBlickSteps from './BioBlickSteps.astro';
+import ProjektAnimation from './ProjektAnimation.astro';
+import ScrollMotion from './ScrollMotion.astro';
 
 /**
- * Projects are bespoke by design (DECISIONS.md §3): this component provides the
- * shell (hero, meta, gallery) and the MDX body is free to compose whatever custom
- * components a given project needs.
+ * A project page, following the structure of the old kubion.io project pages:
+ * a Marine hero (kind, technology, title, lead, key facts, partner), the
+ * ProjektAnimation, overview and approach as one card with the page image (or a
+ * placeholder) beside it, BioBlick's step-by-step tour, the results on a Marine panel,
+ * similar use cases, the funding notice where there is one, the FAQ, further
+ * projects and the CTA panel.
+ *
+ * The blocks come from the entry's frontmatter; the MDX body, if any, runs as
+ * free prose after the photo. Projects are bespoke by design (DECISIONS.md §3),
+ * so the body may compose whatever custom components a project needs.
  */
 interface Props {
   entry: CollectionEntry<'projekte'>;
@@ -19,72 +32,411 @@ interface Props {
 
 const { entry, locale } = Astro.props;
 const t = useTranslations(locale);
+const { data } = entry;
 
 const { Content } = await render(entry);
+const hasBody = Boolean(entry.body?.trim());
 const alternates = await projektAlternates(entry);
+const pageImage = resolveImage(data.pageImage);
+const logo = resolveImage(data.logo);
+const partnerLogo = resolveImage(data.partner?.logo);
+
+const kind = data.kind === 'forschung' ? t('projekte.research') : t('projekte.customer');
+
+const facts = [
+  { label: t('projekte.industry'), value: data.industry },
+  { label: t('projekte.client'), value: data.client },
+  { label: t('projekte.year'), value: data.year?.toString() },
+  { label: t('projekte.services'), value: data.services.join(' · ') || undefined },
+].filter((fact) => fact.value);
+
+const intro = [data.overview, data.approach].filter((block) => block !== undefined);
+
+const related = (await getProjekte(locale))
+  .filter((project) => project.id !== entry.id && project.data.detail)
+  .slice(0, 3);
+
+const cta = {
+  kicker: t('projekte.cta.kicker'),
+  heading: data.cta?.heading ?? t('projekte.cta.heading'),
+  text: data.cta?.text ?? t('projekte.cta.text'),
+  primaryCta: { label: data.cta?.primaryLabel ?? t('projekte.cta.primary'), page: 'kontakt' },
+  secondaryCta: { label: t('projekte.cta.secondary'), page: 'projekte' },
+};
+
+// FAQPage structured data, so the questions can show up in search results.
+const structuredData =
+  data.faq.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: data.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      }
+    : undefined;
+
+const wrap = 'mx-auto max-w-[84rem]';
+const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 ---
 
 <BaseLayout
   locale={locale}
-  title={entry.data.title}
-  description={entry.data.description}
+  title={data.title}
+  description={data.description}
   alternates={alternates}
-  ogImage={entry.data.ogImage}
-  noindex={entry.data.noindex}
+  ogImage={data.ogImage}
+  noindex={data.noindex}
+  structuredData={structuredData}
 >
-  <article>
-    <header class="mx-auto max-w-6xl px-4 py-20">
-      <h1 class="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-        {entry.data.title}
-      </h1>
-      <p class="mt-6 max-w-2xl text-lg text-neutral-600 text-pretty">
-        {entry.data.description}
-      </p>
+  <ScrollMotion />
 
-      <dl class="mt-10 grid gap-6 text-sm sm:grid-cols-3">
-        <div>
-          <dt class="text-neutral-500">{t('projekte.client')}</dt>
-          <dd class="mt-1 font-medium">{entry.data.client}</dd>
+  <article>
+    <section class="px-4">
+      <div class="overflow-hidden rounded-3xl bg-marine px-6 pt-10 pb-10 sm:px-12 sm:pt-12 lg:px-16 lg:pb-14">
+        <div class:list={[wrap, 'grid gap-12', logo && 'lg:grid-cols-12 lg:items-center lg:gap-16']}>
+          <div class:list={[logo && 'lg:col-span-8']}>
+            <a
+              href={localizedPath('projekte', locale)}
+              class="rise group inline-flex items-center gap-3 text-sm font-medium text-hellblau transition-colors hover:text-weiss"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                class="size-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-1"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                aria-hidden="true"
+              >
+                <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {t('projekte.back')}
+            </a>
+
+            <p class="rise mt-14 flex flex-wrap items-center gap-x-4 gap-y-3 lg:mt-20" style="animation-delay: 60ms">
+              <span class="flex items-center gap-4">
+                {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+                <span class="markenkern size-7 shrink-0" aria-hidden="true" />
+                <span class="kicker text-weiss">{kind}</span>
+              </span>
+              {data.technology && (
+                <span class="kicker rounded-full border border-hellblau/40 px-3 py-1 text-hellblau">
+                  {data.technology}
+                </span>
+              )}
+            </p>
+
+            <h1
+              class="rise mt-8 max-w-[20ch] text-[clamp(2.5rem,6vw,5.5rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance max-sm:hyphens-auto text-weiss"
+              style="animation-delay: 120ms"
+            >
+              {data.title}
+            </h1>
+            <p
+              class="rise mt-8 max-w-[62ch] text-lg leading-relaxed text-pretty text-hellblau sm:text-xl"
+              style="animation-delay: 180ms"
+            >
+              {data.description}
+            </p>
+          </div>
+
+          {
+            logo && (
+              <div class="rise lg:col-span-4" style="animation-delay: 240ms">
+                <Image
+                  src={logo}
+                  alt={data.logoAlt ?? ''}
+                  widths={[320, 640]}
+                  sizes="(min-width: 1024px) 22rem, 16rem"
+                  class="mx-auto w-64 rounded-3xl lg:w-full lg:max-w-[22rem]"
+                  loading="eager"
+                />
+              </div>
+            )
+          }
         </div>
-        <div>
-          <dt class="text-neutral-500">{t('projekte.year')}</dt>
-          <dd class="mt-1 font-medium">{entry.data.year}</dd>
-        </div>
+
         {
-          entry.data.services.length > 0 && (
-            <div>
-              <dt class="text-neutral-500">{t('projekte.services')}</dt>
-              <dd class="mt-1 font-medium">{entry.data.services.join(', ')}</dd>
-            </div>
+          (facts.length > 0 || data.partner) && (
+            <dl
+              class:list={[
+                wrap,
+                'rise mt-14 grid gap-6 border-t border-hellblau/25 pt-8 text-sm sm:grid-cols-2 lg:mt-20',
+                facts.length + (data.partner ? 1 : 0) > 2 ? 'lg:grid-cols-3' : '',
+              ]}
+              style="animation-delay: 240ms"
+            >
+              {facts.map((fact) => (
+                <div>
+                  <dt class="kicker text-hellblau">{fact.label}</dt>
+                  <dd class="mt-2 font-medium text-weiss">{fact.value}</dd>
+                </div>
+              ))}
+              {data.partner && (
+                <div>
+                  <dt class="kicker text-hellblau">{data.partner.label}</dt>
+                  <dd class="mt-2 flex items-center gap-4 font-medium text-weiss">
+                    {partnerLogo && (
+                      <span class="rounded-lg bg-weiss px-3 py-1.5">
+                        <Image src={partnerLogo} alt="" widths={[160, 320]} sizes="5rem" class="h-9 w-auto" loading="eager" />
+                      </span>
+                    )}
+                    {data.partner.name}
+                  </dd>
+                </div>
+              )}
+            </dl>
           )
         }
-      </dl>
-
-      <Image
-        src={requireImage(entry.data.heroImage, `projekte/${entry.id}`)}
-        alt={entry.data.heroImageAlt}
-        widths={[640, 1280, 1920]}
-        sizes="(min-width: 1152px) 1152px, 100vw"
-        class="mt-12 w-full rounded-2xl"
-        loading="eager"
-      />
-    </header>
-
-    <div class="prose mx-auto max-w-3xl px-4">
-      <Content />
-    </div>
+      </div>
+    </section>
 
     {
-      entry.data.gallery.length > 0 && (
-        <ul class="mx-auto mt-16 grid max-w-6xl gap-6 px-4 sm:grid-cols-2">
-          {entry.data.gallery.map((item) => (
+      data.animation && data.animation !== 'bioblick' && (
+        <section class="px-4 pt-16 sm:px-16 lg:px-20 lg:pt-20">
+          <div class={wrap}>
+            <ProjektAnimation variant={data.animation} locale={locale} />
+          </div>
+        </section>
+      )
+    }
+
+    {
+      hasBody && (
+        <section class="blog-post px-4 pt-20 sm:px-16 lg:px-20 lg:pt-28">
+          <div class="prose mx-auto max-w-[46rem] text-lg">
+            <Content />
+          </div>
+        </section>
+      )
+    }
+
+    {
+      intro.length > 0 && (
+        <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-28">
+          <div class:list={[wrap, 'grid gap-4 lg:grid-cols-12 lg:gap-6']}>
+            {/* Overview and approach as one card, numbered 01 and 02. */}
+            <div data-scroll-reveal class="rounded-3xl bg-nebel p-8 sm:p-12 lg:col-span-7">
+              {intro.map((block, index) => (
+                <div class:list={[index > 0 && 'mt-12 border-t border-marine-15 pt-12']}>
+                  <p class="font-mono text-sm text-marine-45">{String(index + 1).padStart(2, '0')}</p>
+                  <h2 class="mt-4 text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">{block.heading}</h2>
+                  {block.text && <p class="mt-6 text-lg leading-relaxed text-pretty text-marine-70">{block.text}</p>}
+                  {block.points.length > 0 && (
+                    <ul class="mt-8 space-y-5">
+                      {block.points.map((point) => (
+                        <li class="flex gap-4">
+                          <span class="markenkern mt-2 size-2.5 shrink-0" aria-hidden="true" />
+                          {point.text ? (
+                            <p class="leading-relaxed text-pretty">
+                              <strong class="font-semibold">{point.title}:</strong>{' '}
+                              <span class="text-marine-70">{point.text}</span>
+                            </p>
+                          ) : (
+                            <p class="text-lg leading-relaxed font-medium text-pretty">{point.title}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* The image beside it, or a placeholder until there is one. From lg up it is
+                exactly as tall as the card, cropped from the top left. */}
+            <figure data-scroll-reveal class="flex flex-col lg:col-span-5">
+              {pageImage ? (
+                <Image
+                  src={pageImage}
+                  alt={data.pageImageAlt ?? ''}
+                  widths={[640, 1024, 1600]}
+                  sizes="(min-width: 1024px) 34rem, 100vw"
+                  class="aspect-[16/10] w-full rounded-3xl border border-marine-15 object-cover object-left-top lg:aspect-auto lg:h-0 lg:flex-1"
+                  loading="lazy"
+                />
+              ) : (
+                <Placeholder label={t('placeholder.image')} class="aspect-[4/3] flex-1 rounded-3xl lg:aspect-auto" />
+              )}
+            </figure>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.animation === 'bioblick' && data.steps && (
+        <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-28">
+          <div class={wrap}>
+            <div data-scroll-reveal>
+              <p class="kicker text-marine-70">{t('projekte.howItWorks')}</p>
+              <h2 class="mt-6 max-w-[20ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl">
+                {data.steps.heading}
+              </h2>
+              {data.steps.text && (
+                <p class="mt-6 max-w-[60ch] text-lg leading-relaxed text-pretty text-marine-70">{data.steps.text}</p>
+              )}
+            </div>
+            <BioBlickSteps steps={data.steps} locale={locale} />
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.results && (
+        <section class="px-4 pb-4">
+          <div data-scroll-reveal class="rounded-3xl bg-marine px-6 py-16 text-weiss sm:px-12 lg:px-16 lg:py-24">
+            <div class:list={[wrap, 'grid gap-12 lg:grid-cols-12 lg:gap-16']}>
+              <div class="lg:col-span-5">
+                <p class="kicker text-hellblau">{kind}</p>
+                <h2 class="mt-6 text-4xl leading-[0.95] font-black tracking-[-0.03em] sm:text-6xl">
+                  {data.results.heading}
+                </h2>
+                {data.results.text && (
+                  <p class="mt-6 text-lg leading-relaxed text-pretty text-hellblau">{data.results.text}</p>
+                )}
+                {data.keyFigure && (
+                  <p class="mt-12 border-t border-hellblau/25 pt-8">
+                    <span class="block text-orange text-[clamp(3.5rem,8vw,6rem)] leading-none font-black tracking-[-0.04em]">
+                      {data.keyFigure.value}
+                    </span>
+                    <span class="mt-3 block text-lg font-medium">{data.keyFigure.label}</span>
+                  </p>
+                )}
+              </div>
+
+              <ol class="divide-y divide-hellblau/20 border-y border-hellblau/20 lg:col-span-7">
+                {data.results.points.map((point, index) => (
+                  <li class="flex gap-6 py-6">
+                    <span class="font-mono text-sm text-hellblau">{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <h3 class="text-xl font-semibold tracking-[-0.01em]">{point.title}</h3>
+                      {point.text && <p class="mt-2 leading-relaxed text-pretty text-hellblau">{point.text}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.useCases && (
+        <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-28">
+          <div class={wrap}>
+            <div data-scroll-reveal>
+              <h2 class="max-w-[20ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl">
+                {data.useCases.heading}
+              </h2>
+              {data.useCases.text && (
+                <p class="mt-6 max-w-[64ch] text-lg leading-relaxed text-pretty text-marine-70">{data.useCases.text}</p>
+              )}
+            </div>
+            <ul
+              class:list={[
+                'mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:gap-6',
+                data.useCases.points.length > 3 && 'lg:grid-cols-4',
+              ]}
+            >
+              {data.useCases.points.map((point) => (
+                <li data-scroll-reveal class="flex flex-col rounded-2xl bg-nebel p-8">
+                  <span class="markenkern size-6 shrink-0" aria-hidden="true" />
+                  <h3 class="mt-8 text-xl font-semibold tracking-[-0.01em] text-balance hyphens-auto">{point.title}</h3>
+                  {point.text && <p class="mt-3 leading-relaxed text-pretty text-marine-70">{point.text}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.funding && (
+        <section class:list={['px-4 pb-20 sm:px-16 lg:px-20 lg:pb-28', data.results && !data.useCases && 'pt-20 lg:pt-28']}>
+          <div
+            data-scroll-reveal
+            class:list={[wrap, 'grid gap-10 rounded-3xl border border-marine-15 p-8 sm:p-12 lg:grid-cols-12 lg:items-center lg:gap-16']}
+          >
+            <div class="lg:col-span-7">
+              <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">{data.funding.heading}</h2>
+              <p class="mt-6 leading-relaxed text-pretty text-marine-70">{data.funding.text}</p>
+              {data.funding.poster && (
+                <a
+                  href={data.funding.poster.href}
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-8 inline-flex font-medium underline decoration-orange decoration-2 underline-offset-[6px]"
+                >
+                  {data.funding.poster.label}
+                </a>
+              )}
+            </div>
+            <Image
+              src={requireImage(data.funding.logos, `projekte/${entry.id} funding`)}
+              alt={data.funding.logosAlt}
+              widths={[480, 960]}
+              sizes="(min-width: 1024px) 28rem, 100vw"
+              class="w-full max-w-md lg:col-span-5 lg:justify-self-end"
+              loading="lazy"
+            />
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.faq.length > 0 && (
+        <section
+          class:list={[
+            'px-4 pb-20 sm:px-16 lg:px-20 lg:pb-28',
+            // Straight after the Marine results panel, which has no bottom margin.
+            !data.useCases && !data.funding && 'pt-20 lg:pt-28',
+          ]}
+        >
+          <div class:list={[wrap, 'grid gap-10 lg:grid-cols-12 lg:gap-16']}>
+            <div data-scroll-reveal class="lg:col-span-4">
+              <p class="kicker text-marine-70">{t('projekte.faq')}</p>
+              <h2 class="mt-6 text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl">
+                {t('projekte.faqHeading')}
+              </h2>
+              {data.faqText && <p class="mt-6 max-w-[40ch] leading-relaxed text-pretty text-marine-70">{data.faqText}</p>}
+            </div>
+            <div data-scroll-reveal class="divide-y divide-marine-15 border-y border-marine-15 lg:col-span-8">
+              {data.faq.map((item) => (
+                <details class="group">
+                  <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-lg font-semibold tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
+                    {item.question}
+                    <span class="relative size-9 shrink-0 rounded-lg bg-nebel transition-colors duration-300 group-open:bg-orange" aria-hidden="true">
+                      <span class="absolute top-1/2 left-1/2 h-0.5 w-3.5 -translate-1/2 bg-marine group-open:bg-weiss" />
+                      <span class="absolute top-1/2 left-1/2 h-3.5 w-0.5 -translate-1/2 bg-marine transition-transform duration-300 group-open:scale-y-0" />
+                    </span>
+                  </summary>
+                  <p class="max-w-[60ch] pb-6 leading-relaxed text-pretty text-marine-70">{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      data.gallery.length > 0 && (
+        <ul class:list={[wrap, 'mb-20 grid gap-6 px-4 sm:grid-cols-2 sm:px-16 lg:mb-28 lg:px-20']}>
+          {data.gallery.map((item) => (
             <li>
               <Image
                 src={requireImage(item.src, `projekte/${entry.id} gallery`)}
                 alt={item.alt}
                 widths={[600, 1200]}
                 sizes="(min-width: 640px) 50vw, 100vw"
-                class="w-full rounded-xl"
+                class="w-full rounded-2xl"
                 loading="lazy"
               />
             </li>
@@ -93,4 +445,76 @@ const alternates = await projektAlternates(entry);
       )
     }
   </article>
+
+  {
+    related.length > 0 && (
+      <section class="px-4 pb-4">
+        <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-20">
+          <div class={wrap}>
+            <div class="flex flex-wrap items-end justify-between gap-6">
+              <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">{t('projekte.related')}</h2>
+              <a
+                href={localizedPath('projekte', locale)}
+                class="font-medium underline decoration-orange decoration-2 underline-offset-[6px]"
+              >
+                {t('projekte.back')}
+              </a>
+            </div>
+            <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+              {related.map((project) => {
+                const image = resolveImage(project.data.heroImage);
+                return (
+                  <li>
+                    <a href={projektPath(project, locale)} class="group flex h-full flex-col overflow-hidden rounded-2xl bg-weiss">
+                      {image && (
+                        <div class="overflow-hidden">
+                          <Image
+                            src={image}
+                            alt=""
+                            widths={[400, 800]}
+                            sizes="(min-width: 1024px) 27rem, (min-width: 640px) 50vw, 100vw"
+                            class="aspect-[16/9] w-full object-cover transition-transform duration-700 ease-[var(--ease-out-quint)] group-hover:scale-[1.03]"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div class="flex flex-1 flex-col p-8">
+                        <span class="kicker text-marine-70">
+                          {[
+                            project.data.kind === 'forschung' ? t('projekte.research') : t('projekte.customer'),
+                            project.data.technology,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                        <span class="mt-5 text-xl font-semibold tracking-[-0.02em] text-balance decoration-orange decoration-2 underline-offset-[6px] group-hover:underline">
+                          {project.data.title}
+                        </span>
+                      </div>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <CtaPanel section={cta} locale={locale} source="src/components/ProjektDetail.astro" />
 </BaseLayout>
+
+<style>
+  /* A short staggered rise on load, as on AboutHero; reduced motion is neutralised globally. */
+  .rise {
+    animation: rise 0.9s var(--ease-out-quint) both;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+</style>

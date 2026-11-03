@@ -5,7 +5,7 @@ import { getProjekte, projektSlug } from '../../../lib/content';
 
 export const getStaticPaths = (async () => {
   const projects = await getProjekte('en');
-  return projects.map((entry) => ({
+  return projects.filter((entry) => entry.data.detail).map((entry) => ({
     params: { slug: projektSlug(entry) },
     props: { entry },
   }));

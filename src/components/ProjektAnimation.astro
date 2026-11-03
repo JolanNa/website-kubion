@@ -1,0 +1,541 @@
+---
+import type { Locale } from '../config';
+import { useTranslations } from '../i18n/ui';
+
+/**
+ * The explainer on a project page: drawn straight onto the white page in the
+ * language of the homepage viewfinder (corner brackets, scan line, mono HUD
+ * labels, detection boxes), showing in three steps how the project works.
+ * BioBlick has its own step-by-step tour instead (BioBlickSteps.astro).
+ *
+ * A small script steps `data-phase` on the figure through 1 → 2 → 3 and loops,
+ * paused while it is off screen. Elements carry `data-show="n"` and appear from
+ * phase n on; `.draw` paths draw themselves in instead of fading. Without the
+ * script — reduced motion, no JS — there is no `data-phase`, so the finished
+ * state shows as a still image. Decorative: the steps below the stage carry the
+ * explanation as text.
+ *
+ * The stage is 2:1 and the SVG's viewBox is 1000 × 500, so HTML overlays can be
+ * placed with percentages: left = x / 10 %, top = y / 5 %.
+ */
+type Variant = 'druck' | 'lager' | 'precursor';
+
+interface Props {
+  variant: Variant;
+  locale: Locale;
+}
+
+const { variant, locale } = Astro.props;
+const t = useTranslations(locale);
+const de = locale === 'de';
+
+const copy = {
+  druck: {
+    cam: de ? 'Weiterverarbeitung' : 'Finishing line',
+    steps: de
+      ? ['Kamera fotografiert das Cover', 'KI vergleicht mit den Druck-PDFs', 'Richtiger Auftrag erkannt']
+      : ['Camera photographs the cover', 'AI compares with the print PDFs', 'Matching order identified'],
+  },
+  lager: {
+    cam: de ? 'Lagerplan · Halle 1' : 'Floor plan · hall 1',
+    steps: de
+      ? ['Pick-Liste mit Artikeln', 'Bisherige Route', 'Optimierte Route: ~30 % kürzer']
+      : ['Pick list with items', 'Previous route', 'Optimised route: ~30% shorter'],
+  },
+  precursor: {
+    cam: de ? 'Drehrohrofen · Linie 1' : 'Rotary kiln · line 1',
+    steps: de
+      ? ['Sensordaten laufend erfassen', 'Abweichung früh erkennen', 'Parameter empfehlen, Prozess stabil']
+      : ['Collect sensor data continuously', 'Spot deviations early', 'Recommend parameters, keep it stable'],
+  },
+}[variant];
+
+// Druck: the order database. The matching tile (circle motif, like the cover) is index 5.
+const tiles = Array.from({ length: 6 }, (_, i) => ({
+  x: 640 + (i % 3) * 115,
+  y: 120 + Math.floor(i / 3) * 165,
+  motif: i,
+}));
+const match = 5;
+
+// Lager: racks, items to pick, and the two routes.
+const racks = [100, 200, 300, 400, 500, 600];
+const picks = [
+  { x: 150, y: 330 },
+  { x: 180, y: 140 },
+  { x: 350, y: 200 },
+  { x: 380, y: 120 },
+  { x: 550, y: 300 },
+  { x: 580, y: 160 },
+];
+const oldRoute =
+  'M60 450 H565 V300 V50 H165 V140 V440 H365 V120 V50 H565 V160 V440 H365 V200 V440 H165 V330 V440 H60';
+const newRoute = 'M60 450 H165 V330 V140 V50 H365 V120 V200 V440 H565 V300 V160 V50 H65 V450';
+
+// PreCursor: the process value, drifting out of the band and brought back.
+const history =
+  'M450 250 C480 236 500 262 530 248 C560 234 580 258 610 244 C640 230 660 214 690 200 C710 190 730 170 750 150';
+const guided = 'M750 150 C780 140 800 170 830 200 C860 230 880 246 910 240 C935 236 955 244 975 240';
+---
+
+<figure data-anim class="anim">
+  <div class="flex items-center justify-between gap-4">
+    <p class="kicker flex items-center gap-2 text-marine-70">
+      <span class="anim-rec size-1.5 rounded-full bg-orange" aria-hidden="true"></span>
+      <span>Rec</span>
+      <span class="hidden text-marine-45 sm:inline">{copy.cam}</span>
+    </p>
+    <p class="kicker text-marine-70">{t('projekte.howItWorks')}</p>
+  </div>
+
+  <div class="relative mt-4 aspect-[2/1] w-full lg:mt-6" aria-hidden="true">
+    {
+      variant === 'druck' && (
+        <>
+          <svg viewBox="0 0 1000 500" preserveAspectRatio="none" class="absolute inset-0 size-full">
+            {/* Camera above the belt and its field of view. */}
+            <rect x="275" y="30" width="50" height="34" rx="6" class="fill-marine" />
+            <path d="M285 64 L210 380 H390 L315 64 Z" class="fill-hellblau/30" />
+
+            {/* The belt: a running dash line over rollers. */}
+            <line x1="20" y1="400" x2="560" y2="400" class="anim-belt stroke-marine/40" stroke-width="3" stroke-dasharray="14 10" />
+            {Array.from({ length: 14 }, (_, i) => (
+              <circle cx={40 + i * 40} cy="418" r="10" class="fill-none stroke-marine/20" stroke-width="2" />
+            ))}
+
+            {/* The finished catalogue slides under the camera. */}
+            <g data-show="1" class="anim-slide">
+              <rect x="245" y="230" width="110" height="160" rx="4" class="fill-marine" />
+              <rect x="257" y="244" width="86" height="12" class="fill-hellblau" />
+              <rect x="257" y="262" width="56" height="8" class="fill-hellblau/50" />
+              <circle cx="300" cy="320" r="30" class="fill-orange" />
+              <rect x="257" y="364" width="70" height="8" class="fill-hellblau/50" />
+            </g>
+            <g class="fill-none stroke-marine" stroke-width="2">
+              <path d="M225 230 V210 H245 M355 210 H375 V230 M375 390 V410 H355 M245 410 H225 V390" />
+            </g>
+
+            {/* The order database. */}
+            {tiles.map((tile, i) => (
+              <g>
+                <rect x={tile.x} y={tile.y} width="95" height="135" rx="4" class="fill-nebel stroke-marine-15" stroke-width="1.5" />
+                <rect x={tile.x + 10} y={tile.y + 12} width="75" height="9" class="fill-marine/25" />
+                {tile.motif % 3 === 0 && <rect x={tile.x + 25} y={tile.y + 45} width="45" height="45" class="fill-marine/15" />}
+                {tile.motif % 3 === 1 && <path d={`M${tile.x + 20} ${tile.y + 95} L${tile.x + 47} ${tile.y + 45} L${tile.x + 75} ${tile.y + 95} Z`} class="fill-marine/15" />}
+                {tile.motif % 3 === 2 && <circle cx={tile.x + 47} cy={tile.y + 70} r="26" class={i === match ? 'fill-orange/70' : 'fill-marine/15'} />}
+                <rect
+                  x={tile.x - 4}
+                  y={tile.y - 4}
+                  width="103"
+                  height="143"
+                  rx="6"
+                  style={`--d: ${i * 0.3}s`}
+                  class="anim-flash fill-none stroke-marine/60"
+                  stroke-width="2"
+                />
+              </g>
+            ))}
+            <rect
+              x={tiles[match].x - 6}
+              y={tiles[match].y - 6}
+              width="107"
+              height="147"
+              rx="7"
+              data-show="3"
+              class="fill-orange/10 stroke-orange"
+              stroke-width="3"
+            />
+            <path
+              d={`M375 300 C470 300 520 ${tiles[match].y + 68} ${tiles[match].x - 6} ${tiles[match].y + 68}`}
+              pathLength="1"
+              data-show="3"
+              class="draw fill-none stroke-orange"
+              stroke-width="2"
+              stroke-dasharray="1"
+            />
+          </svg>
+
+          <div class="absolute top-[42%] left-[22.5%] h-[40%] w-[15%] overflow-hidden">
+            <div class="anim-scan absolute inset-x-0 top-0 h-1/3" />
+          </div>
+
+          <p class="kicker anim-label absolute top-[14%] left-[64%] text-marine-70">
+            {de ? 'Auftragsdatenbank · PDF' : 'Order database · PDF'}
+          </p>
+          <p
+            data-show="3"
+            style={`left: ${tiles[match].x / 10}%; top: ${(tiles[match].y + 145) / 5}%`}
+            class="kicker anim-label absolute mt-1 whitespace-nowrap text-marine"
+          >
+            {de ? 'Auftrag' : 'Order'} 4711 · <span data-count="98" data-show="3">98</span> %
+          </p>
+          <p
+            data-show="3"
+            class="kicker anim-label absolute top-[86%] left-[24%] rounded-full bg-orange px-2 py-1 whitespace-nowrap text-weiss sm:px-3"
+          >
+            ✓ {de ? 'Richtiger Auftrag' : 'Correct order'}
+          </p>
+        </>
+      )
+    }
+
+    {
+      variant === 'lager' && (
+        <>
+          <svg viewBox="0 0 1000 500" preserveAspectRatio="none" class="absolute inset-0 size-full">
+            <rect x="20" y="20" width="660" height="460" rx="12" class="fill-nebel stroke-marine-15" />
+            {racks.map((x) => (
+              <g>
+                <rect x={x} y="80" width="30" height="320" rx="3" class="fill-hellblau/60 stroke-marine/20" />
+                {Array.from({ length: 7 }, (_, i) => (
+                  <line x1={x} x2={x + 30} y1={120 + i * 40} y2={120 + i * 40} class="stroke-marine/15" />
+                ))}
+              </g>
+            ))}
+            <rect x="30" y="430" width="60" height="40" rx="4" class="fill-marine/20" />
+
+            {/* Offset a little, so it stays visible beside the new route in the shared aisles. */}
+            <path d={oldRoute} transform="translate(-16 -10)" pathLength="1" data-show="2" class="draw fill-none stroke-marine/35" stroke-width="3" stroke-dasharray="1" stroke-linejoin="round" />
+            <path d={newRoute} pathLength="1" data-show="3" class="draw fill-none stroke-orange" stroke-width="5" stroke-dasharray="1" stroke-linejoin="round" stroke-linecap="round" />
+
+            {picks.map((p, i) => (
+              <g data-show="1" style={`--d: ${i * 0.25}s`}>
+                <circle cx={p.x} cy={p.y} r="13" class="fill-weiss stroke-marine" stroke-width="2" />
+                <circle cx={p.x} cy={p.y} r="5" class="fill-marine" />
+              </g>
+            ))}
+          </svg>
+
+          <div class="absolute top-[4%] right-0 flex h-[92%] w-[29%] flex-col rounded-2xl border border-marine-15 bg-weiss p-3 sm:p-5">
+            <p class="kicker anim-label text-marine-70">{de ? 'Pick-Liste' : 'Pick list'} #0815</p>
+            <p data-show="1" class="mt-1 text-[0.5625rem] text-marine sm:mt-2 sm:text-sm">
+              <span data-count="6" data-show="1">6</span> {de ? 'Artikel' : 'items'}
+            </p>
+            <div class="mt-auto space-y-2 sm:space-y-4">
+              <div data-show="2">
+                <p class="flex justify-between text-[0.5rem] text-marine-70 sm:text-xs">
+                  <span>{de ? 'Vorher' : 'Before'}</span><span>100 %</span>
+                </p>
+                <div class="mt-1 h-1.5 rounded-full bg-marine/30" />
+              </div>
+              <div data-show="3">
+                <p class="flex justify-between text-[0.5rem] text-marine-70 sm:text-xs">
+                  <span>{de ? 'Optimiert' : 'Optimised'}</span><span>70 %</span>
+                </p>
+                <div class="mt-1 h-1.5 w-[70%] rounded-full bg-orange" />
+              </div>
+            </div>
+            <p data-show="3" class="mt-3 text-2xl leading-none font-black tracking-[-0.03em] sm:mt-6 sm:text-6xl">
+              −<span data-count="30" data-show="3">30</span>
+              <span class="text-lg text-marine-70 sm:text-3xl">%</span>
+            </p>
+            <p data-show="3" class="mt-1 hidden text-sm text-marine-70 sm:block">{de ? 'Laufweg pro Auftrag' : 'walking distance per order'}</p>
+          </div>
+        </>
+      )
+    }
+
+    {
+      variant === 'precursor' && (
+        <>
+          <svg viewBox="0 0 1000 500" preserveAspectRatio="none" class="absolute inset-0 size-full">
+            {/* The kiln: a tilted drum on two supports, burner at the low end. */}
+            <g transform="rotate(-8 210 260)">
+              <rect x="40" y="225" width="340" height="70" rx="35" class="fill-hellblau/60 stroke-marine/40" stroke-width="2" />
+              {[100, 160, 220, 280, 340].map((x) => (
+                <line x1={x} x2={x} y1="228" y2="292" class="stroke-marine/20" stroke-width="2" />
+              ))}
+              <path d="M380 245 Q420 260 380 275" class="anim-flame fill-orange" />
+            </g>
+            <rect x="110" y="300" width="14" height="80" class="fill-marine/25" />
+            <rect x="290" y="270" width="14" height="110" class="fill-marine/25" />
+            <line x1="30" y1="380" x2="400" y2="380" class="stroke-marine/25" stroke-width="2" />
+
+            {[
+              { x: 120, y: 268 },
+              { x: 230, y: 252 },
+              { x: 330, y: 238 },
+            ].map((s, i) => (
+              <g>
+                <circle cx={s.x} cy={s.y} r="16" data-show="1" style={`--d: ${i * 0.2}s`} class="anim-pulse fill-none stroke-marine" stroke-width="2" />
+                <circle cx={s.x} cy={s.y} r="6" class="fill-marine" />
+                <path
+                  d={`M${s.x} ${s.y} C${s.x} ${120 + i * 20} 380 ${130 + i * 30} 440 ${200 + i * 30}`}
+                  pathLength="1"
+                  data-show="1"
+                  style={`--d: ${0.3 + i * 0.2}s`}
+                  class="draw fill-none stroke-marine/30"
+                  stroke-width="1.5"
+                  stroke-dasharray="1"
+                />
+              </g>
+            ))}
+
+            {/* The chart: frame, target band, process value. */}
+            <rect x="440" y="40" width="540" height="420" rx="12" class="fill-nebel stroke-marine-15" />
+            <rect x="450" y="205" width="525" height="70" class="fill-hellblau/50" />
+            <line x1="450" x2="975" y1="205" y2="205" class="stroke-marine/25" stroke-dasharray="6 6" />
+            <line x1="450" x2="975" y1="275" y2="275" class="stroke-marine/25" stroke-dasharray="6 6" />
+            <path d={history} pathLength="1" data-show="1" class="draw fill-none stroke-marine" stroke-width="3" stroke-dasharray="1" stroke-linecap="round" />
+            <circle cx="750" cy="150" r="14" data-show="2" class="fill-orange/20 stroke-orange" stroke-width="2.5" />
+            <path d={guided} pathLength="1" data-show="3" class="draw fill-none stroke-orange" stroke-width="3.5" stroke-dasharray="1" stroke-linecap="round" />
+          </svg>
+
+          <p class="kicker anim-label absolute top-[42%] left-[46%] text-marine-70">
+            {de ? 'Zielbereich' : 'Target band'}
+          </p>
+          <p data-show="2" class="kicker anim-label absolute top-[19%] left-[77%] whitespace-nowrap text-marine">
+            {de ? 'Abweichung' : 'Deviation'}
+          </p>
+          <div
+            data-show="2"
+            style="--d: 0.6s"
+            class="absolute top-[64%] left-[64%] rounded-xl border border-orange/60 bg-weiss px-2 py-1.5 shadow-sm sm:px-4 sm:py-3"
+          >
+            <p class="kicker anim-label text-marine-70">{de ? 'Empfehlung' : 'Recommendation'}</p>
+            <p class="mt-0.5 text-[0.5625rem] font-semibold whitespace-nowrap sm:mt-1 sm:text-base">
+              {de ? 'Brennstoffzufuhr' : 'Fuel feed'} −<span data-count="3" data-show="2">3</span> %
+            </p>
+          </div>
+          <p
+            data-show="3"
+            style="--d: 1.2s"
+            class="kicker anim-label absolute top-[86%] left-[80%] rounded-full bg-orange px-2 py-1 whitespace-nowrap text-weiss sm:px-3"
+          >
+            ✓ {de ? 'Stabil' : 'Stable'}
+          </p>
+        </>
+      )
+    }
+  </div>
+
+  <ol class="mt-6 grid gap-3 sm:grid-cols-3 sm:gap-6 lg:mt-8">
+    {
+      copy.steps.map((step, i) => (
+        <li data-step={i + 1} class="anim-step flex gap-3 border-t border-marine-15 pt-3 sm:pt-4">
+          <span class="font-mono text-sm text-marine-45">{String(i + 1).padStart(2, '0')}</span>
+          <span class="text-sm font-medium sm:text-base">{step}</span>
+        </li>
+      ))
+    }
+  </ol>
+</figure>
+
+<style>
+  /* Labels on the stage scale with it; the global .kicker size would overrun on phones. */
+  .anim-label {
+    font-size: clamp(0.4375rem, 1.1vw, 0.6875rem);
+    letter-spacing: 0.08em;
+  }
+
+  /* Phase states. Without `data-phase` (no script, reduced motion) everything shows. */
+  [data-anim][data-phase] [data-show] {
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out-quint);
+  }
+  [data-anim][data-phase='1'] [data-show='1'],
+  [data-anim][data-phase='2'] :is([data-show='1'], [data-show='2']),
+  [data-anim][data-phase='3'] [data-show] {
+    opacity: 1;
+    transition-delay: var(--d, 0s);
+  }
+
+  /* Paths drawn in rather than faded (pathLength="1", stroke-dasharray="1"). */
+  [data-anim][data-phase] .draw[data-show] {
+    opacity: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0.4s ease-in;
+  }
+  [data-anim][data-phase='1'] .draw[data-show='1'],
+  [data-anim][data-phase='2'] .draw:is([data-show='1'], [data-show='2']),
+  [data-anim][data-phase='3'] .draw[data-show] {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.8s var(--ease-out-quint) var(--d, 0s);
+  }
+
+  /* The catalogue slides in from the left. */
+  .anim-slide {
+    transition: transform 1.6s var(--ease-out-quint);
+  }
+  [data-anim][data-phase='0'] .anim-slide {
+    transform: translateX(-240px);
+  }
+
+  /* Steps: the current one is dark and gets an orange progress line. */
+  .anim-step {
+    position: relative;
+    transition: opacity 0.4s;
+  }
+  [data-anim][data-phase] .anim-step {
+    opacity: 0.4;
+  }
+  [data-anim][data-phase='1'] .anim-step[data-step='1'],
+  [data-anim][data-phase='2'] .anim-step[data-step='2'],
+  [data-anim][data-phase='3'] .anim-step[data-step='3'] {
+    opacity: 1;
+  }
+  .anim-step::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background: var(--color-orange);
+  }
+  [data-anim][data-phase='1'] .anim-step[data-step='1']::before,
+  [data-anim][data-phase='2'] .anim-step[data-step='2']::before,
+  [data-anim][data-phase='3'] .anim-step[data-step='3']::before {
+    animation: step-progress var(--phase, 2.8s) linear forwards;
+  }
+  @keyframes step-progress {
+    to {
+      width: 100%;
+    }
+  }
+
+  /* Scan line with a faint wake, sweeping once through phase 2. */
+  .anim-scan {
+    opacity: 0;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--color-marine) 5%, transparent) 96%,
+      color-mix(in srgb, var(--color-marine) 55%, transparent) 100%
+    );
+  }
+  [data-anim][data-phase='2'] .anim-scan {
+    animation: scan 2.4s ease-in-out forwards;
+  }
+  @keyframes scan {
+    0% {
+      opacity: 1;
+      transform: translateY(-100%);
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(300%);
+    }
+  }
+
+  /* Continuous details. */
+  .anim-rec {
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.2;
+    }
+  }
+  .anim-belt {
+    animation: belt 1.2s linear infinite;
+  }
+  @keyframes belt {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+  .anim-flame {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: flame 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes flame {
+    to {
+      transform: scaleX(1.25);
+    }
+  }
+  [data-anim][data-phase] .anim-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pulse 1.6s ease-out infinite;
+  }
+  @keyframes pulse {
+    from {
+      transform: scale(0.6);
+    }
+    to {
+      transform: scale(1.6);
+      stroke-opacity: 0;
+    }
+  }
+  /* Database tiles flicker once as they are compared; hidden otherwise. */
+  .anim-flash {
+    opacity: 0;
+  }
+  [data-anim][data-phase='2'] .anim-flash {
+    animation: flash 0.6s var(--d, 0s) both;
+  }
+  @keyframes flash {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Steps every explainer through its phases (1 → 2 → 3, then a short blank
+   * phase 0) while it is on screen, and counts up `[data-count]` numbers as
+   * they appear. Skipped with reduced motion: without `data-phase` the
+   * finished state shows. Initialised directly and on `astro:page-load`
+   * (DECISIONS.md §12).
+   */
+  import { countUp } from '../lib/count-up';
+
+  const PHASES: [phase: number, ms: number][] = [
+    [1, 2800],
+    [2, 2800],
+    [3, 4000],
+    [0, 800],
+  ];
+
+  function initAnimations() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    for (const anim of document.querySelectorAll<HTMLElement>('[data-anim]')) {
+      if (anim.dataset.animBound) continue;
+      anim.dataset.animBound = 'true';
+
+      const counters = [...anim.querySelectorAll<HTMLElement>('[data-count]')];
+      let index = PHASES.length - 1;
+      let timer: number | undefined;
+
+      const next = () => {
+        index = (index + 1) % PHASES.length;
+        const [phase, ms] = PHASES[index];
+        anim.dataset.phase = String(phase);
+        anim.style.setProperty('--phase', `${ms}ms`);
+        for (const el of counters) {
+          if (Number(el.dataset.show) === phase) countUp(el);
+          if (phase === 0) el.textContent = '0';
+        }
+        timer = window.setTimeout(next, ms);
+      };
+
+      anim.dataset.phase = '0';
+      new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting && timer === undefined) {
+            index = PHASES.length - 1;
+            next();
+          } else if (!entry.isIntersecting && timer !== undefined) {
+            window.clearTimeout(timer);
+            timer = undefined;
+          }
+        },
+        { threshold: 0.3 },
+      ).observe(anim);
+    }
+  }
+
+  initAnimations();
+  document.addEventListener('astro:page-load', initAnimations);
+</script>
