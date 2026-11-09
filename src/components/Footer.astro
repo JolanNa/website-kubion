@@ -13,8 +13,8 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 
 /*
- * A Nebel panel inset like the header island and the CTA panel, so the page
- * closes on the same rounded shape it opens with. Content follows the old
+ * A full-width Nebel band, edge to edge, with the content held to the same
+ * max width as the rest of the page. Content follows the old
  * kubion.io footer: contact up front, then address, social and info, and the
  * wordmark large in the bottom-right corner.
  */
@@ -43,12 +43,12 @@ const headingClass = 'kicker text-marine-45';
 const linkClass = 'transition-colors duration-200 hover:text-orange';
 ---
 
-<footer class="mt-24 px-4 pb-4">
-  <div class="mx-auto max-w-[90rem] rounded-3xl bg-nebel px-6 pt-14 pb-8 text-marine sm:px-12 lg:px-16 lg:pt-20">
-    <div class="grid gap-14 lg:grid-cols-12 lg:gap-8">
+<footer class="mt-24 bg-nebel">
+  <div class="mx-auto max-w-[90rem] px-6 pt-12 pb-12 text-marine sm:px-12 lg:px-16 lg:pt-14 lg:pb-16">
+    <div class="grid gap-10 lg:grid-cols-12 lg:gap-8">
       <div class="lg:col-span-6">
         <p class={headingClass}>{t('footer.contact')}</p>
-        <ul class="mt-6 space-y-2 text-2xl font-black tracking-[-0.02em] sm:text-4xl">
+        <ul class="mt-5 space-y-1 text-xl font-semibold tracking-[-0.01em] sm:text-2xl">
           <li>
             <a href={`mailto:${COMPANY.email}`} class={linkClass}>{COMPANY.email}</a>
           </li>
@@ -58,7 +58,7 @@ const linkClass = 'transition-colors duration-200 hover:text-orange';
             </a>
           </li>
         </ul>
-        <div class="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+        <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
           <ArrowLink href={localizedPath('kontakt', locale)}>{t('footer.cta')}</ArrowLink>
           <a
             href={localizedPath('projekte', locale)}
@@ -118,14 +118,14 @@ const linkClass = 'transition-colors duration-200 hover:text-orange';
     </div>
 
     <div
-      class="mt-16 flex flex-col-reverse gap-8 border-t border-marine-15 pt-8 sm:flex-row sm:items-end sm:justify-between"
+      class="mt-10 flex flex-col-reverse gap-6 border-t border-marine-15 pt-6 sm:flex-row sm:items-center sm:justify-between"
     >
       <p class="font-mono text-xs text-marine-45">&copy; {year} {COMPANY.name}. {t('footer.rights')}</p>
       <a
         href={localizedPath('home', locale)}
         class="transition-opacity duration-200 hover:opacity-70"
       >
-        <Logo width={320} class="h-auto w-[200px] sm:w-[260px] lg:w-[320px]" />
+        <Logo width={224} class="h-auto w-[140px] sm:w-[182px] lg:w-[224px]" />
       </a>
     </div>
   </div>
