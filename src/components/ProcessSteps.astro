@@ -1,0 +1,418 @@
+---
+import type { Locale } from '../config';
+
+/**
+ * The homepage's "Vorgehen": one card per step on a track that slides from
+ * left to right, the next card peeking in at the edge. Below it, a progress
+ * row with one segment per step and back/next arrows.
+ *
+ * While the slider is on screen it advances on its own; the active segment
+ * fills up for as long as the step stays. Hovering or focusing the slider
+ * pauses it, a click on a segment, a card, an arrow or a swipe jumps to that
+ * step and carries on from there. With reduced motion it only moves on
+ * click. Without JS step 1 shows and the others sit to its right.
+ *
+ * Pictograms go by position: analysis, prototype, integration, operation.
+ */
+interface Props {
+  items: { title: string; text?: string }[];
+  locale: Locale;
+  class?: string;
+}
+
+const { items, locale, class: className } = Astro.props;
+const de = locale === 'de';
+const label = {
+  step: de ? 'Schritt' : 'Step',
+  of: de ? 'von' : 'of',
+  prev: de ? 'Vorheriger Schritt' : 'Previous step',
+  next: de ? 'Nächster Schritt' : 'Next step',
+};
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<div data-process data-active="1" class:list={['process', className]} aria-roledescription="carousel">
+  <div class="process-viewport -my-4 py-4">
+    <ol class="process-track flex" aria-live="polite">
+      {
+        items.map((item, i) => (
+          <li
+            data-card={i + 1}
+            aria-current={i === 0 ? 'step' : undefined}
+            aria-label={`${label.step} ${i + 1} ${label.of} ${items.length}`}
+            class="process-card grid shrink-0 cursor-pointer gap-6 rounded-2xl border border-marine-15 bg-weiss p-6 sm:p-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:items-center lg:gap-12 lg:p-12"
+          >
+            <div class="relative mx-auto aspect-square w-full max-w-[10rem] rounded-2xl bg-nebel p-5 text-marine sm:max-w-[16rem] sm:p-8" aria-hidden="true">
+              {i === 0 && (
+                <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="size-full">
+                  {/* Analysis: a bar chart under a magnifier. */}
+                  <path d="M14 98h76" class="text-marine-45" stroke="currentColor" />
+                  <rect x="20" y="66" width="12" height="32" rx="2" class="pa-grow" style="--d: .05s" />
+                  <rect x="40" y="50" width="12" height="48" rx="2" class="pa-grow" style="--d: .15s" />
+                  <rect x="60" y="74" width="12" height="24" rx="2" class="pa-grow" style="--d: .25s" />
+                  <g class="pa-move">
+                    <circle cx="76" cy="42" r="20" fill="var(--color-weiss)" />
+                    <path d="M66 46l7-8 6 5 8-10" stroke="var(--color-orange)" />
+                    <path d="M90 56l16 16" stroke-width="6" />
+                  </g>
+                </svg>
+              )}
+              {i === 1 && (
+                <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="size-full">
+                  {/* Prototype: a flask with real data bubbling up. */}
+                  <path d="M48 16h24M52 16v30L28 90a8 8 0 0 0 7 12h50a8 8 0 0 0 7-12L68 46V16" />
+                  <path d="M38 76h44l7 13a5 5 0 0 1-4 7H35a5 5 0 0 1-4-7z" fill="var(--color-hellblau)" stroke="none" class="pa-in" />
+                  <circle cx="54" cy="84" r="4" fill="var(--color-orange)" stroke="none" class="pa-bubble" style="--d: .2s" />
+                  <circle cx="66" cy="70" r="3" fill="var(--color-orange)" stroke="none" class="pa-bubble" style="--d: .6s" />
+                  <circle cx="58" cy="58" r="2.5" fill="var(--color-orange)" stroke="none" class="pa-bubble" style="--d: 1s" />
+                </svg>
+              )}
+              {i === 2 && (
+                <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="size-full">
+                  {/* Integration: two blocks that click together. */}
+                  <path d="M16 40h26v8a6 6 0 0 0 12 0v-8h8v44H16z" fill="var(--color-weiss)" />
+                  <g class="pa-slide">
+                    <path d="M62 40h42v44H62v-8h-8a6 6 0 0 1 0-12h8z" fill="var(--color-hellblau)" />
+                  </g>
+                  <path d="M30 62h12" stroke="var(--color-orange)" class="pa-in" style="--d: .7s" />
+                  <path d="M78 62h12" stroke="var(--color-orange)" class="pa-in" style="--d: .7s" />
+                </svg>
+              )}
+              {i === 3 && (
+                <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="size-full">
+                  {/* Operation: a gauge in the green zone, a gear for maintenance. */}
+                  <path d="M18 78a42 42 0 0 1 84 0" />
+                  <path d="M78 42a42 42 0 0 1 24 36" stroke="var(--color-orange)" stroke-width="6" />
+                  <g class="pa-needle">
+                    <path d="M60 78l24-20" stroke-width="4" />
+                  </g>
+                  <circle cx="60" cy="78" r="5" fill="currentColor" />
+                  <g class="pa-spin" style="transform-origin: 88px 98px">
+                    <circle cx="88" cy="98" r="7" fill="var(--color-weiss)" />
+                    <path d="M88 86v4M88 106v4M76 98h4M96 98h4M79.5 89.5l3 3M93.5 103.5l3 3M79.5 106.5l3-3M93.5 92.5l3-3" />
+                  </g>
+                </svg>
+              )}
+            </div>
+
+            <div>
+              <p class="kicker text-marine-45">
+                {label.step} {pad(i + 1)} {label.of} {pad(items.length)}
+              </p>
+              <h3 class="mt-3 text-2xl font-semibold tracking-[-0.01em] text-balance sm:text-3xl">{item.title}</h3>
+              {item.text && <p class="mt-4 max-w-prose text-lg leading-relaxed text-pretty text-marine-70">{item.text}</p>}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <div class="mt-8 flex items-end gap-6 lg:mt-10">
+    <div class="grid flex-1 grid-cols-4 gap-3 sm:gap-6">
+      {
+        items.map((item, i) => (
+          <button
+            type="button"
+            data-process-step={i + 1}
+            aria-label={`${label.step} ${i + 1}: ${item.title}`}
+            aria-current={i === 0 ? 'step' : undefined}
+            class="process-seg group min-w-0 cursor-pointer pt-1 pb-2 text-left"
+          >
+            <span class="process-bar relative block h-0.5 overflow-hidden rounded-full bg-marine-15">
+              <span class="process-fill absolute inset-y-0 left-0 bg-orange" />
+            </span>
+            <span class="mt-3 hidden items-baseline gap-2 sm:flex">
+              <span class="kicker text-marine-45">{pad(i + 1)}</span>
+              <span class="process-title truncate font-semibold decoration-orange decoration-2 underline-offset-4 group-hover:underline">
+                {item.title}
+              </span>
+            </span>
+          </button>
+        ))
+      }
+    </div>
+    <div class="flex shrink-0 gap-2">
+      <button
+        type="button"
+        data-process-prev
+        aria-label={label.prev}
+        class="flex size-11 cursor-pointer items-center justify-center rounded-full border border-marine-15 bg-weiss transition-colors hover:border-marine hover:bg-marine hover:text-weiss"
+      >
+        <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10H4m5-5-5 5 5 5" /></svg>
+      </button>
+      <button
+        type="button"
+        data-process-next
+        aria-label={label.next}
+        class="flex size-11 cursor-pointer items-center justify-center rounded-full bg-marine text-weiss transition-colors hover:bg-orange"
+      >
+        <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" /></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* The track: each card is --w wide; the next one peeks in on the right. */
+  .process {
+    --w: 88%;
+    --gap: 1rem;
+    --i: 0;
+  }
+  @media (min-width: 64rem) {
+    .process {
+      --w: 76%;
+      --gap: 1.5rem;
+    }
+  }
+  .process-viewport {
+    overflow-x: clip;
+    overflow-y: visible;
+    touch-action: pan-y;
+  }
+  .process-track {
+    gap: var(--gap);
+    transform: translateX(calc(var(--i) * -1 * (var(--w) + var(--gap))));
+    transition: transform 0.7s var(--ease-out-quint);
+  }
+  .process-card {
+    width: var(--w);
+    transition:
+      opacity 0.5s,
+      box-shadow 0.5s;
+  }
+  .process-card:not([aria-current]) {
+    opacity: 0.45;
+  }
+  .process-card:not([aria-current]):hover {
+    opacity: 0.7;
+  }
+  .process-card[aria-current] {
+    cursor: default;
+    box-shadow: 0 30px 60px -30px rgb(10 38 95 / 0.3);
+  }
+
+  /* Progress row: done segments are full, the current one fills while it stays. */
+  .process-fill {
+    width: 0;
+  }
+  .process-seg[data-done] .process-fill,
+  .process-seg[aria-current] .process-fill {
+    width: 100%;
+  }
+  .process[data-playing] .process-seg[aria-current] .process-fill {
+    animation: process-fill var(--step-ms, 6s) linear both;
+  }
+  .process[data-paused] .process-seg[aria-current] .process-fill {
+    animation-play-state: paused;
+  }
+  @keyframes process-fill {
+    from {
+      width: 0;
+    }
+  }
+  .process-seg:not([aria-current]) .process-title {
+    color: var(--color-marine-70);
+  }
+
+  /* Pictogram motion, only on the current card; replays each time it comes up. */
+  @keyframes pa-fade {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  [aria-current] .pa-in {
+    animation: pa-fade 0.5s var(--ease-out-quint) calc(var(--d, 0.2s) + 0.3s) both;
+  }
+  .pa-grow {
+    transform-box: fill-box;
+    transform-origin: bottom;
+  }
+  [aria-current] .pa-grow {
+    animation: pa-grow 0.7s var(--ease-out-quint) calc(var(--d, 0s) + 0.3s) both;
+  }
+  @keyframes pa-grow {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  [aria-current] .pa-move {
+    animation: pa-move 0.9s var(--ease-out-quint) 0.5s both;
+  }
+  @keyframes pa-move {
+    from {
+      transform: translate(-14px, 10px);
+      opacity: 0;
+    }
+  }
+  .pa-bubble {
+    animation: pa-bubble 2.4s ease-in var(--d, 0s) infinite;
+  }
+  @keyframes pa-bubble {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-22px);
+      opacity: 0;
+    }
+  }
+  [aria-current] .pa-slide {
+    animation: pa-slide 0.8s var(--ease-out-quint) 0.45s both;
+  }
+  @keyframes pa-slide {
+    from {
+      transform: translateX(16px);
+    }
+  }
+  .pa-needle {
+    transform-origin: 60px 78px;
+  }
+  [aria-current] .pa-needle {
+    animation: pa-needle 1.1s var(--ease-out-quint) 0.45s both;
+  }
+  @keyframes pa-needle {
+    from {
+      transform: rotate(-100deg);
+    }
+  }
+  .pa-spin {
+    animation: pa-spin 6s linear infinite;
+  }
+  @keyframes pa-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .process-track {
+      transition: none;
+    }
+    .process-card,
+    .process-card * {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  /**
+   * Slider for [data-process]: auto-advances while on screen, pauses on hover
+   * or focus, and jumps on click, arrow keys or swipe. Initialised directly
+   * and on `astro:page-load`.
+   */
+  const STEP_MS = 6000;
+
+  function initProcess() {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    for (const root of document.querySelectorAll<HTMLElement>('[data-process]')) {
+      if (root.dataset.processBound) continue;
+      root.dataset.processBound = 'true';
+
+      const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+      const segs = [...root.querySelectorAll<HTMLButtonElement>('[data-process-step]')];
+      const count = cards.length;
+      let active = 1;
+      let visible = false;
+      let paused = false;
+      let timer: number | undefined;
+      let started = 0;
+      let remaining = STEP_MS;
+
+      const stop = () => {
+        window.clearTimeout(timer);
+        timer = undefined;
+      };
+      const schedule = () => {
+        stop();
+        if (reduced || !visible || paused) return;
+        started = performance.now();
+        timer = window.setTimeout(() => show((active % count) + 1), remaining);
+      };
+
+      const show = (step: number) => {
+        active = ((step - 1 + count) % count) + 1;
+        root.dataset.active = String(active);
+        root.style.setProperty('--i', String(active - 1));
+        root.style.setProperty('--step-ms', `${STEP_MS}ms`);
+        const mark = (el: HTMLElement, i: number) => {
+          if (i + 1 === active) el.setAttribute('aria-current', 'step');
+          else el.removeAttribute('aria-current');
+        };
+        cards.forEach(mark);
+        segs.forEach((seg, i) => {
+          // Restart the fill animation of the current segment.
+          seg.removeAttribute('aria-current');
+          void seg.offsetWidth;
+          mark(seg, i);
+          seg.toggleAttribute('data-done', i + 1 < active);
+        });
+        remaining = STEP_MS;
+        schedule();
+      };
+
+      segs.forEach((seg, i) => seg.addEventListener('click', () => show(i + 1)));
+      cards.forEach((card, i) => card.addEventListener('click', () => i + 1 !== active && show(i + 1)));
+      root.querySelector('[data-process-prev]')?.addEventListener('click', () => show(active - 1));
+      root.querySelector('[data-process-next]')?.addEventListener('click', () => show(active + 1));
+      root.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') show(active + 1);
+        else if (e.key === 'ArrowLeft') show(active - 1);
+      });
+
+      // Swipe on touch screens.
+      let x0: number | null = null;
+      root.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse') x0 = e.clientX;
+      });
+      root.addEventListener('pointerup', (e) => {
+        if (x0 === null) return;
+        const dx = e.clientX - x0;
+        x0 = null;
+        if (Math.abs(dx) > 40) show(active + (dx < 0 ? 1 : -1));
+      });
+
+      // Pause while the pointer or focus is inside; resume where it left off.
+      const pause = () => {
+        if (paused) return;
+        paused = true;
+        root.dataset.paused = 'true';
+        if (timer !== undefined) remaining = Math.max(0, remaining - (performance.now() - started));
+        stop();
+      };
+      const resume = () => {
+        if (!paused || root.matches(':hover') || root.contains(document.activeElement)) return;
+        paused = false;
+        delete root.dataset.paused;
+        schedule();
+      };
+      root.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && pause());
+      root.addEventListener('pointerleave', () => setTimeout(resume));
+      root.addEventListener('focusin', pause);
+      root.addEventListener('focusout', () => setTimeout(resume));
+
+      show(1);
+      if (reduced) continue;
+      root.dataset.playing = 'true';
+      new IntersectionObserver(
+        ([entry]) => {
+          visible = entry.isIntersecting;
+          if (visible) show(active);
+          else stop();
+        },
+        { threshold: 0.4 },
+      ).observe(root);
+    }
+  }
+
+  initProcess();
+  document.addEventListener('astro:page-load', initProcess);
+</script>

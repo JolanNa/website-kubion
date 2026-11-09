@@ -8,7 +8,7 @@ import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
 import Placeholder from './Placeholder.astro';
 import SectionHeader from './SectionHeader.astro';
-import Steps from './Steps.astro';
+import ProcessSteps from './ProcessSteps.astro';
 
 /**
  * Everything on the homepage below the hero.
@@ -129,11 +129,11 @@ const gutter = 'px-4 sm:px-16 lg:px-20';
   </div>
 </section>
 
-<section class="px-4 py-14 lg:py-24">
-  <div class="rounded-3xl bg-nebel px-6 pt-16 pb-6 sm:px-12 lg:px-16 lg:pt-24 lg:pb-14">
+<section class="my-14 lg:my-24">
+  <div class="overflow-x-clip bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
     <div class={wrap}>
       <SectionHeader section={process} locale={locale} />
-      <Steps items={process.items} class="mt-12 lg:mt-16" />
+      <ProcessSteps items={process.items} locale={locale} class="mt-12 lg:mt-16" />
     </div>
   </div>
 </section>
