@@ -32,6 +32,6 @@ if (!hero) {
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
-  <PageHero hero={hero} />
+  <PageHero hero={hero} locale={locale} source={`src/content/pages/${entry.id}.mdx`} />
   <PageSections entry={entry} locale={locale} />
 </BaseLayout>

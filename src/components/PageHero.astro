@@ -1,65 +1,112 @@
 ---
+import type { Locale } from '../config';
+import { ctaHref } from '../lib/content';
+
 /**
- * The hero of every page except the homepage: the same Marine panel as
- * HomeHero, but sized to its content rather than to the viewport.
+ * The hero of every page except the homepage, on a white ground: eyebrow,
+ * one headline and the CTAs. No subline — the headline carries the whole
+ * message. The bordered card grids below it (PageSections, Karriere,
+ * Projekte) carry the page from here.
+ *
+ * CTAs need `locale` and `source`.
  */
-interface Props {
-  hero: { eyebrow?: string; headline: string; subline?: string; note?: string };
+interface Cta {
+  label: string;
+  page?: string;
+  href?: string;
 }
 
-const { hero } = Astro.props;
+interface Props {
+  hero: {
+    eyebrow?: string;
+    headline: string;
+    note?: string;
+    primaryCta?: Cta;
+    secondaryCta?: Cta;
+  };
+  locale?: Locale;
+  /** The content file the hero came from, for error messages. */
+  source?: string;
+}
+
+const { hero, locale, source = 'the page hero' } = Astro.props;
+const hasCtas = locale && (hero.primaryCta || hero.secondaryCta);
 ---
 
-<section>
-  <div
-    class="relative overflow-hidden bg-marine px-6 pt-16 pb-12 sm:px-12 sm:pt-24 lg:px-16 lg:pt-28"
-  >
-    <div class="mx-auto w-full max-w-[84rem]">
-      {
-        hero.eyebrow && (
-          <p class="flex items-center gap-4">
-            {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
-            <span class="markenkern size-7 shrink-0" aria-hidden="true" />
-            <span class="kicker text-weiss">{hero.eyebrow}</span>
-          </p>
-        )
-      }
+<section class="px-4 pt-20 pb-14 sm:px-16 sm:pt-28 lg:px-20 lg:pt-36 lg:pb-20">
+  <div class="mx-auto max-w-[84rem]">
+    {
+      hero.eyebrow && (
+        <p class="rise flex items-center gap-3">
+          {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+          <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+          <span class="kicker text-marine-70">{hero.eyebrow}</span>
+        </p>
+      )
+    }
 
-      <h1
-        class="mt-10 max-w-[16ch] text-[clamp(2.5rem,7vw,6rem)] leading-[0.95] font-black tracking-[-0.035em] text-balance text-weiss"
-      >
-        {hero.headline}
-      </h1>
+    <h1
+      class="rise mt-6 max-w-[22ch] text-[clamp(2.25rem,5vw,4.5rem)] leading-[1] font-black tracking-[-0.035em] text-balance text-marine"
+      style="animation-delay: 60ms"
+    >
+      {hero.headline}
+    </h1>
 
-      {
-        hero.subline && (
-          <p class="mt-8 max-w-[46ch] text-lg leading-relaxed text-pretty text-hellblau sm:text-xl">
-            {hero.subline}
-          </p>
-        )
-      }
-
-      {
-        hero.note ? (
-          <p class="mt-16 flex items-center gap-4 border-t border-hellblau/25 pt-8 lg:mt-24">
-            {/* Pixel heart, drawn inline so it inherits the accent colour. */}
-            <svg
-              width="18"
-              height="16"
-              viewBox="0 0 9 8"
-              class="shrink-0 text-orange"
-              aria-hidden="true"
-              fill="currentColor"
-              shape-rendering="crispEdges"
+    {
+      hasCtas && (
+        <div class="rise mt-10 flex flex-wrap items-center gap-3" style="animation-delay: 180ms">
+          {hero.primaryCta && (
+            <a
+              href={ctaHref(hero.primaryCta, locale, source)}
+              class="rounded-full bg-marine px-6 py-3 font-medium whitespace-nowrap text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
             >
-              <path d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z" />
-            </svg>
-            <span class="kicker text-weiss">{hero.note}</span>
-          </p>
-        ) : (
-          <div class="h-4 lg:h-12" />
-        )
-      }
-    </div>
+              {hero.primaryCta.label}
+            </a>
+          )}
+          {hero.secondaryCta && (
+            <a
+              href={ctaHref(hero.secondaryCta, locale, source)}
+              class="rounded-full border border-marine-15 bg-weiss px-6 py-3 font-medium whitespace-nowrap text-marine transition-colors duration-300 hover:border-marine"
+            >
+              {hero.secondaryCta.label}
+            </a>
+          )}
+        </div>
+      )
+    }
+
+    {
+      hero.note && (
+        <p class="rise mt-10 flex items-center gap-3" style="animation-delay: 240ms">
+          {/* Pixel heart, drawn inline so it inherits the accent colour. */}
+          <svg
+            width="18"
+            height="16"
+            viewBox="0 0 9 8"
+            class="shrink-0 text-orange"
+            aria-hidden="true"
+            fill="currentColor"
+            shape-rendering="crispEdges"
+          >
+            <path d="M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z" />
+          </svg>
+          <span class="kicker text-marine-70">{hero.note}</span>
+        </p>
+      )
+    }
   </div>
 </section>
+
+<style>
+  /* A short staggered rise on load; reduced motion is neutralised globally. */
+  .rise {
+    animation: rise 0.9s var(--ease-out-quint) both;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+</style>

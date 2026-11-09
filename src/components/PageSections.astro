@@ -40,9 +40,43 @@ const wrap = 'mx-auto max-w-[84rem]';
 // Spelled out so Tailwind sees the class names.
 const cardColumns = (count: number) =>
   count === 2 || count === 4 ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3';
+
+/*
+ * Bento grid on 12 columns: a wide first card with two narrow ones beside it,
+ * then the rest shared out evenly over rows of up to four. On two columns the
+ * first card spans both whenever that leaves the rest in full pairs.
+ */
+const lgSpan: Record<number, string> = {
+  12: 'lg:col-span-12',
+  6: 'lg:col-span-6',
+  4: 'lg:col-span-4',
+  3: 'lg:col-span-3',
+};
+const bento = (count: number): string[] => {
+  let spans: number[];
+  if (count === 1) spans = [12];
+  else if (count === 2) spans = [6, 6];
+  else {
+    spans = [6, 3, 3];
+    let rest = count - 3;
+    while (rest > 0) {
+      const rows = Math.ceil(rest / 4);
+      const inRow = Math.ceil(rest / rows);
+      spans.push(...Array(inRow).fill(12 / inRow));
+      rest -= inRow;
+    }
+  }
+  return spans.map((span, index) =>
+    [lgSpan[span], index === 0 && (count - 1) % 2 === 0 && 'sm:col-span-2'].filter(Boolean).join(' '),
+  );
+};
+const bentoGrid = 'mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-12';
+const bentoCard =
+  'flex h-full flex-col rounded-2xl border border-marine-15 bg-weiss p-6 transition-colors duration-300 sm:p-8';
+const check = 'M3.5 8.5l3 3 6-7';
 ---
 
-<div class="pt-6 lg:pt-8">
+<div>
   {
     sections.map(([id, section]) => {
       const inlineCta = section.primaryCta && (
@@ -59,42 +93,56 @@ const cardColumns = (count: number) =>
             </div>
           );
 
-        /* Large linked rows — the services on the overview page. */
-        case 'rows':
+        /* The services on the overview page, as a bento of linked cards. */
+        case 'rows': {
+          const spans = bento(section.items.length);
           return (
             <section id={id} class={gutter}>
               <div class={wrap}>
                 <SectionHeader section={section} locale={locale} />
-                <ul class="mt-12 border-t border-marine-15 lg:mt-16">
+                <ul class={bentoGrid}>
                   {section.items.map((item, index) => (
-                    <li class="border-b border-marine-15">
+                    <li class={spans[index]}>
                       <a
                         href={ctaHref(item, locale, source)}
-                        class="group grid gap-6 py-8 lg:grid-cols-[4rem_1fr_1.2fr_auto] lg:items-start lg:gap-10 lg:py-12"
+                        class:list={[bentoCard, 'group hover:border-marine-45 lg:min-h-[22rem]']}
                       >
-                        <span class={numberTile}>{number(index)}</span>
-                        <h3 class="text-2xl leading-tight font-bold tracking-[-0.02em] text-balance sm:text-4xl">
+                        <span class="flex items-center gap-3">
+                          <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+                          <span class="font-mono text-sm tracking-[0.14em] text-marine-45">{number(index)}</span>
+                        </span>
+                        <h3
+                          class:list={[
+                            'mt-6 font-bold tracking-[-0.02em] text-balance',
+                            index === 0 ? 'text-3xl sm:text-4xl' : 'text-2xl',
+                          ]}
+                        >
                           {item.title}
                         </h3>
-                        <span>
-                          {item.text && (
-                            <span class="block max-w-[52ch] text-lg leading-relaxed text-pretty text-marine-70">
-                              {item.text}
-                            </span>
-                          )}
-                          {item.points.length > 0 && (
-                            <span class="mt-6 flex flex-wrap gap-2">
+                        {item.text && (
+                          <p class="mt-3 max-w-[46ch] leading-relaxed text-pretty text-marine-70">{item.text}</p>
+                        )}
+                        <span class="mt-auto flex items-end justify-between gap-6 pt-10">
+                          {item.points.length > 0 ? (
+                            <span class="grid gap-1.5">
                               {item.points.map((point) => (
-                                <span class="rounded-full bg-nebel px-4 py-1.5 text-sm">{point}</span>
+                                <span class="flex items-center gap-2 text-sm">
+                                  <svg viewBox="0 0 16 16" class="size-4 shrink-0 text-orange" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                                    <path d={check} stroke-linecap="round" stroke-linejoin="round" />
+                                  </svg>
+                                  {point}
+                                </span>
                               ))}
                             </span>
+                          ) : (
+                            <span />
                           )}
-                        </span>
-                        <span
-                          class="flex size-11 items-center justify-center rounded-xl gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
-                          aria-hidden="true"
-                        >
-                          →
+                          <span
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1"
+                            aria-hidden="true"
+                          >
+                            →
+                          </span>
                         </span>
                       </a>
                     </li>
@@ -103,27 +151,39 @@ const cardColumns = (count: number) =>
               </div>
             </section>
           );
+        }
 
-        case 'cards':
+        case 'cards': {
+          const spans = bento(section.items.length);
           return (
             <section id={id} class={gutter}>
               <div class={wrap}>
                 <SectionHeader section={section} locale={locale} />
-                <ul class:list={['mt-12 grid gap-4 lg:mt-16 lg:gap-6', cardColumns(section.items.length)]}>
-                  {section.items.map((item) => (
-                    <li class="rounded-2xl bg-nebel p-6 sm:p-8">
-                      {item.meta && <p class="kicker text-marine-70">{item.meta}</p>}
-                      <h3 class="mt-4 text-xl font-semibold tracking-[-0.01em] sm:text-2xl">
-                        {item.title}
-                      </h3>
-                      {item.text && (
-                        <p class="mt-3 leading-relaxed text-pretty text-marine-70">{item.text}</p>
-                      )}
-                      {item.page && (
-                        <ArrowLink href={ctaHref(item, locale, source)} class="mt-6">
-                          {t('common.more')}
-                        </ArrowLink>
-                      )}
+                <ul class={bentoGrid}>
+                  {section.items.map((item, index) => (
+                    <li class={spans[index]}>
+                      <div class:list={[bentoCard, index === 0 && section.items.length > 2 && 'lg:min-h-[18rem]']}>
+                        <p class="flex items-center gap-3">
+                          <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+                          {item.meta && <span class="kicker text-marine-70">{item.meta}</span>}
+                        </p>
+                        <h3
+                          class:list={[
+                            'mt-6 font-semibold tracking-[-0.01em] text-balance',
+                            index === 0 && section.items.length > 2 ? 'text-3xl font-bold' : 'text-xl sm:text-2xl',
+                          ]}
+                        >
+                          {item.title}
+                        </h3>
+                        {item.text && (
+                          <p class="mt-3 max-w-[46ch] leading-relaxed text-pretty text-marine-70">{item.text}</p>
+                        )}
+                        {item.page && (
+                          <ArrowLink href={ctaHref(item, locale, source)} class="mt-auto pt-6">
+                            {t('common.more')}
+                          </ArrowLink>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -131,6 +191,7 @@ const cardColumns = (count: number) =>
               </div>
             </section>
           );
+        }
 
         /* Portrait photo cards, paged with arrows — the industries. */
         case 'carousel':
@@ -281,7 +342,7 @@ const cardColumns = (count: number) =>
                 </div>
                 <ul class:list={['mt-12 grid gap-4 lg:mt-16 lg:gap-6', cardColumns(section.items.length)]}>
                   {section.items.map((item) => (
-                    <li class="rounded-2xl bg-nebel p-4">
+                    <li class="rounded-2xl border border-marine-15 bg-weiss p-4">
                       <Placeholder
                         label={item.imageNote ?? t('placeholder.image')}
                         class="aspect-[16/9] w-full rounded-xl p-6 text-center"

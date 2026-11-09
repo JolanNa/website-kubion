@@ -93,22 +93,22 @@ const openings = await getJobs(locale);
     </div>
   </section>
 
-  <section class="px-4 pb-20 lg:pb-32">
-    <div class="rounded-3xl bg-nebel px-6 py-16 sm:px-12 lg:px-16 lg:py-24">
+  <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
+    <div>
       <div class="mx-auto max-w-[84rem]">
         <SectionHeader section={career.benefits} locale={locale} />
 
         <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-6">
           {
             career.benefits.items.map((item, index) => (
-              <li data-scroll-reveal class="flex flex-col bg-weiss p-8 lg:p-10">
+              <li data-scroll-reveal class="flex flex-col rounded-2xl border border-marine-15 bg-weiss p-6 sm:p-8">
                 <span class="flex items-center gap-4">
                   <span class="markenkern size-3 shrink-0" aria-hidden="true" />
                   <span class="font-mono text-sm tracking-[0.14em] text-marine-70">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                 </span>
-                <h3 class="mt-10 text-2xl font-semibold tracking-[-0.02em]">{item.title}</h3>
+                <h3 class="mt-6 text-2xl font-semibold tracking-[-0.02em]">{item.title}</h3>
                 <p class="mt-4 leading-relaxed text-pretty text-marine-70">{item.text}</p>
               </li>
             ))
