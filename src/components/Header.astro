@@ -222,19 +222,14 @@ const navItemClass =
                   <div>
                     <p class="kicker text-marine-45">{mega.heading}</p>
                     <ul class="mt-5 space-y-1">
-                      {mega.items.map((item, index) => (
+                      {mega.items.map((item) => (
                         <li>
                           <a
                             href={`${localizedPath(item.page, locale)}${item.anchor ? `#${item.anchor}` : ''}`}
                             class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
                           >
-                            {/* The Markenkern square as the item marker, numbered. */}
-                            <span
-                              class="markenkern mt-[3px] flex size-[18px] shrink-0 items-center justify-center font-mono text-[0.5625rem] leading-none font-medium text-weiss"
-                              aria-hidden="true"
-                            >
-                              {String(index + 1).padStart(2, '0')}
-                            </span>
+                            {/* The Markenkern square as the item marker. */}
+                            <span class="markenkern mt-[6px] block size-3 shrink-0" aria-hidden="true"></span>
                             <span>
                               <span class="block font-semibold text-marine">{item.title}</span>
                               <span class="block text-sm text-marine-70">{item.description}</span>
