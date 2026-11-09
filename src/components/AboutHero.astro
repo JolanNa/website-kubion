@@ -27,14 +27,14 @@ interface Props {
 const { hero, locale, source, compact = false } = Astro.props;
 ---
 
-<section class="px-4 pb-4">
+<section class="pb-4">
   {/*
     Fills the viewport below the sticky header, like HomeHero (same height
     formula, see the comment there). The content is centred vertically; the
     CTAs sit on the right, level with the last line of the intro.
   */}
   <div
-    class="flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden rounded-3xl bg-marine px-6 py-[clamp(2rem,6svh,4rem)] sm:px-12 lg:px-16"
+    class="flex min-h-[calc(100svh-var(--header-height)-(--spacing(4)))] flex-col overflow-hidden bg-marine px-6 py-[clamp(2rem,6svh,4rem)] sm:px-12 lg:px-16"
   >
     <div
       class="mx-auto my-auto grid w-full max-w-[84rem] gap-10 xl:grid-cols-12 xl:items-end xl:gap-16"
