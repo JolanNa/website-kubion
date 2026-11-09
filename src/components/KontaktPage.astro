@@ -4,11 +4,10 @@ import { loadPage, pageAlternates, pageSection } from '../lib/content';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import DraftTag from './DraftTag.astro';
-import PageHero from './PageHero.astro';
-import SectionHeader from './SectionHeader.astro';
 
 /**
- * The Kontakt page: contact details beside the form.
+ * The Kontakt page: no Marine hero panel — the Markenkern and page name, then
+ * the contact details (same values as the footer) and a lead-in to the form.
  *
  * The form is a disabled sketch — it has no handler yet (DECISIONS.md §7), so
  * it must not look submittable.
@@ -21,10 +20,6 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 
 const entry = await loadPage('kontakt', locale);
-const source = `src/content/pages/${entry.id}.mdx`;
-const { hero } = entry.data;
-if (!hero) throw new Error(`The Kontakt page needs a \`hero\` block in ${source}.`);
-
 const details = pageSection(entry, 'details');
 
 const field =
@@ -39,22 +34,42 @@ const field =
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
-  <PageHero hero={hero} />
-
-  <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
+  <section class="px-4 pt-16 sm:px-16 sm:pt-24 lg:px-20 lg:pt-28">
     <div class="mx-auto grid max-w-[84rem] gap-12 lg:grid-cols-2 lg:gap-16">
       <div>
-        <SectionHeader section={details} locale={locale} />
+        <p class="flex items-center gap-4">
+          {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
+          <span class="markenkern size-7 shrink-0" aria-hidden="true" />
+          <span class="kicker text-marine">{entry.data.title}</span>
+        </p>
+        <h1 class="mt-10 max-w-[20ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl">
+          {details.heading}
+        </h1>
         <dl class="mt-12 border-t border-marine-15">
           {
             details.items.map((item) => (
               <div class="grid gap-1 border-b border-marine-15 py-5 sm:grid-cols-[10rem_1fr] sm:gap-6">
                 <dt class="kicker pt-1 text-marine-70">{item.title}</dt>
-                <dd class="text-lg font-medium">{item.meta}</dd>
+                <dd class="text-lg font-medium">
+                  {item.href ? (
+                    <a href={item.href} class="underline-offset-4 hover:underline">
+                      {item.meta}
+                    </a>
+                  ) : (
+                    item.meta
+                  )}
+                </dd>
               </div>
             ))
           }
         </dl>
+        {
+          details.text && (
+            <p class="mt-10 max-w-[52ch] text-lg leading-relaxed text-pretty text-marine-70">
+              {details.text}
+            </p>
+          )
+        }
       </div>
 
       <form class="rounded-3xl bg-nebel p-6 sm:p-10" onsubmit="return false">
