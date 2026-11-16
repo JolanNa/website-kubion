@@ -32,7 +32,6 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
     featured.map((job) => (
       <a
         href={jobPath(job, locale)}
-        data-scroll-reveal
         class="group relative block overflow-hidden rounded-3xl bg-marine px-6 py-10 text-weiss sm:px-12 sm:py-14 lg:px-16 lg:py-16"
       >
         {/* The orange edge sets the card apart from the rows below. */}
@@ -71,7 +70,7 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 
   {
     rest.length > 0 && (
-      <ul data-scroll-reveal class="border-t border-marine-15">
+      <ul class="border-t border-marine-15">
         {rest.map((job) => (
           <li class="border-b border-marine-15">
             <a href={jobPath(job, locale)} class="group flex items-center justify-between gap-6 py-8 sm:py-10">

@@ -97,6 +97,62 @@
 }
 
 /*
+ * Buttons — one pill shape, one size, one motion across the whole site.
+ *
+ *   .btn + .btn-primary        Marine fill, on light grounds
+ *   .btn + .btn-light          Weiss fill, on Marine grounds
+ *   .btn + .btn-outline        hairline, on light grounds
+ *   .btn + .btn-outline-light  hairline, on Marine grounds
+ *   .btn-sm                    compact (header, author card)
+ *   .btn-lg                    the home hero only
+ *
+ * Every button carries a 1px border (transparent on fills), so filled and
+ * outlined buttons side by side are exactly the same height. Fills lift on
+ * hover; outlines darken their border.
+ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-transparent px-7 py-3.5 text-center font-medium whitespace-nowrap transition-[translate,border-color,background-color] duration-300 ease-[var(--ease-out-quint)];
+  }
+  .btn-sm {
+    @apply px-5 py-2.5 text-[0.9375rem];
+  }
+  .btn-lg {
+    @apply px-8 py-4 text-[1.1rem];
+  }
+  .btn-primary {
+    @apply bg-marine text-weiss hover:-translate-y-0.5;
+  }
+  .btn-light {
+    @apply bg-weiss text-marine hover:-translate-y-0.5;
+  }
+  .btn-outline {
+    @apply border-marine-15 bg-weiss text-marine hover:border-marine;
+  }
+  .btn-outline-light {
+    @apply border-hellblau/50 text-weiss hover:border-hellblau hover:bg-white/5;
+  }
+
+  /*
+   * The small gradient arrow tile that leads text links (ArrowLink.astro and
+   * everything shaped like it). Slides right when its link — a `group` or
+   * `group/cta` ancestor — is hovered.
+   */
+  .arrow-tile {
+    @apply flex size-9 shrink-0 items-center justify-center rounded-lg text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover:translate-x-1 group-hover/cta:translate-x-1;
+    background-image: linear-gradient(135deg, var(--color-orange), var(--color-orange-light));
+  }
+}
+
+/*
+ * Headings that opt into `hyphens-auto` only break genuinely long compounds
+ * (Prozessoptimierung) when a narrow card forces it — never everyday words.
+ */
+:where(h1, h2, h3) {
+  hyphenate-limit-chars: 14 6 6;
+}
+
+/*
  * Hatched fill for image and logo placeholders, so a placeholder never reads as
  * real artwork. Only used while the site is a skeleton (LAUNCH-CHECKLIST.md).
  */

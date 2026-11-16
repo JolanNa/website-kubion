@@ -171,7 +171,7 @@ const navItemClass =
           <LanguageSwitcher locale={locale} alternates={alternates} />
           <a
             href={localizedPath('kontakt', locale)}
-            class="rounded-full bg-marine px-5 py-2.5 text-[0.9375rem] font-medium text-weiss transition-opacity duration-200 hover:opacity-90"
+            class="btn btn-sm btn-primary"
           >
             {t('nav.kontakt')}
           </a>
@@ -251,7 +251,7 @@ const navItemClass =
                       href={localizedPath(mega.overviewPage, locale)}
                       class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
                     >
-                      <span class="flex size-9 items-center justify-center gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1">
+                      <span class="arrow-tile">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                           <path
                             d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
@@ -311,7 +311,7 @@ const navItemClass =
               <LanguageSwitcher locale={locale} alternates={alternates} />
               <a
                 href={localizedPath('kontakt', locale)}
-                class="rounded-full bg-marine px-5 py-2.5 font-medium text-weiss"
+                class="btn btn-sm btn-primary"
               >
                 {t('nav.kontakt')}
               </a>
@@ -325,7 +325,7 @@ const navItemClass =
                 class="group/cta mt-5 inline-flex items-center gap-3 font-medium text-weiss"
               >
                 <span
-                  class="flex size-9 items-center justify-center gradient-orange text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] group-hover/cta:translate-x-1"
+                  class="arrow-tile"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path

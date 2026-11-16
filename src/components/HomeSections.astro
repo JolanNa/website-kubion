@@ -70,11 +70,14 @@ const gutter = 'px-4 sm:px-16 lg:px-20';
     <ul class="mt-12 grid gap-4 lg:mt-16 lg:grid-cols-3 lg:gap-6">
       {
         services.items.map((item, index) => (
-          <li class="flex flex-col rounded-3xl bg-nebel p-6 sm:p-8">
-            <span class="kicker flex size-9 items-center justify-center rounded-lg bg-marine text-weiss">
-              {String(index + 1).padStart(2, '0')}
+          <li class="flex flex-col rounded-2xl border border-marine-15 bg-weiss p-6 sm:p-8">
+            <span class="flex items-center gap-3">
+              <span class="markenkern size-3 shrink-0" aria-hidden="true" />
+              <span class="font-mono text-sm tracking-[0.14em] text-marine-45">
+                {String(index + 1).padStart(2, '0')}
+              </span>
             </span>
-            <h3 class="mt-10 max-w-[18ch] text-2xl leading-tight font-bold tracking-[-0.02em] text-balance sm:text-3xl">
+            <h3 class="mt-6 max-w-[18ch] text-2xl leading-tight font-bold tracking-[-0.02em] text-balance hyphens-auto sm:text-3xl">
               {item.title}
             </h3>
             {item.text && (
@@ -85,7 +88,7 @@ const gutter = 'px-4 sm:px-16 lg:px-20';
             {item.points.length > 0 && (
               <ul class="mt-8 flex flex-wrap gap-2">
                 {item.points.map((point) => (
-                  <li class="rounded-full bg-weiss px-4 py-1.5 text-sm text-marine">{point}</li>
+                  <li class="rounded-full bg-nebel px-4 py-1.5 text-sm text-marine">{point}</li>
                 ))}
               </ul>
             )}

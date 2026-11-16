@@ -75,7 +75,7 @@ function initials(name: string): string {
         member.data.email && (
           <a
             href={`mailto:${member.data.email}`}
-            class="rounded-full bg-marine px-4 py-2 text-sm font-medium text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+            class="btn btn-sm btn-primary"
           >
             {t('form.email')}
           </a>
@@ -86,7 +86,7 @@ function initials(name: string): string {
           <a
             href={member.data.linkedin}
             rel="noopener"
-            class="rounded-full border border-marine-15 px-4 py-2 text-sm font-medium transition-colors hover:border-marine"
+            class="btn btn-sm btn-outline"
           >
             LinkedIn
           </a>
@@ -96,7 +96,7 @@ function initials(name: string): string {
         !member.data.email && (
           <a
             href={localizedPath('kontakt', locale)}
-            class="rounded-full bg-marine px-4 py-2 text-sm font-medium text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+            class="btn btn-sm btn-primary"
           >
             {t('blog.contact')}
           </a>

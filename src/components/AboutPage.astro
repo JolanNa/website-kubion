@@ -62,7 +62,13 @@ function initials(name: string): string {
 >
   <ScrollMotion />
 
-  <AboutHero hero={hero} locale={locale} source={source} />
+  {/*
+    The hero fills the first screen on this page, so the first statement only
+    comes into view once the reader scrolls.
+  */}
+  <div class="flex min-h-[calc(100svh-var(--header-height))] flex-col justify-center">
+    <AboutHero hero={hero} locale={locale} source={source} />
+  </div>
 
   <section class="px-4 pt-20 sm:px-16 lg:px-20 lg:pt-32">
     <Statement text={about.statement.text} locale={locale} draft={about.statement.draft} />

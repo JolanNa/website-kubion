@@ -58,7 +58,7 @@ const hasCtas = locale && (hero.primaryCta || hero.secondaryCta);
           {hero.primaryCta && (
             <a
               href={ctaHref(hero.primaryCta, locale, source)}
-              class="rounded-full bg-marine px-6 py-3 font-medium whitespace-nowrap text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              class="btn btn-primary"
             >
               {hero.primaryCta.label}
             </a>
@@ -66,7 +66,7 @@ const hasCtas = locale && (hero.primaryCta || hero.secondaryCta);
           {hero.secondaryCta && (
             <a
               href={ctaHref(hero.secondaryCta, locale, source)}
-              class="rounded-full border border-marine-15 bg-weiss px-6 py-3 font-medium whitespace-nowrap text-marine transition-colors duration-300 hover:border-marine"
+              class="btn btn-outline"
             >
               {hero.secondaryCta.label}
             </a>

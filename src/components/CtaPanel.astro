@@ -50,7 +50,7 @@ const { section, locale, source } = Astro.props;
           section.primaryCta && (
             <a
               href={ctaHref(section.primaryCta, locale, source)}
-              class="rounded-full bg-weiss px-7 py-3.5 font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              class="btn btn-light"
             >
               {section.primaryCta.label}
             </a>
@@ -60,7 +60,7 @@ const { section, locale, source } = Astro.props;
           section.secondaryCta && (
             <a
               href={ctaHref(section.secondaryCta, locale, source)}
-              class="rounded-full border border-hellblau/50 px-7 py-3.5 font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+              class="btn btn-outline-light"
             >
               {section.secondaryCta.label}
             </a>

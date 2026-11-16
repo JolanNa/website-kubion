@@ -8,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
 import JobList from './JobList.astro';
-import ScrollMotion from './ScrollMotion.astro';
 
 /**
  * A job posting, laid out like the Über-uns and Karriere pages: a Marine hero
@@ -44,8 +43,6 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
   ogImage={job.ogImage}
   noindex={job.noindex || job.draft}
 >
-  <ScrollMotion />
-
   <section class="pb-4">
     <div class="relative overflow-hidden bg-marine px-6 py-12 sm:px-12 lg:px-16 lg:py-20">
       <span class="gradient-orange absolute inset-x-0 top-0 h-1.5" aria-hidden="true"></span>
@@ -92,7 +89,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
           <div class="xl:col-span-4 xl:flex xl:justify-end">
             <a
               href={applyHref}
-              class="inline-block rounded-full bg-weiss px-7 py-3.5 font-medium whitespace-nowrap text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              class="btn btn-light"
             >
               {t('jobs.apply')}
             </a>
@@ -107,7 +104,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
       <div class="space-y-16 lg:col-span-7 lg:space-y-20">
         {
           job.sections.map((section, index) => (
-            <div data-scroll-reveal>
+            <div>
               <p class="font-mono text-sm tracking-[0.14em] text-marine-70">
                 {String(index + 1).padStart(2, '0')}
               </p>
@@ -133,7 +130,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
 
         {
           job.benefits && (
-            <div data-scroll-reveal>
+            <div>
               <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">
                 {job.benefits.heading}
               </h2>
@@ -151,7 +148,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
 
         {
           job.about && (
-            <div data-scroll-reveal>
+            <div>
               <span class="gradient-orange block h-1.5 w-16" aria-hidden="true" />
               <h2 class="mt-8 text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-4xl">
                 {job.about.heading}
@@ -164,8 +161,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
 
       {/* Stays in view beside the posting on wide screens. */}
       <aside
-        data-scroll-reveal
-        class="rounded-3xl bg-nebel p-8 lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:col-span-5 lg:self-start lg:p-10"
+        class="rounded-2xl bg-nebel p-8 lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:col-span-5 lg:self-start lg:p-10"
       >
         <p class="kicker text-marine-70">{t('jobs.glance')}</p>
         <dl class="mt-6 border-t border-marine-15">
@@ -180,7 +176,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
         </dl>
         <a
           href={applyHref}
-          class="mt-8 block rounded-full bg-marine px-7 py-3.5 text-center font-medium text-weiss transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+          class="btn btn-primary mt-8 w-full"
         >
           {t('jobs.apply')}
         </a>
@@ -199,7 +195,7 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
     others.length > 0 && (
       <section class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
         <div class="mx-auto max-w-[84rem]">
-          <h2 data-scroll-reveal class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-5xl">
+          <h2 class="text-3xl leading-[1.05] font-bold tracking-[-0.02em] sm:text-5xl">
             {t('jobs.more')}
           </h2>
           <JobList jobs={others} locale={locale} class="mt-12" />

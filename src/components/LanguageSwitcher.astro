@@ -37,7 +37,7 @@ const targets = LOCALES.filter((l) => l !== locale).map((target) => {
         hreflang={LOCALE_TAGS[target]}
         lang={LOCALE_TAGS[target]}
         rel={isFallback ? 'nofollow' : undefined}
-        class="rounded px-2 py-1 text-sm font-medium uppercase transition-colors hover:bg-neutral-100"
+        class="rounded px-2 py-1 text-sm font-medium uppercase transition-colors hover:bg-nebel"
       >
         <span class="sr-only">{t('lang.switchTo')}</span>
         <span aria-hidden="true">{target}</span>

@@ -183,7 +183,7 @@ const corners = ['tl', 'tr', 'br', 'bl'] as const;
           hero.primaryCta && (
             <a
               href={href(hero.primaryCta)}
-              class="rounded-full bg-weiss px-8 py-4 text-[1.1rem] font-medium text-marine transition-transform duration-300 ease-[var(--ease-out-quint)] hover:-translate-y-0.5"
+              class="btn btn-lg btn-light"
             >
               {hero.primaryCta.label}
             </a>
@@ -193,7 +193,7 @@ const corners = ['tl', 'tr', 'br', 'bl'] as const;
           hero.secondaryCta && (
             <a
               href={href(hero.secondaryCta)}
-              class="rounded-full border border-hellblau/50 px-8 py-4 text-[1.1rem] font-medium text-weiss transition-colors duration-300 hover:border-hellblau hover:bg-white/5"
+              class="btn btn-lg btn-outline-light"
             >
               {hero.secondaryCta.label}
             </a>

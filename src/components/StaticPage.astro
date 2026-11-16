@@ -41,12 +41,12 @@ const heroImage = resolveImage(hero?.image);
           {hero.headline}
         </h1>
         {hero.subline && (
-          <p class="mt-6 max-w-2xl text-lg text-neutral-600 text-pretty">{hero.subline}</p>
+          <p class="mt-6 max-w-2xl text-lg text-marine-70 text-pretty">{hero.subline}</p>
         )}
         {hero.ctaLabel && hero.ctaHref && (
           <a
             href={hero.ctaHref}
-            class="mt-8 inline-block rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+            class="btn btn-primary mt-8"
           >
             {hero.ctaLabel}
           </a>

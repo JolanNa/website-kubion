@@ -8,7 +8,6 @@ import DraftTag from './DraftTag.astro';
 import JobList from './JobList.astro';
 import PhotoStrip from './PhotoStrip.astro';
 import Placeholder from './Placeholder.astro';
-import ScrollMotion from './ScrollMotion.astro';
 import SectionHeader from './SectionHeader.astro';
 
 /**
@@ -45,13 +44,11 @@ const openings = await getJobs(locale);
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
-  <ScrollMotion />
-
   <AboutHero hero={hero} locale={locale} source={source} />
 
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
     <div class="mx-auto grid max-w-[84rem] gap-12 lg:grid-cols-2 lg:gap-20">
-      <div data-scroll-reveal>
+      <div>
         {career.intro.kicker && <p class="kicker text-marine-70">{career.intro.kicker}</p>}
         <h2
           class="mt-6 max-w-[18ch] text-3xl leading-[1.05] font-bold tracking-[-0.02em] text-balance sm:text-5xl"
@@ -65,7 +62,7 @@ const openings = await getJobs(locale);
       </div>
 
       {/* Sticks beside the text on wide screens; stands in for a photo until one is chosen. */}
-      <div data-scroll-reveal class="lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:self-start">
+      <div class="lg:sticky lg:top-[calc(var(--header-height)+2rem)] lg:self-start">
         <Placeholder label={career.intro.imageNote} class="aspect-[4/3] w-full" />
       </div>
     </div>
@@ -75,7 +72,7 @@ const openings = await getJobs(locale);
 
   <section id="stellen" class="scroll-mt-[var(--header-height)] px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
     <div class="mx-auto max-w-[84rem]">
-      <div data-scroll-reveal class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+      <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <SectionHeader section={jobs} locale={locale} />
         {
           jobs.email && (
@@ -101,7 +98,7 @@ const openings = await getJobs(locale);
         <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-6">
           {
             career.benefits.items.map((item, index) => (
-              <li data-scroll-reveal class="flex flex-col rounded-2xl border border-marine-15 bg-weiss p-6 sm:p-8">
+              <li class="flex flex-col rounded-2xl border border-marine-15 bg-weiss p-6 sm:p-8">
                 <span class="flex items-center gap-4">
                   <span class="markenkern size-3 shrink-0" aria-hidden="true" />
                   <span class="font-mono text-sm tracking-[0.14em] text-marine-70">
