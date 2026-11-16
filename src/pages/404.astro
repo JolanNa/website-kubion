@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import { useTranslations } from '../i18n/ui';
 import { localizedPath } from '../i18n/routes';
 
@@ -8,15 +9,15 @@ const t = useTranslations(locale);
 ---
 
 <BaseLayout locale={locale} title={t('404.title')} description={t('404.body')} noindex>
-  <div class="mx-auto max-w-3xl px-4 py-32 text-center">
-    <p class="text-sm font-medium text-marine-45">404</p>
-    <h1 class="mt-3 text-4xl font-semibold tracking-tight">{t('404.title')}</h1>
-    <p class="mt-4 text-marine-70">{t('404.body')}</p>
-    <a
-      href={localizedPath('home', locale)}
-      class="btn btn-primary mt-8"
-    >
-      {t('404.home')}
-    </a>
+  <div class="pb-20 lg:pb-32">
+    <PageHero
+      hero={{
+        eyebrow: '404',
+        headline: t('404.title'),
+        intro: t('404.body'),
+        primaryCta: { label: t('404.home'), href: localizedPath('home', locale) },
+      }}
+      locale={locale}
+    />
   </div>
 </BaseLayout>

@@ -8,11 +8,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaPanel from './CtaPanel.astro';
 import DraftTag from './DraftTag.astro';
 import JobList from './JobList.astro';
+import PageHero from './PageHero.astro';
 
 /**
- * A job posting, laid out like the Über-uns and Karriere pages: a Marine hero
- * (the colours of the highlighted card on the Karriere page)
- * with the key facts, the tasks and profile next to a sticky "at a glance" box,
+ * A job posting, laid out like the Über-uns and Karriere pages: the white
+ * PageHero with the apply button and key facts, the tasks and profile next to a sticky "at a glance" box,
  * benefits and a word about kubion, the other open roles, and an apply panel.
  *
  * Copy comes from src/content/jobs/<slug>/<locale>.mdx.
@@ -43,61 +43,26 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
   ogImage={job.ogImage}
   noindex={job.noindex || job.draft}
 >
-  <section class="pb-4">
-    <div class="relative overflow-hidden bg-marine px-6 py-12 sm:px-12 lg:px-16 lg:py-20">
-      <span class="gradient-orange absolute inset-x-0 top-0 h-1.5" aria-hidden="true"></span>
-      <div class="mx-auto max-w-[84rem]">
-        <a
-          href={backHref}
-          class="rise kicker inline-flex items-center gap-2 text-hellblau transition-colors hover:text-weiss"
-        >
-          <span aria-hidden="true">←</span>
-          {t('jobs.back')}
-        </a>
-
-        <p class="rise mt-12 flex flex-wrap items-center gap-4 lg:mt-16" style="animation-delay: 60ms">
-          <span class="markenkern size-7 shrink-0" aria-hidden="true"></span>
-          {job.kicker && <span class="kicker text-weiss">{job.kicker}</span>}
-          {job.draft && <DraftTag locale={locale} dark />}
-        </p>
-
-        <h1
-          class="rise mt-8 max-w-[18ch] text-[clamp(2.5rem,6.5vw,6rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance text-weiss"
-          style="animation-delay: 120ms"
-        >
-          {job.title}
-        </h1>
-
-        <div
-          class="rise mt-10 grid gap-10 xl:grid-cols-12 xl:items-end xl:gap-16"
-          style="animation-delay: 180ms"
-        >
-          <div class="xl:col-span-8">
-            <p class="max-w-[64ch] text-lg leading-relaxed text-pretty text-weiss">{job.intro}</p>
-            {
-              job.facts.length > 0 && (
-                <ul class="mt-8 flex flex-wrap gap-2">
-                  {job.facts.map((fact) => (
-                    <li class="kicker rounded-full border border-weiss/60 px-4 py-2 text-weiss">
-                      {fact.value}
-                    </li>
-                  ))}
-                </ul>
-              )
-            }
-          </div>
-          <div class="xl:col-span-4 xl:flex xl:justify-end">
-            <a
-              href={applyHref}
-              class="btn btn-light"
-            >
-              {t('jobs.apply')}
-            </a>
-          </div>
-        </div>
-      </div>
+  <PageHero
+    hero={{ eyebrow: job.kicker, headline: job.title, intro: job.intro }}
+    back={{ href: backHref, label: t('jobs.back') }}
+  >
+    {job.draft && <DraftTag slot="eyebrow" locale={locale} />}
+    <div class="mt-10 flex flex-wrap items-center gap-x-8 gap-y-6">
+      <a href={applyHref} class="btn btn-primary">
+        {t('jobs.apply')}
+      </a>
+      {
+        job.facts.length > 0 && (
+          <ul class="flex flex-wrap gap-2">
+            {job.facts.map((fact) => (
+              <li class="kicker rounded-full border border-marine-15 px-4 py-2 text-marine-70">{fact.value}</li>
+            ))}
+          </ul>
+        )
+      }
     </div>
-  </section>
+  </PageHero>
 
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
     <div class="mx-auto grid max-w-[84rem] gap-16 lg:grid-cols-12 lg:gap-20">
@@ -215,17 +180,3 @@ const backHref = `${localizedPath('karriere', locale)}#stellen`;
     source={source}
   />
 </BaseLayout>
-
-<style>
-  /* The same short staggered rise as the Über-uns hero. */
-  .rise {
-    animation: rise 0.9s var(--ease-out-quint) both;
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-  }
-</style>

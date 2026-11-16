@@ -8,6 +8,7 @@ import { requireImage, resolveImage } from '../lib/images';
 import { useTranslations } from '../i18n/ui';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaPanel from './CtaPanel.astro';
+import PageHero from './PageHero.astro';
 import Placeholder from './Placeholder.astro';
 import BioBlickSteps from './BioBlickSteps.astro';
 import ProjektAnimation from './ProjektAnimation.astro';
@@ -79,7 +80,6 @@ const structuredData =
     : undefined;
 
 const wrap = 'mx-auto max-w-[84rem]';
-const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 ---
 
 <BaseLayout
@@ -94,104 +94,63 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
   <ScrollMotion />
 
   <article>
-    <section>
-      <div class="overflow-hidden bg-marine px-6 pt-10 pb-10 sm:px-12 sm:pt-12 lg:px-16 lg:pb-14">
-        <div class:list={[wrap, 'grid gap-12', logo && 'lg:grid-cols-12 lg:items-center lg:gap-16']}>
-          <div class:list={[logo && 'lg:col-span-8']}>
-            <a
-              href={localizedPath('projekte', locale)}
-              class="rise group inline-flex items-center gap-3 text-sm font-medium text-hellblau transition-colors hover:text-weiss"
-            >
-              <svg
-                viewBox="0 0 16 16"
-                class="size-4 rotate-180 transition-transform duration-300 group-hover:-translate-x-1"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                aria-hidden="true"
-              >
-                <path d={arrow} stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-              {t('projekte.back')}
-            </a>
+    <PageHero
+      hero={{ eyebrow: kind, headline: data.title, intro: data.description }}
+      back={{ href: localizedPath('projekte', locale), label: t('projekte.back') }}
+    >
+      {
+        data.technology && (
+          <span slot="eyebrow" class="kicker rounded-full border border-marine-15 px-3 py-1 text-marine-70">
+            {data.technology}
+          </span>
+        )
+      }
 
-            <p class="rise mt-14 flex flex-wrap items-center gap-x-4 gap-y-3 lg:mt-20" style="animation-delay: 60ms">
-              <span class="flex items-center gap-4">
-                {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
-                <span class="markenkern size-7 shrink-0" aria-hidden="true" />
-                <span class="kicker text-weiss">{kind}</span>
-              </span>
-              {data.technology && (
-                <span class="kicker rounded-full border border-hellblau/40 px-3 py-1 text-hellblau">
-                  {data.technology}
-                </span>
-              )}
-            </p>
-
-            <h1
-              class="rise mt-8 max-w-[20ch] text-[clamp(2.5rem,6vw,5.5rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance max-sm:hyphens-auto text-weiss"
-              style="animation-delay: 120ms"
-            >
-              {data.title}
-            </h1>
-            <p
-              class="rise mt-8 max-w-[62ch] text-lg leading-relaxed text-pretty text-hellblau sm:text-xl"
-              style="animation-delay: 180ms"
-            >
-              {data.description}
-            </p>
-          </div>
-
-          {
-            logo && (
-              <div class="rise lg:col-span-4" style="animation-delay: 240ms">
-                <Image
-                  src={logo}
-                  alt={data.logoAlt ?? ''}
-                  widths={[320, 640]}
-                  sizes="(min-width: 1024px) 22rem, 16rem"
-                  class="mx-auto w-64 rounded-3xl lg:w-full lg:max-w-[22rem]"
-                  loading="eager"
-                />
+      {
+        (facts.length > 0 || data.partner) && (
+          <dl
+            class:list={[
+              'mt-12 grid gap-6 border-t border-marine-15 pt-8 text-sm sm:grid-cols-2 lg:mt-16',
+              facts.length + (data.partner ? 1 : 0) > 2 ? 'lg:grid-cols-3' : '',
+            ]}
+          >
+            {facts.map((fact) => (
+              <div>
+                <dt class="kicker text-marine-70">{fact.label}</dt>
+                <dd class="mt-2 font-medium text-marine">{fact.value}</dd>
               </div>
-            )
-          }
-        </div>
+            ))}
+            {data.partner && (
+              <div>
+                <dt class="kicker text-marine-70">{data.partner.label}</dt>
+                <dd class="mt-2 flex items-center gap-4 font-medium text-marine">
+                  {partnerLogo && (
+                    <span class="rounded-lg border border-marine-15 bg-weiss px-3 py-1.5">
+                      <Image src={partnerLogo} alt="" widths={[160, 320]} sizes="5rem" class="h-9 w-auto" loading="eager" />
+                    </span>
+                  )}
+                  {data.partner.name}
+                </dd>
+              </div>
+            )}
+          </dl>
+        )
+      }
 
-        {
-          (facts.length > 0 || data.partner) && (
-            <dl
-              class:list={[
-                wrap,
-                'rise mt-14 grid gap-6 border-t border-hellblau/25 pt-8 text-sm sm:grid-cols-2 lg:mt-20',
-                facts.length + (data.partner ? 1 : 0) > 2 ? 'lg:grid-cols-3' : '',
-              ]}
-              style="animation-delay: 240ms"
-            >
-              {facts.map((fact) => (
-                <div>
-                  <dt class="kicker text-hellblau">{fact.label}</dt>
-                  <dd class="mt-2 font-medium text-weiss">{fact.value}</dd>
-                </div>
-              ))}
-              {data.partner && (
-                <div>
-                  <dt class="kicker text-hellblau">{data.partner.label}</dt>
-                  <dd class="mt-2 flex items-center gap-4 font-medium text-weiss">
-                    {partnerLogo && (
-                      <span class="rounded-lg bg-weiss px-3 py-1.5">
-                        <Image src={partnerLogo} alt="" widths={[160, 320]} sizes="5rem" class="h-9 w-auto" loading="eager" />
-                      </span>
-                    )}
-                    {data.partner.name}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          )
-        }
-      </div>
-    </section>
+      {
+        logo && (
+          <Image
+            slot="aside"
+            src={logo}
+            alt={data.logoAlt ?? ''}
+            widths={[320, 640]}
+            sizes="(min-width: 1024px) 22rem, 16rem"
+            class="mx-auto w-64 rounded-3xl lg:w-full lg:max-w-[22rem]"
+            loading="eager"
+          />
+        )
+      }
+    </PageHero>
 
     {
       data.animation && data.animation !== 'bioblick' && (
@@ -504,17 +463,3 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 
   <CtaPanel section={cta} locale={locale} source="src/components/ProjektDetail.astro" />
 </BaseLayout>
-
-<style>
-  /* A short staggered rise on load, as on AboutHero; reduced motion is neutralised globally. */
-  .rise {
-    animation: rise 0.9s var(--ease-out-quint) both;
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-  }
-</style>

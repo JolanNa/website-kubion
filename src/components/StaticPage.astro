@@ -5,6 +5,7 @@ import type { PageKey } from '../i18n/routes';
 import { loadPage, pageAlternates } from '../lib/content';
 import { resolveImage } from '../lib/images';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from './PageHero.astro';
 import { Image } from 'astro:assets';
 
 /**
@@ -34,39 +35,37 @@ const heroImage = resolveImage(hero?.image);
   ogImage={entry.data.ogImage}
   noindex={entry.data.noindex}
 >
+  {/* Pages without a hero in their content (Impressum, Datenschutz) still get one, titled after the page. */}
+  <PageHero
+    hero={{
+      headline: hero?.headline ?? entry.data.title,
+      intro: hero?.subline,
+      primaryCta: hero?.ctaLabel && hero?.ctaHref ? { label: hero.ctaLabel, href: hero.ctaHref } : undefined,
+    }}
+    locale={locale}
+    source={`src/content/pages/${entry.id}.mdx`}
+  />
   {
-    hero && (
-      <section class="mx-auto max-w-6xl px-4 py-20">
-        <h1 class="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          {hero.headline}
-        </h1>
-        {hero.subline && (
-          <p class="mt-6 max-w-2xl text-lg text-marine-70 text-pretty">{hero.subline}</p>
-        )}
-        {hero.ctaLabel && hero.ctaHref && (
-          <a
-            href={hero.ctaHref}
-            class="btn btn-primary mt-8"
-          >
-            {hero.ctaLabel}
-          </a>
-        )}
-        {heroImage && (
-          <Image
-            src={heroImage}
-            alt=""
-            widths={[640, 1024, 1600]}
-            sizes="(min-width: 1024px) 1024px, 100vw"
-            class="mt-12 w-full rounded-2xl"
-            loading="eager"
-          />
-        )}
-      </section>
+    heroImage && (
+      <div class="px-4 pb-12 sm:px-16 lg:px-20">
+        <Image
+          src={heroImage}
+          alt=""
+          widths={[640, 1024, 1600]}
+          sizes="(min-width: 1024px) 1024px, 100vw"
+          class="mx-auto w-full max-w-[84rem] rounded-2xl"
+          loading="eager"
+        />
+      </div>
     )
   }
 
-  <div class="prose mx-auto max-w-3xl px-4 pb-12">
-    <Content />
+  <div class="px-4 pb-20 sm:px-16 lg:px-20 lg:pb-32">
+    <div class="mx-auto max-w-[84rem]">
+      <div class="prose max-w-3xl">
+        <Content />
+      </div>
+    </div>
   </div>
 
   <slot />

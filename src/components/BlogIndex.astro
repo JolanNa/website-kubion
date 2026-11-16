@@ -1,4 +1,5 @@
 ---
+import PageHero from './PageHero.astro';
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import type { Locale } from '../config';
@@ -68,48 +69,7 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
 >
   <ScrollMotion />
 
-  <section class="px-4 pt-16 sm:px-16 lg:px-20 lg:pt-24">
-    <div class="mx-auto max-w-[84rem] text-marine">
-      {
-        hero.eyebrow && (
-          <p class="rise flex items-center gap-4">
-            {/* Markenkern — square, 135° gradient, no radius (Guideline §05). */}
-            <span class="markenkern size-9 shrink-0" aria-hidden="true" />
-            <span class="text-3xl font-bold tracking-[-0.02em] sm:text-4xl">{hero.eyebrow}</span>
-          </p>
-        )
-      }
-
-      <h1
-        class="rise mt-10 max-w-[18ch] text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.95] font-black tracking-[-0.04em] text-balance"
-        style="animation-delay: 80ms"
-      >
-        {hero.headline}
-      </h1>
-
-      {
-        hero.subline && (
-          <p
-            class="rise mt-8 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
-            style="animation-delay: 160ms"
-          >
-            {hero.subline}
-          </p>
-        )
-      }
-
-      {
-        hero.body && (
-          <p
-            class="rise mt-6 max-w-[64ch] text-lg leading-relaxed text-pretty"
-            style="animation-delay: 240ms"
-          >
-            {hero.body}
-          </p>
-        )
-      }
-    </div>
-  </section>
+  <PageHero hero={{ eyebrow: hero.eyebrow, headline: hero.headline, intro: hero.body ?? hero.subline }} />
 
   <section class="px-4 py-20 sm:px-16 lg:px-20 lg:py-32">
     <div class="mx-auto max-w-[84rem]">
@@ -255,18 +215,3 @@ const arrow = 'M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5';
     }
   }
 </script>
-
-
-<style>
-  /* A short staggered rise on load, as on AboutHero; reduced motion is neutralised globally. */
-  .rise {
-    animation: rise 0.9s var(--ease-out-quint) both;
-  }
-
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-  }
-</style>
