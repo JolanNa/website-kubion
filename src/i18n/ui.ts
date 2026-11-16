@@ -262,17 +262,30 @@ export function useTranslations(locale: Locale) {
  *
  * `page` is a page key, so every link resolves to the right localised slug.
  */
-export type MegaId = 'leistungen' | 'about';
+export type MegaId = 'leistungen' | 'projekte' | 'about';
 
-export interface MegaPanel {
-  heading: string;
-  /** `anchor` points at a section of the page, e.g. the industries on Leistungen. */
-  items: { title: string; description: string; page: PageKey; anchor?: string }[];
-  overviewHeading: string;
-  overviewBody: string;
-  overviewCta: string;
-  overviewPage: PageKey;
+export interface MegaItem {
+  title: string;
+  description: string;
+  page: PageKey;
+  /** Points at a section of the page, e.g. the industries on Leistungen. */
+  anchor?: string;
+  /** A full path instead of `page` — used for the project entries. */
+  href?: string;
 }
+
+/**
+ * A full panel lists its items beside a Marine overview card. A `compact` panel
+ * (Über uns) is just the items side by side, with no card.
+ */
+export type MegaPanel = {
+  heading: string;
+  /** Empty for `projekte`: Header.astro fills it from the projekte collection. */
+  items: readonly MegaItem[];
+} & (
+  | { compact?: false; overviewHeading: string; overviewBody: string; overviewCta: string; overviewPage: PageKey }
+  | { compact: true }
+);
 
 export const MEGA_MENU = {
   de: {
@@ -307,17 +320,21 @@ export const MEGA_MENU = {
         },
       ],
     },
+    projekte: {
+      heading: 'Projektübersicht',
+      overviewHeading: 'Aus der Praxis',
+      overviewBody:
+        'Echte Projekte aus Produktion, Logistik und Forschung — was wir gebaut haben, wie es funktioniert und was es gebracht hat.',
+      overviewCta: 'Zur Projektübersicht',
+      overviewPage: 'projekte',
+      items: [],
+    },
     about: {
       heading: 'Wer wir sind',
-      overviewHeading: 'Standort',
-      overviewBody:
-        'Wir entwickeln aus Osnabrück und Berlin — nah an den Unternehmen, für die wir bauen.',
-      overviewCta: 'Team kennenlernen',
-      overviewPage: 'ueber-uns',
+      compact: true,
       items: [
         { title: 'Über uns', description: 'Team, Standort und Zusammenarbeit', page: 'ueber-uns' },
         { title: 'Karriere', description: 'Mit uns an KI-Systemen arbeiten', page: 'karriere' },
-        { title: 'Blog', description: 'Einblicke aus Projekten und Praxis', page: 'blog' },
       ],
     },
   },
@@ -353,17 +370,21 @@ export const MEGA_MENU = {
         },
       ],
     },
+    projekte: {
+      heading: 'Project overview',
+      overviewHeading: 'From practice',
+      overviewBody:
+        'Real projects from production, logistics and research — what we built, how it works and what it achieved.',
+      overviewCta: 'To the project overview',
+      overviewPage: 'projekte',
+      items: [],
+    },
     about: {
       heading: 'Who we are',
-      overviewHeading: 'Location',
-      overviewBody:
-        'We build from Osnabrück and Berlin — close to the companies we work for.',
-      overviewCta: 'Meet the team',
-      overviewPage: 'ueber-uns',
+      compact: true,
       items: [
         { title: 'About us', description: 'Team, location and how we work', page: 'ueber-uns' },
         { title: 'Careers', description: 'Work on AI systems with us', page: 'karriere' },
-        { title: 'Blog', description: 'Notes from projects and practice', page: 'blog' },
       ],
     },
   },

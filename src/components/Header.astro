@@ -5,12 +5,13 @@ import {
   MEGA_MENU,
   useTranslations,
   type MegaId,
+  type MegaItem,
   type MegaPanel,
   type UIKey,
 } from '../i18n/ui';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import Logo from './Logo.astro';
-import type { Alternate } from '../lib/content';
+import { getProjekte, projektPath, type Alternate } from '../lib/content';
 
 interface Props {
   locale: Locale;
@@ -63,8 +64,8 @@ const t = useTranslations(locale);
 const NAV: { key: PageKey; label: UIKey; mega?: MegaId; covers?: PageKey[] }[] = [
   { key: 'home', label: 'nav.home' },
   { key: 'leistungen', label: 'nav.leistungen', mega: 'leistungen' },
-  { key: 'projekte', label: 'nav.projekte' },
-  { key: 'ueber-uns', label: 'nav.ueberUns', mega: 'about', covers: ['karriere', 'blog'] },
+  { key: 'projekte', label: 'nav.projekte', mega: 'projekte' },
+  { key: 'ueber-uns', label: 'nav.ueberUns', mega: 'about', covers: ['karriere'] },
 ];
 
 const MOBILE_NAV: { key: PageKey; label: UIKey }[] = [
@@ -73,7 +74,33 @@ const MOBILE_NAV: { key: PageKey; label: UIKey }[] = [
   { key: 'blog', label: 'nav.blog' },
 ];
 
-const megaPanels = Object.entries(MEGA_MENU[locale]) as [MegaId, MegaPanel][];
+/*
+ * The Projekte panel lists every published project, so it can't be static copy:
+ * its items come from the collection, under a short `navTitle` where the full
+ * title is a sentence. Projects without a page of their own link to their
+ * block on the index.
+ */
+const projekte = await getProjekte(locale);
+const projektItems: MegaItem[] = projekte.map((project) => {
+  const { navTitle, title, technology, industry, kind, detail } = project.data;
+  return {
+    title: navTitle ?? title,
+    description: [technology, industry ?? (kind === 'forschung' ? t('projekte.research') : undefined)]
+      .filter(Boolean)
+      .join(' · '),
+    page: 'projekte',
+    href: detail
+      ? projektPath(project, locale)
+      : `${localizedPath('projekte', locale)}${kind === 'forschung' ? '#forschung' : ''}`,
+  };
+});
+
+const megaPanels = (Object.entries(MEGA_MENU[locale]) as [MegaId, MegaPanel][]).map(
+  ([id, mega]): [MegaId, MegaPanel] => (id === 'projekte' ? [id, { ...mega, items: projektItems }] : [id, mega]),
+);
+
+const itemHref = (item: MegaItem) =>
+  item.href ?? `${localizedPath(item.page, locale)}${item.anchor ? `#${item.anchor}` : ''}`;
 
 // Normalised so `/leistungen.html` (the built filename) still matches at runtime.
 const current =
@@ -212,61 +239,78 @@ const navItemClass =
             clears it by just 9px.
           */}
           <div class="mx-6 mt-2 h-px bg-marine-15"></div>
-          <div class="grid">
+          {/*
+            The panels share one grid cell so switching between them cross-fades.
+            The stack's height is set from the current panel in JS and
+            transitions, so the island eases between the tall panels and the
+            compact Über-uns one instead of always being as tall as the tallest.
+          */}
+          <div
+            class="grid overflow-hidden transition-[height] duration-500 ease-[var(--ease-out-quint)]"
+            data-mega-stack
+          >
             {
-              megaPanels.map(([id, mega]) => (
-                <div
-                  data-mega-panel={id}
-                  class="invisible col-start-1 row-start-1 grid grid-cols-[1.15fr_1fr] gap-6 px-6 pt-5 pb-6 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100"
-                >
-                  <div>
-                    <p class="kicker text-marine-45">{mega.heading}</p>
-                    <ul class="mt-5 space-y-1">
-                      {mega.items.map((item) => (
-                        <li>
-                          <a
-                            href={`${localizedPath(item.page, locale)}${item.anchor ? `#${item.anchor}` : ''}`}
-                            class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
-                          >
-                            {/* The Markenkern square as the item marker. */}
-                            <span class="markenkern mt-[6px] block size-3 shrink-0" aria-hidden="true"></span>
-                            <span>
-                              <span class="block font-semibold text-marine">{item.title}</span>
-                              <span class="block text-sm text-marine-70">{item.description}</span>
-                            </span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
-                    <div>
-                      <p class="kicker text-hellblau">{mega.overviewHeading}</p>
-                      <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">
-                        {mega.overviewBody}
-                      </p>
-                    </div>
+              megaPanels.map(([id, mega]) => {
+                const links = mega.items.map((item) => (
+                  <li>
                     <a
-                      href={localizedPath(mega.overviewPage, locale)}
-                      class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
+                      href={itemHref(item)}
+                      class="flex items-start gap-4 rounded-xl p-3 transition-colors duration-200 hover:bg-nebel"
                     >
-                      <span class="arrow-tile">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path
-                            d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
+                      {/* The Markenkern square as the item marker. */}
+                      <span class="markenkern mt-[6px] block size-3 shrink-0" aria-hidden="true"></span>
+                      <span>
+                        <span class="block font-semibold text-marine">{item.title}</span>
+                        <span class="block text-sm text-marine-70">{item.description}</span>
                       </span>
-                      {mega.overviewCta}
                     </a>
+                  </li>
+                ));
+
+                return mega.compact ? (
+                  <div
+                    data-mega-panel={id}
+                    class="invisible col-start-1 row-start-1 self-start px-6 pt-5 pb-5 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100"
+                  >
+                    <p class="kicker text-marine-45">{mega.heading}</p>
+                    <ul class="mt-3 grid max-w-2xl grid-cols-2 gap-x-6 gap-y-1">{links}</ul>
                   </div>
-                </div>
-              ))
+                ) : (
+                  <div
+                    data-mega-panel={id}
+                    class="invisible col-start-1 row-start-1 grid grid-cols-[1.15fr_1fr] gap-6 self-start px-6 pt-5 pb-6 opacity-0 transition-opacity duration-300 data-current:visible data-current:opacity-100"
+                  >
+                    <div>
+                      <p class="kicker text-marine-45">{mega.heading}</p>
+                      <ul class="mt-5 space-y-1">{links}</ul>
+                    </div>
+
+                    <div class="flex flex-col justify-between rounded-xl bg-marine p-6">
+                      <div>
+                        <p class="kicker text-hellblau">{mega.overviewHeading}</p>
+                        <p class="mt-5 text-[0.9375rem] leading-relaxed text-weiss">{mega.overviewBody}</p>
+                      </div>
+                      <a
+                        href={localizedPath(mega.overviewPage, locale)}
+                        class="group/cta mt-8 inline-flex items-center gap-3 text-[0.9375rem] font-medium text-weiss"
+                      >
+                        <span class="arrow-tile">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path
+                              d="M3 8h9m0 0-3.5-3.5M12 8l-3.5 3.5"
+                              stroke="currentColor"
+                              stroke-width="1.75"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        {mega.overviewCta}
+                      </a>
+                    </div>
+                  </div>
+                );
+              })
             }
           </div>
         </div>
@@ -366,26 +410,55 @@ const navItemClass =
       ...header.querySelectorAll<HTMLButtonElement>('[data-mega-trigger]'),
     ];
     const megaPanels = [...header.querySelectorAll<HTMLElement>('[data-mega-panel]')];
+    const megaStack = header.querySelector<HTMLElement>('[data-mega-stack]');
+    // Nav links without a panel (Home): hovering one closes an open mega menu.
+    const plainItems = [
+      ...header.querySelectorAll<HTMLElement>('[data-nav-item]:not([data-mega-trigger])'),
+    ];
     const menuToggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]');
 
     // --- Panels ------------------------------------------------------------
 
+    /**
+     * Size the panel stack to the current panel. Animated when switching
+     * between panels; instant when the island opens, since the island's own
+     * expansion is the motion then.
+     */
+    function sizeStack(animate: boolean) {
+      const current = megaPanels.find((panel) => panel.hasAttribute('data-current'));
+      if (!megaStack || !current) return;
+      if (!animate) megaStack.style.transition = 'none';
+      megaStack.style.height = `${current.offsetHeight}px`;
+      if (!animate) {
+        void megaStack.offsetHeight;
+        megaStack.style.transition = '';
+      }
+    }
+
     /** Reflect which mega menu (if any) is showing on the triggers and panels. */
-    function syncMega(mega?: string) {
+    function syncMega(mega?: string, animate = false) {
       for (const trigger of megaTriggers) {
         trigger.setAttribute('aria-expanded', String(trigger.dataset.megaTrigger === mega));
       }
       for (const panel of megaPanels) {
         panel.toggleAttribute('data-current', panel.dataset.megaPanel === mega);
       }
+      if (mega) sizeStack(animate);
     }
 
+    // Panel heights change with the island's width (scroll state, resizes).
+    const panelObserver = new ResizeObserver(() => {
+      if (isOpen('mega')) sizeStack(false);
+    });
+    for (const panel of megaPanels) panelObserver.observe(panel);
+
     function openPanel(panel: 'mega' | 'menu', mega?: string) {
+      const switching = isOpen('mega') && panel === 'mega';
       header!.dataset.panel = panel;
       if (mega) header!.dataset.mega = mega;
       else delete header!.dataset.mega;
       header!.setAttribute('data-open', '');
-      syncMega(mega);
+      syncMega(mega, switching);
       menuToggle?.setAttribute('aria-expanded', String(panel === 'menu'));
     }
 
@@ -413,6 +486,12 @@ const navItemClass =
       // fight the click handler.
       trigger.addEventListener('pointerenter', (event) => {
         if ((event as PointerEvent).pointerType === 'mouse') openPanel('mega', mega);
+      });
+    }
+
+    for (const item of plainItems) {
+      item.addEventListener('pointerenter', (event) => {
+        if ((event as PointerEvent).pointerType === 'mouse' && isOpen('mega')) closePanel();
       });
     }
 

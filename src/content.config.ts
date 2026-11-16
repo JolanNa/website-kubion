@@ -247,6 +247,8 @@ const projekte = defineCollection({
      * to override the entry id — which would erase the locale from the id.
      */
     urlSlug: z.string().optional(),
+    /** Short name for the Projekte dropdown in the header; falls back to the title. */
+    navTitle: z.string().optional(),
     /** Customer project or research project — each gets its own block on the index. */
     kind: z.enum(['kunde', 'forschung']).default('kunde'),
     /** Small mono label on cards and in the hero, e.g. "Computer Vision". */
